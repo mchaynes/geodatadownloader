@@ -1,6 +1,8 @@
 import React from 'react';
 import logo from './logo.svg';
 import './App.css';
+import { writeToDisk } from './file';
+import initSqlJs from 'sql.js'
 
 function App() {
   return (
@@ -18,6 +20,7 @@ function App() {
         >
           Learn React
         </a>
+        <button onClick={writeToDisk}>Open File</button>
       </header>
     </div>
   );
