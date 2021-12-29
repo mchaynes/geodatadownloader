@@ -1,46 +1,18 @@
-# Getting Started with Create React App
+# geodatadownloader.com (GDD)
+This repo contains *all* of the code for https://geodatadownloader.com
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## What is geodatadownloader?
+GDD is client side browser application that will download all the data in a ArcGIS feature layer onto your computer. It is not limited by max query size, and can download any size of dataset (yes that includes those huge parcel layers from your local county). You can choose a custom extent for your download, and pick the output columns you want to use 
 
-## Available Scripts
+## Does this steal my data or do anything nefarious? 
+GDD runs entirely in your browser and stores nothing besides what your browser caches locally. There is no backend to the application, besides the CDN used to serve up the html/javascript. The map in order to draw an extent uses ESRI's javascript library (and therefore ESRI's servers to serve up the data for the map). Conversion to from arcgis json to geojson is done browser side as well.
 
-In the project directory, you can run:
+## What formats does this support?
+* GeoJSON
 
-### `yarn start`
+ I want to add more support for other formats in the future (especially geopackage), but most other good formats are binary formats and have iffy support in a client-side browser application. I'm hoping to either make or find a good wasm port of `ogr2ogr`, then I'll basically be able to support any format with no work. I believe I can add `shp` support via [shp-write](https://github.com/mapbox/shp-write). 
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## How does geodatadownloader download **all* of the data for a layer?
+It executes a query on the arcgis feature service that says `where: 1=1`. Or, in other words, return everything. When it executes this query, it specifies the parameter `returnOnlyObjectIds`. This returns all objectIds in a list. Then, GDD paginates those objectIds into chunks of 500. It then constructs a `where: OBJECTID IN (...objectIds...)` which returns those 500 features. It then proceeds to do this until every chunk has been requested and written into the downloaded dataset.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
-
-### `yarn test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `yarn build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `yarn eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+You may be asking yourself "Why even ask for the objectIds and instead just grab all the features in that original `where: 1=1`?". If GDD could, it would. ArcGIS REST services are typically are limited by a specific number of features they can return (usually around 1000, but it depends). Some endpoints are "paginated", meaning that you can fetch features one page at a time. Not all services support this, though. So instead, we use the objectIds method because it works a lot more consistently.

@@ -5,15 +5,23 @@ import createTheme from '@mui/material/styles/createTheme'
 import CssBaseline from '@mui/material/CssBaseline'
 import Toolbar from '@mui/material/Toolbar'
 import Typography from '@mui/material/Typography'
+import Box from '@mui/material/Box'
 import Link from '@mui/material/Link'
 import './App.css';
 import { Arcgis } from './arcgis';
 import { FileHandler } from './FileHandler';
 import { Workflow } from './Workflow';
 import logo from './icons/icon-128.png'
+import IconButton from '@mui/material/IconButton';
+import GithubSvg from './icons/GithubSvg';
+import SvgIcon from '@mui/material/SvgIcon';
 
 
 const theme = createTheme();
+
+const openInNewTab = (url: string) => () => {
+  window.open(url, "_blank")
+}
 
 export type AppProps = {
   arc: Arcgis
@@ -38,6 +46,15 @@ function App({ arc, fileHandler }: AppProps) {
           <Typography sx={{ ml: 3 }} variant="h6" color="inherit" noWrap>
             geodatadownloader
           </Typography>
+          <Box sx={{ flexGrow: 1 }} ></Box>
+          <IconButton
+            color="inherit"
+            onClick={openInNewTab("https://github.com/mchaynes/geodatadownloader")}
+          >
+            <SvgIcon>
+              <GithubSvg />
+            </SvgIcon>
+          </IconButton>
         </Toolbar>
       </AppBar>
       <Container component="main" maxWidth="lg" sx={{ mb: 4 }}>
