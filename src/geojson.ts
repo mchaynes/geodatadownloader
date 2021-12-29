@@ -41,6 +41,7 @@ export class GeojsonDownloader {
         const writable = await fileHandle.createWritable()
         const writer = writable.getWriter()
         let headerWritten = false
+        let firstPage = true
         while (await results.hasNext()) {
             const features = await results.next(outFields)
             const json = features.toJSON()
@@ -50,9 +51,15 @@ export class GeojsonDownloader {
                 writer.write(header)
                 headerWritten = true
             }
-            writer.write(JSON.stringify(geojson.features))
+            if (!firstPage) {
+                writer.write(",")
+            }
+            writer.write(
+                geojson.features.map(f => JSON.stringify(f)).join(",")
+            )
             this.featuresWritten += geojson.features.length
             this.onWrite(this.featuresWritten)
+            firstPage = false
         }
         writer.write(footer)
         writer.close()
