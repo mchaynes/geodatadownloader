@@ -15,6 +15,7 @@ import logo from './icons/icon-128.png'
 import IconButton from '@mui/material/IconButton';
 import GithubSvg from './icons/GithubSvg';
 import SvgIcon from '@mui/material/SvgIcon';
+import CompatibilityCheck from './CompatibilityCheck';
 
 
 const theme = createTheme();
@@ -58,6 +59,9 @@ function App({ arc, fileHandler }: AppProps) {
         </Toolbar>
       </AppBar>
       <Container component="main" maxWidth="lg" sx={{ mb: 4 }}>
+        <Box sx={{ mt: 3 }}>
+          <CompatibilityCheck />
+        </Box>
         <Workflow
           arc={arc}
           fileHandler={fileHandler}

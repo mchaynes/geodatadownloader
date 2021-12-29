@@ -36,7 +36,7 @@ export function StatusAlert({ loading, successMsg, errorMsg, infoMsg }: StatusAl
     }
     if (errorMsg) {
         return (
-            <Alert severity="info">
+            <Alert severity="error">
                 {errorMsg}
             </Alert>
         )
