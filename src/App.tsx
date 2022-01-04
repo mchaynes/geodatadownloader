@@ -1,13 +1,14 @@
+import React from 'react'
 import { ThemeProvider } from '@emotion/react';
 import AppBar from '@mui/material/AppBar'
 import Container from '@mui/material/Container'
-import createTheme from '@mui/material/styles/createTheme'
+import { createTheme } from '@mui/material'
 import CssBaseline from '@mui/material/CssBaseline'
 import Toolbar from '@mui/material/Toolbar'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
 import Link from '@mui/material/Link'
-import './App.css';
+// import './App.css';
 import { Arcgis } from './arcgis';
 import { FileHandler } from './FileHandler';
 import { Workflow } from './Workflow';

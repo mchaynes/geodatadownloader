@@ -1,3 +1,4 @@
+import React from 'react'
 /**
  * Vector path for github icon
  */

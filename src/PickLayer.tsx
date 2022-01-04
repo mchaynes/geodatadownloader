@@ -57,9 +57,9 @@ export function PickLayer({ onSuccess, loadLayer }: PickLayerProps) {
             <Box sx={{ ml: 1, mt: 2 }}>
                 <StatusAlert
                     loading={loading}
-                    successMsg={successMsg}
-                    errorMsg={errMsg}
-                    infoMsg="Layer options will appear after load"
+                    success={successMsg}
+                    error={errMsg}
+                    info="Layer options will appear after load"
                 />
             </Box>
 

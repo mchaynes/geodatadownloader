@@ -1,3 +1,4 @@
+import React from 'react'
 import Alert from '@mui/material/Alert'
 import LinearProgress from '@mui/material/LinearProgress'
 
@@ -9,15 +10,15 @@ export type StatusAlertProps = {
     /**
      * Success message to display if successful
      */
-    successMsg?: string
+    success?: string
     /**
      * Error message to display if errored
      */
-    errorMsg?: string
+    error?: JSX.Element | string
     /**
      * Info message to display if not loading/successful/errored
      */
-    infoMsg?: string
+    info?: string
 }
 
 /**
@@ -28,30 +29,30 @@ export type StatusAlertProps = {
  * 4. Info (if non-empty string)
  * 5. Nothing (if nothing defined. Helpful for only displaying status when necessary)
  */
-export function StatusAlert({ loading, successMsg, errorMsg, infoMsg }: StatusAlertProps) {
+export function StatusAlert({ loading, success, error, info: info }: StatusAlertProps) {
     if (loading) {
         return (
             <LinearProgress />
         )
     }
-    if (errorMsg) {
+    if (error) {
         return (
             <Alert severity="error">
-                {errorMsg}
+                {error}
             </Alert>
         )
     }
-    if (successMsg) {
+    if (success) {
         return (
             <Alert severity="success">
-                {successMsg}
+                {success}
             </Alert>
         )
     }
-    if (infoMsg) {
+    if (info) {
         return (
             <Alert severity="info">
-                {infoMsg}
+                {info}
             </Alert>
         )
     }

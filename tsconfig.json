@@ -1,28 +1,30 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "lib": [
-      "ES2020",
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-    "types": ["@types/wicg-file-system-access"],
-    "allowJs": true,
-    "skipLibCheck": true,
+    "module": "commonjs",
+    "target": "es6",
+    "jsx": "react",
+    "sourceMap": true,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
-    "module": "esnext",
     "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx"
+    "noImplicitAny": false,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "strictNullChecks": true,
+    "removeComments": true,
+    "outDir": "./dist/",
+    "allowJs": true,
+    "typeRoots": [
+      "src/types",
+      "./node_modules/@types"
+    ]
   },
   "include": [
-    "src"
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/*.spec.ts",
+    "**/*.test.ts"
   ]
 }

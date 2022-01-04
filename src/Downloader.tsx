@@ -1,3 +1,4 @@
+import React from 'react'
 import InputLabel from '@mui/material/InputLabel';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -7,13 +8,12 @@ import { FileHandler } from './FileHandler';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
-import { GeojsonDownloader } from './geojson';
+import { GeojsonDownloader } from './formats/geojson';
 import { StatusAlert } from './StatusAlert';
 import LinearProgress from '@mui/material/LinearProgress';
 import Typography from '@mui/material/Typography';
 
 type SupportedExportTypes = "geojson"
-
 
 
 export type DownloaderProps = {
@@ -100,8 +100,8 @@ export function Downloader({ queryResults, fileHandler, outFields }: DownloaderP
             )}
             <Box sx={{ mt: 3, ml: 1, mr: 1, mb: 3 }}>
                 <StatusAlert
-                    errorMsg={errMsg}
-                    successMsg={successMsg}
+                    error={errMsg}
+                    success={successMsg}
                 />
             </Box>
         </div>

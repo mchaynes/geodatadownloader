@@ -1,3 +1,4 @@
+import React from 'react'
 import { useEffect, useState } from 'react'
 import Divider from '@mui/material/Divider'
 import Paper from '@mui/material/Paper'
@@ -44,22 +45,18 @@ function WorkflowItems({ arc, fileHandler }: WorkflowProps) {
         return new QueryResults(arc.getLayer(), filterExtent)
     })
 
-    useEffect(() => {
-        arc.onNewFilterGeometry((g) => {
-            setFilterExtent(g)
-        })
-    }, [arc])
-
 
     useEffect(() => {
         setQueryResults(new QueryResults(arc.getLayer(), filterExtent, 500))
     }, [filterExtent, arc])
+
     return (
         <div>
             <SectionDivider />
-            <SectionHeader header="Draw Extent (if you want)" />
+            <SectionHeader header="Draw Boundary (if you want)" />
             <ExtentPicker
-                attachMap={arc.attachView}
+                layer={arc.getLayer()}
+                onFilterGeometryChange={g => setFilterExtent(g)}
             />
             <SectionDivider />
             <SectionHeader header="Attribute Table Preview" />

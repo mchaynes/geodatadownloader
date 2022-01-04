@@ -1,40 +1,13 @@
 import FeatureLayer from '@arcgis/core/layers/FeatureLayer'
-import Map from '@arcgis/core/Map'
-import MapView from '@arcgis/core/views/MapView'
-import Sketch from '@arcgis/core/widgets/Sketch'
-import GraphicsLayer from '@arcgis/core/layers/GraphicsLayer'
-import FeatureEffect from '@arcgis/core/layers/support/FeatureEffect'
-import FeatureFilter from '@arcgis/core/layers/support/FeatureFilter'
 import FeatureSet from "@arcgis/core/rest/support/FeatureSet";
-import { union as geometryUnion } from '@arcgis/core/geometry/geometryEngine'
 import Geometry from '@arcgis/core/geometry/Geometry'
+import EsriExtent from '@arcgis/core/geometry/Extent'
+import EsriPolygon from '@arcgis/core/geometry/Polygon'
 
 export class Arcgis {
     layerUrl?: string
     layer?: FeatureLayer
-    map: Map
-    mapView: MapView
-    sketch: Sketch
-    sketchLayer: GraphicsLayer
-    filterGeometry?: Geometry
-    attachedAndLoaded = false
-    outFields = ["*"]
-    filterGeomHooks: ((_?: Geometry) => void)[] = []
-    constructor() {
-        this.sketchLayer = new GraphicsLayer()
-        this.map = new Map({
-            basemap: "topo-vector",
-        })
-        this.mapView = new MapView({
-            map: this.map,
-            center: [0, 0],
-            zoom: 1,
-        })
-        // Only initializing to fix compiler errors 
-        this.sketchLayer = new GraphicsLayer()
-        this.sketch = new Sketch()
-    }
-
+    outFields: string[] = []
     getLayerUrl() {
         return this.layerUrl
     }
@@ -68,84 +41,68 @@ export class Arcgis {
         this.layer = new FeatureLayer({
             url: layerUrl,
         })
-        this.map.add(this.layer)
         await this.layer?.load()
         return this.layer?.title ?? "<No Title>"
     }
 
-    async zoomToLayer() {
-        const extent = await this.layer?.queryExtent()
-        await this.mapView.goTo(extent)
-    }
-
-    attachView = async (container: any) => {
-        this.mapView.container = container
-        if (!this.attachedAndLoaded) {
-            this.sketchLayer = new GraphicsLayer()
-            this.sketch = new Sketch({
-                layer: this.sketchLayer,
-                view: this.mapView,
-                creationMode: "update",
-                availableCreateTools: ["polygon", "rectangle", "circle"],
-                layout: "vertical",
-            })
-            this.map.add(this.sketchLayer)
-            this.mapView.ui.add(this.sketch, "top-right")
-            this.attachedAndLoaded = true
-            this.sketch.on("update", this.syncSketch(this.sketchLayer))
-            await this.mapView.when()
-            await this.zoomToLayer()
-        }
-    }
-
-    syncSketch(sketchLayer: GraphicsLayer) {
-        return () => {
-            const sketchGeometries = sketchLayer.graphics
-                .filter((g) => g?.geometry?.spatialReference !== undefined)
-                .map((g) => g.geometry).toArray()
-            if (sketchGeometries.length > 0) {
-                this.filterGeometry = geometryUnion(sketchGeometries)
-            } else {
-                // If there's no sketch geometries, remove the filterGeometry entirely
-                this.filterGeometry = undefined
-            }
-            this.syncFeatureEffect()
-        }
-    }
-
-    onNewFilterGeometry = (f: (_?: Geometry) => void) => {
-        this.filterGeomHooks.push(f)
-    }
-
-    syncFeatureEffect() {
-        if (this.layer) {
-            this.layer.featureEffect = new FeatureEffect({
-                filter: new FeatureFilter({
-                    geometry: this.filterGeometry,
-                    spatialRelationship: "intersects",
-                }),
-                excludedEffect: "grayscale(100%) opacity(30%)"
-            })
-            this.filterGeomHooks.forEach(func => func(this.filterGeometry))
-        }
-    }
-
-
-    /**
-     * Queries layer for all objectIds
-     * @returns list of all object ids for the server
-     */
-    getObjectIds = async (where = "1=1"): Promise<number[]> => {
-        if (this.layer) {
-            return await this.layer.queryObjectIds({
-                where: where,
-            })
-        } else {
-            return Promise.reject("layer is not defined")
-        }
-    }
-
 }
+
+type SpatialReference = {
+    wkid: number,
+    latestWkid: number,
+}
+
+type Polygon = {
+    type: "polygon"
+    rings: number[][][]
+    spatialReference: SpatialReference
+}
+
+type Extent = {
+    type: "extent",
+    xmin: number,
+    ymin: number,
+    xmax: number,
+    ymax: number,
+    spatialReference: SpatialReference
+}
+
+type Geo = Polygon | Extent
+
+export function parseGeometryFromString(str: string): Geometry {
+    const geo = JSON.parse(str) as Geo
+    // allow for type to not be defined
+    let type = geo.type
+    if (!type) {
+        if ((geo as Polygon).rings) { // if it has "rings", then assume a polygon
+            type = "polygon"
+        } else if ((geo as Extent).xmax) { // if it has "xmax" then assume an extent
+            type = "extent"
+        }
+    }
+    geo.type = type
+    switch (geo.type) {
+        case "extent":
+            return EsriExtent.fromJSON({
+                "type": "extent",
+                "xmin": geo.xmin,
+                "ymin": geo.ymin,
+                "xmax": geo.xmax,
+                "ymax": geo.ymax,
+                "spatialReference": geo.spatialReference,
+            })
+        case "polygon":
+            return EsriPolygon.fromJSON({
+                "type": geo.type,
+                "spatialReference": geo.spatialReference,
+                "rings": geo.rings
+            })
+        default:
+            throw new Error(`Unable to parse geometry: ${str}`)
+    }
+}
+
+export type GeometryUpdateListener = (_?: Geometry) => void
 
 export class QueryResults {
     private paginatedObjectIds: number[][] = []

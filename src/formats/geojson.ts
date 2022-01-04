@@ -1,4 +1,4 @@
-import { QueryResults } from "./arcgis";
+import { QueryResults } from "../arcgis";
 import { arcgisToGeoJSON } from '@terraformer/arcgis'
 
 // Open geojson FeatureCollection object and "features" array
