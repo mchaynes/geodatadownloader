@@ -1,7 +1,8 @@
 // Most of this was taken from: https://github.com/defiantgoat/esri-react-typescript
 module.exports = {
   setupFiles: [
-    "jest-canvas-mock"
+    "jest-canvas-mock",
+    "<rootDir>/src/setupTests.js"
   ],
   transform: {
     "^.+\\.(js|jsx|ts|tsx)?$": "ts-jest",
@@ -16,9 +17,6 @@ module.exports = {
     "node_modules/(?!(@arcgis|@esri|@stencil)/)"
   ],
   testEnvironment: "jsdom",
-  setupFiles: [
-    "<rootDir>/src/setupTests.js"
-  ],
   setupFilesAfterEnv: ["<rootDir>/src/setupJest.js"],
 
   collectCoverage: true,

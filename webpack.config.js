@@ -1,5 +1,7 @@
 // Most of this was taken from: https://github.com/defiantgoat/esri-react-typescript
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const ArcGISPlugin = require('@arcgis/webpack-plugin')
+const CopyWebpackPlugin = require('copy-webpack-plugin')
 const path = require('path');
 
 module.exports = {
@@ -15,18 +17,49 @@ module.exports = {
                 test: /\.css$/i,
                 use: ['style-loader', 'css-loader'],
             },
+            {
+                test: /\.(png|jpe?g|gif|jp2|webp|ico)$/,
+                loader: 'file-loader',
+                options: {
+                    name: '[name].[ext]',
+                },
+            },
         ],
     },
     resolve: {
         extensions: ['.tsx', '.ts', '.js'],
     },
     output: {
-        filename: 'bundle.js',
-        path: path.resolve(__dirname, 'dist'),
+        filename: '[name].bundle.js',
+        path: path.resolve(__dirname, 'build'),
+        clean: true,
     },
-    plugins: [new HtmlWebpackPlugin({
-        filename: "index.html",
-        template: "public/index.html",
-        excludeChunks: ["server"],
-    })],
+    plugins: [
+        new HtmlWebpackPlugin({
+            filename: "index.html",
+            template: "public/index.html",
+            excludeChunks: ["server"],
+            minify: {
+                removeComments: true,
+                collapseWhitespace: true,
+                removeRedundantAttributes: true,
+                useShortDoctype: true,
+                removeEmptyAttributes: true,
+                removeStyleLinkTypeAttributes: true,
+                keepClosingSlash: true,
+                minifyJS: true,
+                minifyCSS: true,
+                minifyURLs: true,
+            },
+        }),
+        new ArcGISPlugin({
+            copyAssets: false,
+        }),
+        new CopyWebpackPlugin({
+            patterns: [
+                { from: 'public', to: './', globOptions: { ignore: ["**/index.html"] } }
+            ]
+        }),
+
+    ],
 };

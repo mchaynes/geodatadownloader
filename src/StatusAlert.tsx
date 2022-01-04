@@ -10,7 +10,7 @@ export type StatusAlertProps = {
     /**
      * Success message to display if successful
      */
-    success?: string
+    success?: JSX.Element | string
     /**
      * Error message to display if errored
      */
@@ -18,7 +18,7 @@ export type StatusAlertProps = {
     /**
      * Info message to display if not loading/successful/errored
      */
-    info?: string
+    info?: JSX.Element | string
 }
 
 /**
@@ -29,7 +29,7 @@ export type StatusAlertProps = {
  * 4. Info (if non-empty string)
  * 5. Nothing (if nothing defined. Helpful for only displaying status when necessary)
  */
-export function StatusAlert({ loading, success, error, info: info }: StatusAlertProps) {
+export function StatusAlert({ loading, success, error, info }: StatusAlertProps) {
     if (loading) {
         return (
             <LinearProgress />

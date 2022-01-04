@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "es6",
+    "target": "es2020",
     "jsx": "react",
     "sourceMap": true,
     "esModuleInterop": true,
@@ -11,7 +11,7 @@
     "noImplicitThis": true,
     "strictNullChecks": true,
     "removeComments": true,
-    "outDir": "./dist/",
+    "outDir": "./build/",
     "allowJs": true,
     "typeRoots": [
       "src/types",
@@ -20,7 +20,8 @@
   },
   "include": [
     "src/**/*.ts",
-    "src/**/*.tsx"
+    "src/**/*.tsx",
+    "index.d.ts"
   ],
   "exclude": [
     "node_modules",
