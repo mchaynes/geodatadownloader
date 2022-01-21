@@ -54,7 +54,6 @@ export function Downloader({ queryResults, fileHandler, outFields }: DownloaderP
             setErrMsg(err.message)
         } finally {
             setDownloading(false)
-            queryResults.reset()
         }
     }
 
