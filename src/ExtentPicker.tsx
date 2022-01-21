@@ -174,7 +174,7 @@ export function ExtentPicker({ layer, onFilterGeometryChange }: ExtentPickerProp
                 }))
                 setFilterGeometry(geo)
                 await mapView.goTo(geo)
-                // we made it here, so reset the alertType so it doesn't show 
+                // we made it here, so reset the alertType so it doesn't show
                 setBoundaryAlertType(undefined)
             } catch (e) {
                 // We can't parse text for some reason, so assume no filterGeometry 
