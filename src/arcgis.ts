@@ -106,7 +106,6 @@ export type GeometryUpdateListener = (_?: Geometry) => void
 
 export class QueryResults {
     private paginatedObjectIds: number[][] = []
-    private i = 0
     private initialized = false
     private where: string
     private layer?: FeatureLayer
@@ -134,24 +133,6 @@ export class QueryResults {
         this.paginatedObjectIds = this.paginateIds(objectIds, this.pageSize)
         this.initialized = true
 
-    }
-
-    /**
-     * Reset resets page state back to 0. Useful for re-querying data 
-     */
-    reset = () => {
-        this.i = 0
-    }
-
-    next = async (outFields: string[]): Promise<FeatureSet> => {
-        const features = await this.getPage(this.i, outFields)
-        this.i++
-        return features
-    }
-
-    hasNext = async (): Promise<boolean> => {
-        await this.initialize()
-        return this.i < this.paginatedObjectIds.length
     }
 
     getPage = async (page: number, outFields: string[]): Promise<FeatureSet> => {
