@@ -21,7 +21,7 @@ import FeatureEffect from '@arcgis/core/layers/support/FeatureEffect'
 import FeatureFilter from '@arcgis/core/layers/support/FeatureFilter'
 import Graphic from '@arcgis/core/Graphic'
 import SimpleFillSymbol from "@arcgis/core/symbols/SimpleFillSymbol";
-import { StatusAlert } from './StatusAlert'
+import { AlertType, StatusAlert } from './StatusAlert'
 import CopyAll from '@mui/icons-material/CopyAll'
 import InputAdornment from '@mui/material/InputAdornment'
 import IconButton from '@mui/material/IconButton'
@@ -45,6 +45,7 @@ export function ExtentPicker({ layer, onFilterGeometryChange }: ExtentPickerProp
     // Form State variables
     const [loading, setLoading] = useState(false)
     const [boundaryErrMsg, setBoundaryErrMsg] = useState("")
+    const [boundaryAlertType, setBoundaryAlertType] = useState<AlertType>(undefined)
     const [textBoxDisabled, setTextBoxDisabled] = useState(false)
     const [textBoxValue, setTextBoxValue] = useState("")
 
@@ -173,8 +174,8 @@ export function ExtentPicker({ layer, onFilterGeometryChange }: ExtentPickerProp
                 }))
                 setFilterGeometry(geo)
                 await mapView.goTo(geo)
-                // we made it here, so there's no error on the new boundary 
-                setBoundaryErrMsg("")
+                // we made it here, so reset the alertType so it doesn't show 
+                setBoundaryAlertType(undefined)
             } catch (e) {
                 // We can't parse text for some reason, so assume no filterGeometry 
                 setFilterGeometry(undefined)
@@ -183,6 +184,7 @@ export function ExtentPicker({ layer, onFilterGeometryChange }: ExtentPickerProp
                 if (val) {
                     const err = e as Error
                     setBoundaryErrMsg(err.message)
+                    setBoundaryAlertType("error")
                 }
             }
         }, setLoading)
@@ -250,7 +252,7 @@ export function ExtentPicker({ layer, onFilterGeometryChange }: ExtentPickerProp
             </Box>
 
             <StatusAlert
-                error={(boundaryErrMsg &&
+                msg={
                     <div>
                             Error parsing your boundary, you probably mistyped.
                             Supported Formats:{' '}
@@ -259,7 +261,8 @@ export function ExtentPicker({ layer, onFilterGeometryChange }: ExtentPickerProp
                         <p />
                         <code>{'    '}{boundaryErrMsg}</code>
                     </div>
-                )}
+                }
+                alertType={boundaryAlertType}
                 loading={loading}
             />
         </Box>

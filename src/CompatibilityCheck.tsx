@@ -8,7 +8,8 @@ export default function CompatibilityCheck() {
         <div>
             {!isCompatible && (
                 <StatusAlert
-                    error="Browser is not compatible. This site relies on the new FileSystem Access API. Please use a supported browser (Chrome, Edge, Opera): https://developer.mozilla.org/en-US/docs/Web/API/Window/showSaveFilePicker#browser_compatibility"
+                    msg="Browser is not compatible. This site relies on the new FileSystem Access API. Please use a supported browser (Chrome, Edge, Opera): https://developer.mozilla.org/en-US/docs/Web/API/Window/showSaveFilePicker#browser_compatibility"
+                    alertType='error'
                 />
             )}
         </div>

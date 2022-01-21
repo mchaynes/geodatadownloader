@@ -10,49 +10,29 @@ export type StatusAlertProps = {
     /**
      * Success message to display if successful
      */
-    success?: JSX.Element | string
-    /**
-     * Error message to display if errored
-     */
-    error?: JSX.Element | string
-    /**
-     * Info message to display if not loading/successful/errored
-     */
-    info?: JSX.Element | string
+    msg?: JSX.Element | string
+
+    alertType?: AlertType
 }
 
+export type AlertType = "error" | "success" | "info" | undefined
+
 /**
- * Renders different indicators based on status, in the following precedence:
+ * Renders different indicators based on status.
  * 1. Loading (if true)
- * 2. Error (if non-empty string)
- * 3. Success (if non-empty string)
- * 4. Info (if non-empty string)
- * 5. Nothing (if nothing defined. Helpful for only displaying status when necessary)
+ * 2. Alert based on alertType
+ * 3. Nothing, if alertType not defined
  */
-export function StatusAlert({ loading, success, error, info }: StatusAlertProps) {
+export function StatusAlert({ loading, msg, alertType }: StatusAlertProps) {
     if (loading) {
         return (
             <LinearProgress />
         )
     }
-    if (error) {
+    if (alertType) {
         return (
-            <Alert severity="error">
-                {error}
-            </Alert>
-        )
-    }
-    if (success) {
-        return (
-            <Alert severity="success">
-                {success}
-            </Alert>
-        )
-    }
-    if (info) {
-        return (
-            <Alert severity="info">
-                {info}
+            <Alert severity={alertType}>
+                {msg}
             </Alert>
         )
     }

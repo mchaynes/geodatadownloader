@@ -9,7 +9,7 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import { GeojsonDownloader } from './formats/geojson';
-import { StatusAlert } from './StatusAlert';
+import { AlertType, StatusAlert } from './StatusAlert';
 import LinearProgress from '@mui/material/LinearProgress';
 import Typography from '@mui/material/Typography';
 
@@ -29,8 +29,8 @@ export function Downloader({ queryResults, fileHandler, outFields }: DownloaderP
     const [totalFeatures, setTotalFeatures] = useState<number>(100)
 
     const [downloading, setDownloading] = useState(false)
-    const [successMsg, setSuccessMsg] = useState("")
-    const [errMsg, setErrMsg] = useState("")
+    const [alertMsg, setAlertMsg] = useState("")
+    const [alertType, setAlertType] = useState<AlertType>(undefined)
 
     const MIN = 0
     const normalise = (value: number) => ((value - MIN) * 100) / (totalFeatures - MIN);
@@ -48,10 +48,12 @@ export function Downloader({ queryResults, fileHandler, outFields }: DownloaderP
         try {
             setDownloading(true)
             await downloader.download(queryResults, fileHandle, outFields)
-            setSuccessMsg(`Successfully downloaded ${totalFeatures} features to "${fileHandle.name}"`)
+            setAlertMsg(`Successfully downloaded ${totalFeatures} features to "${fileHandle.name}"`)
+            setAlertType("success")
         } catch (e) {
             const err = e as Error
-            setErrMsg(err.message)
+            setAlertMsg(err.message)
+            setAlertType("error")
         } finally {
             setDownloading(false)
         }
@@ -99,8 +101,8 @@ export function Downloader({ queryResults, fileHandler, outFields }: DownloaderP
             )}
             <Box sx={{ mt: 3, ml: 1, mr: 1, mb: 3 }}>
                 <StatusAlert
-                    error={errMsg}
-                    success={successMsg}
+                    msg={alertMsg}
+                    alertType={alertType}
                 />
             </Box>
         </div>

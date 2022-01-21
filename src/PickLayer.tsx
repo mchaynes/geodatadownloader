@@ -3,7 +3,7 @@ import TextField from '@mui/material/TextField'
 import Box from '@mui/material/Box'
 import React, { useState } from 'react'
 import type { } from '@mui/x-data-grid/themeAugmentation';
-import { StatusAlert } from './StatusAlert';
+import { AlertType, StatusAlert } from './StatusAlert';
 
 export type Status = "not_started" | "loading" | "error" | "loaded"
 
@@ -16,20 +16,21 @@ export type PickLayerProps = {
 export function PickLayer({ onSuccess, loadLayer }: PickLayerProps) {
 
     const [loading, setLoading] = useState(false)
-    const [successMsg, setSuccessMsg] = useState("")
-    const [errMsg, setErrMsg] = useState("")
+    const [msg, setMsg] = useState("Layer options will appear after load")
+    const [alertType, setAlertType] = useState<AlertType>("info")
     const [url, setUrl] = useState("")
 
     async function onLoadClick() {
         try {
             setLoading(true)
             const title = await loadLayer(url)
-            setSuccessMsg(`Successfully loaded layer "${title}"`)
+            setMsg(`Successfully loaded layer "${title}"`)
+            setAlertType("success")
             onSuccess()
         } catch (e) {
             console.error(e)
-            setErrMsg(`${e}`)
-            setSuccessMsg("")
+            setMsg(`${e}`)
+            setAlertType("error")
         } finally {
             setLoading(false)
         }
@@ -57,9 +58,8 @@ export function PickLayer({ onSuccess, loadLayer }: PickLayerProps) {
             <Box sx={{ ml: 1, mt: 2 }}>
                 <StatusAlert
                     loading={loading}
-                    success={successMsg}
-                    error={errMsg}
-                    info="Layer options will appear after load"
+                    msg={msg}
+                    alertType={alertType}
                 />
             </Box>
 
