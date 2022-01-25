@@ -1,5 +1,6 @@
 import React from 'react'
 import InputLabel from '@mui/material/InputLabel';
+import { styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import { useEffect, useState } from 'react'
@@ -8,12 +9,20 @@ import { FileHandler } from './FileHandler';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
-import { GeojsonDownloader } from './formats/geojson';
-import { AlertType, StatusAlert } from './StatusAlert';
+import { DEFAULT_CONCURRENT_REQUESTS, GeojsonDownloader, MAX_CONCURRENT_REQUESTS } from './formats/geojson';
+import { StatusAlert, useStatusAlert } from './StatusAlert';
 import LinearProgress from '@mui/material/LinearProgress';
 import Typography from '@mui/material/Typography';
+import Slider from '@mui/material/Slider';
+import Grid from '@mui/material/Grid';
+import MuiInput from '@mui/material/Input';
+import Stack from '@mui/material/Stack';
 
 type SupportedExportTypes = "geojson"
+
+const Input = styled(MuiInput)`
+  width: 42px;
+`;
 
 
 export type DownloaderProps = {
@@ -26,11 +35,12 @@ export function Downloader({ queryResults, fileHandler, outFields }: DownloaderP
 
     const [exportType, setExportType] = useState<SupportedExportTypes>("geojson")
     const [featuresWritten, setFeaturesWritten] = useState(0)
+    const [concRequests, setConcRequests] = useState(DEFAULT_CONCURRENT_REQUESTS)
+    const [concAlertProps, setConcAlertProps] = useStatusAlert("", undefined)
     const [totalFeatures, setTotalFeatures] = useState<number>(100)
 
     const [downloading, setDownloading] = useState(false)
-    const [alertMsg, setAlertMsg] = useState("")
-    const [alertType, setAlertType] = useState<AlertType>(undefined)
+    const [alertProps, setAlertProps] = useStatusAlert("", undefined)
 
     const MIN = 0
     const normalise = (value: number) => ((value - MIN) * 100) / (totalFeatures - MIN);
@@ -42,38 +52,99 @@ export function Downloader({ queryResults, fileHandler, outFields }: DownloaderP
         void setTotal()
     }, [queryResults])
 
+    useEffect(() => {
+        if (concRequests > DEFAULT_CONCURRENT_REQUESTS) {
+            setConcAlertProps("Careful, setting higher than default concurrency can cause timeouts (it can also speed things up!)", "warning")
+        } else {
+            setConcAlertProps("", undefined)
+        }
+    }, [concRequests, setConcAlertProps])
+
     async function download() {
         const fileHandle = await fileHandler.getFileHandle(`${queryResults.getLayer()?.title ?? "Layer"}.geojson`)
         const downloader = new GeojsonDownloader(setFeaturesWritten)
         try {
             setDownloading(true)
-            await downloader.download(queryResults, fileHandle, outFields)
-            setAlertMsg(`Successfully downloaded ${totalFeatures} features to "${fileHandle.name}"`)
-            setAlertType("success")
+            // set the total again here in case it was still loading as we hit download
+            setTotalFeatures(await queryResults.getTotalCount())
+            await downloader.download(queryResults, fileHandle, outFields, concRequests)
+            setAlertProps(`Successfully downloaded ${totalFeatures} features to "${fileHandle.name}"`, "success")
         } catch (e) {
             const err = e as Error
-            setAlertMsg(err.message)
-            setAlertType("error")
+            setAlertProps(err.message, "error")
         } finally {
             setDownloading(false)
         }
     }
 
+    const handleBlur = () => {
+        if (concRequests < 0) {
+            setConcRequests(0);
+        } else if (concRequests > MAX_CONCURRENT_REQUESTS) {
+            setConcRequests(MAX_CONCURRENT_REQUESTS);
+        }
+    };
+
+    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setConcRequests(event.target.value === '' ? 0 : Number(event.target.value));
+    };
+
+    const handleSliderChange = (event: Event, newValue: number) => {
+        setConcRequests(newValue);
+    };
+
     return (
         <div>
             <Box sx={{ mt: 3, ml: 1, mr: 1, mb: 1 }}>
-                <FormControl fullWidth>
-                    <InputLabel>File Type</InputLabel>
-                    <Select
-                        labelId="file-type-label"
-                        id="type-type"
-                        value={exportType}
-                        label="Export File Type"
-                        onChange={(e) => setExportType(e.target.value as SupportedExportTypes)}
-                    >
-                        <MenuItem value="geojson">GeoJSON</MenuItem>
-                    </Select>
-                </FormControl>
+                <Stack spacing={2}>
+                    <FormControl fullWidth>
+                        <InputLabel>File Type</InputLabel>
+                        <Select
+                            labelId="file-type-label"
+                            disabled={true /*disabled until we support different file types*/}
+                            id="type-type"
+                            value={exportType}
+                            label="Export File Type"
+                            onChange={(e) => setExportType(e.target.value as SupportedExportTypes)}
+                        >
+                            <MenuItem value="geojson">GeoJSON</MenuItem>
+                        </Select>
+                    </FormControl>
+                    <Box>
+                        <Typography id="input-slider" gutterBottom>
+                            Concurrent Requests
+                        </Typography>
+                        <Grid container spacing={2} alignItems="center">
+                            <Grid item xs>
+                                <Slider
+                                    aria-label="Concurrent Requests"
+                                    onChange={handleSliderChange}
+                                    value={concRequests}
+                                    marks={true}
+                                    step={1}
+                                    min={1}
+                                    max={20}
+                                />
+                            </Grid>
+                            <Grid item>
+                                <Input
+                                    value={concRequests}
+                                    size="small"
+                                    onChange={handleInputChange}
+                                    onBlur={handleBlur}
+                                    inputProps={{
+                                        step: 1,
+                                        min: 0,
+                                        max: MAX_CONCURRENT_REQUESTS,
+                                        type: 'number',
+                                        'aria-labelledby': 'input-slider',
+                                    }}
+                                />
+                            </Grid>
+                        </Grid>
+                    </Box>
+                    <StatusAlert {...concAlertProps} />
+                </Stack>
             </Box>
             <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
                 <Button
@@ -100,10 +171,7 @@ export function Downloader({ queryResults, fileHandler, outFields }: DownloaderP
 
             )}
             <Box sx={{ mt: 3, ml: 1, mr: 1, mb: 3 }}>
-                <StatusAlert
-                    msg={alertMsg}
-                    alertType={alertType}
-                />
+                <StatusAlert {...alertProps} />
             </Box>
         </div>
     )
