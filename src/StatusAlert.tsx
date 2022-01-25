@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import Alert from '@mui/material/Alert'
 import LinearProgress from '@mui/material/LinearProgress'
 
@@ -15,7 +15,7 @@ export type StatusAlertProps = {
     alertType?: AlertType
 }
 
-export type AlertType = "error" | "success" | "info" | undefined
+export type AlertType = "error" | "success" | "info" | "warning" | undefined
 
 /**
  * Renders different indicators based on status.
@@ -37,4 +37,19 @@ export function StatusAlert({ loading, msg, alertType }: StatusAlertProps) {
         )
     }
     return (<></>)
+}
+
+export type StatusAlertSetter = (msg: string, alertType: AlertType) => void;
+
+export function useStatusAlert(msg: string, alertType: AlertType): [StatusAlertProps, StatusAlertSetter] {
+    const [msgState, setMsgState] = useState(msg)
+    const [alertTypeState, setAlertTypeState] = useState(alertType)
+    const setStatusAlert = (newMsg: string, newAlertType: AlertType) => {
+        setMsgState(newMsg)
+        setAlertTypeState(newAlertType)
+    }
+    return [{
+        msg: msgState,
+        alertType: alertTypeState,
+    }, setStatusAlert]
 }

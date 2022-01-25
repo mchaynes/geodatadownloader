@@ -28,13 +28,16 @@ type FeatureCollection = {
     }[]
 }
 
+export const DEFAULT_CONCURRENT_REQUESTS = 2
+export const MAX_CONCURRENT_REQUESTS = 20
+
 export class GeojsonDownloader {
     featuresWritten = 0
     onWrite: (featuresWritten: number) => void
     constructor(onWrite: (_: number) => void) {
         this.onWrite = onWrite
     }
-    download = async (results: QueryResults, fileHandle: FileSystemFileHandle, outFields: string[]) => {
+    download = async (results: QueryResults, fileHandle: FileSystemFileHandle, outFields: string[], numConcurrent: number) => {
         const layer = results.getLayer()
         if (!layer) {
             throw new Error("layer not defined")
@@ -55,8 +58,7 @@ export class GeojsonDownloader {
                 }
             })
         // Combine those callables into chunks
-        const chunkSize = 2
-        const callableChunks = chunk(getFeaturesCallables, chunkSize)
+        const callableChunks = chunk(getFeaturesCallables, numConcurrent)
         for (let i = 0; i < callableChunks.length; i++) {
             if (i !== 0) {
                 await writer.write(",")

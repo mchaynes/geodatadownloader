@@ -121,9 +121,6 @@ export class QueryResults {
         this.totalCount = 0
     }
 
-    /**
-     * Initializes paginator. If where string changes, it will reload objectIds according to new where clause
-     */
     private initialize = async (): Promise<void> => {
         if (this.initialized) {
             return
