@@ -1,6 +1,8 @@
 import { QueryResults } from "../arcgis";
 import { arcgisToGeoJSON } from '@terraformer/arcgis'
-import { chunk } from '../utils'
+import * as fastq from 'fastq'
+import type { queueAsPromised } from "fastq";
+
 
 // Open geojson FeatureCollection object and "features" array
 const header = `
@@ -47,37 +49,36 @@ export class GeojsonDownloader {
         const numPages = await results.getNumPages()
         writer.write(header)
         // Create callable functions that fetch results for each page
-        const getFeaturesCallables = Array.from({ length: numPages })
-            .map((_, pageNum) => async () => {
-                const features = await results.getPage(pageNum, outFields)
-                const json = features.toJSON()
-                const geojson = arcgisToGeoJSON(json) as unknown as FeatureCollection
-                return {
-                    stringified: geojson.features.map(f => JSON.stringify(f)).join(","),
-                    numFeatures: geojson.features.length
-                }
-            })
-        // Combine those callables into chunks
-        const callableChunks = chunk(getFeaturesCallables, numConcurrent)
-        for (let i = 0; i < callableChunks.length; i++) {
-            if (i !== 0) {
-                await writer.write(",")
+        let firstPage = true
+        const fetchResults = async (pageNum: number): Promise<void> => {
+            const features = await results.getPage(pageNum, outFields)
+            const json = features.toJSON()
+            const geojson = arcgisToGeoJSON(json) as unknown as FeatureCollection
+            let stringified = geojson.features.map(f => JSON.stringify(f)).join(",")
+            if (firstPage) {
+                // we are the first page, so new pages are no longer first
+                firstPage = false
+            } else {
+                // add a leading "," if this isn't the first page we fetched
+                stringified = "," + stringified
             }
-            // Actually call the callables
-            const calledChunk = callableChunks[i].map(f => f())
-            // Wait for all callables to resolve
-            const pages = await Promise.all(calledChunk)
-
             // Join features in chunk together, write to file
             await writer.write(
-                pages.map(p => p.stringified).join(",")
+                stringified
             )
-            this.featuresWritten += pages.map(p => p.numFeatures).reduce((prev, num) => prev + num, 0)
+            this.featuresWritten += geojson.features.length
             // Notify listeners that we've written more features
             this.onWrite(this.featuresWritten)
         }
+        const promises: Array<Promise<void>> = []
+        const q: queueAsPromised<number, void> = fastq.promise(fetchResults, numConcurrent)
+        for (let i = 0; i < numPages; i++) {
+            promises.push(q.push(i))
+        }
+        await Promise.all(promises)
         writer.write(footer)
         writer.close()
         this.featuresWritten = 0
     }
+
 }
