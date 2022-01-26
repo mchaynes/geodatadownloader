@@ -17,17 +17,17 @@ type ExportedField = {
     selected: boolean
 }
 
-function CustomFooter({ total }: { total: number }) {
+function CustomFooter({ total, fetched }: { total: number, fetched: number }) {
     return (
         <Box>
             <Box sx={{ padding: '10px', display: 'flex', justifyContent: "flex-end" }}>
-                Total Features {total}
+                Total Features {total}, Displaying {fetched}
             </Box>
         </Box>
     )
 }
 
-export function AttributeTablePreview({ queryResults: paginator, fields, onFieldSelectionChange }: AttributeTableProps) {
+export function AttributeTablePreview({ queryResults, fields, onFieldSelectionChange }: AttributeTableProps) {
 
     const [loading, setLoading] = useState(false)
     const [totalFeaturesCount, setTotalFeaturesCount] = useState(0)
@@ -51,9 +51,9 @@ export function AttributeTablePreview({ queryResults: paginator, fields, onField
 
     useEffect(() => {
         async function loadPreview() {
-            if (paginator) {
+            if (queryResults) {
                 setLoadingWhile(async () => {
-                    const featureSet = await paginator.getPage(0, exportedFieldsToOutFields(fieldsToExport))
+                    const featureSet = await queryResults.getPage(0, exportedFieldsToOutFields(fieldsToExport))
                     const rows = featureSet?.features?.map((feature, i) => {
                         const item: Row = { id: i }
                         fields.forEach(f => {
@@ -62,12 +62,12 @@ export function AttributeTablePreview({ queryResults: paginator, fields, onField
                         return item
                     }) ?? []
                     setRows(rows)
-                    setTotalFeaturesCount(await paginator.getTotalCount())
+                    setTotalFeaturesCount(await queryResults.getTotalCount())
                 }, setLoading)
             }
         }
         void loadPreview()
-    }, [paginator, fieldsToExport, fields])
+    }, [queryResults, fieldsToExport, fields])
 
     useEffect(() => {
         onFieldSelectionChange(exportedFieldsToOutFields(fieldsToExport))
@@ -100,6 +100,7 @@ export function AttributeTablePreview({ queryResults: paginator, fields, onField
             <div style={{ height: 400, width: '100%' }}>
                 <DataGrid
                     loading={loading}
+                    pageSize={100}
                     localeText={{
                         toolbarColumns: "Choose Fields For Export"
                     }}
@@ -110,8 +111,10 @@ export function AttributeTablePreview({ queryResults: paginator, fields, onField
                     componentsProps={{
                         footer: {
                             total: totalFeaturesCount,
+                            fetched: 100, // mui datagrid is limited to 100 w/out pagination
                         }
                     }}
+                    pagination
                     onColumnVisibilityChange={onColumnVisibilityChange}
                     columns={columns}
                     rows={loading ? [] : rows}
