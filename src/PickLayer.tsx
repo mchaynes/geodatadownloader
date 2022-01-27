@@ -40,6 +40,7 @@ export function PickLayer({ onLayerLoad }: PickLayerProps) {
         <React.Fragment>
             <TextField
                 required
+                autoComplete='url'
                 fullWidth sx={{ m: 1 }}
                 variant="outlined"
                 label="Layer Url"
