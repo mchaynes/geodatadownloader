@@ -29,9 +29,10 @@ export type DownloaderProps = {
     queryResults: QueryResults
     outFields: string[]
     fileHandler: FileHandler
+    where: string
 }
 
-export function Downloader({ queryResults, fileHandler, outFields }: DownloaderProps) {
+export function Downloader({ queryResults, fileHandler, outFields, where }: DownloaderProps) {
 
     const [exportType, setExportType] = useState<SupportedExportTypes>("geojson")
     const [featuresWritten, setFeaturesWritten] = useState(0)
@@ -47,10 +48,10 @@ export function Downloader({ queryResults, fileHandler, outFields }: DownloaderP
 
     useEffect(() => {
         async function setTotal() {
-            setTotalFeatures(await queryResults.getTotalCount())
+            setTotalFeatures(await queryResults.getTotalCount(where))
         }
         void setTotal()
-    }, [queryResults])
+    }, [queryResults, where])
 
     useEffect(() => {
         if (concRequests > DEFAULT_CONCURRENT_REQUESTS) {
@@ -66,8 +67,8 @@ export function Downloader({ queryResults, fileHandler, outFields }: DownloaderP
         try {
             setDownloading(true)
             // set the total again here in case it was still loading as we hit download
-            setTotalFeatures(await queryResults.getTotalCount())
-            await downloader.download(queryResults, fileHandle, outFields, concRequests)
+            setTotalFeatures(await queryResults.getTotalCount(where))
+            await downloader.download(queryResults, fileHandle, outFields, concRequests, where)
             setAlertProps(`Successfully downloaded ${totalFeatures} features to "${fileHandle.name}"`, "success")
         } catch (e) {
             const err = e as Error

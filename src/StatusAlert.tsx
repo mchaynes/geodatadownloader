@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import Alert from '@mui/material/Alert'
 import LinearProgress from '@mui/material/LinearProgress'
 
@@ -41,15 +41,18 @@ export function StatusAlert({ loading, msg, alertType }: StatusAlertProps) {
 
 export type StatusAlertSetter = (msg: string, alertType: AlertType) => void;
 
-export function useStatusAlert(msg: string, alertType: AlertType): [StatusAlertProps, StatusAlertSetter] {
-    const [msgState, setMsgState] = useState(msg)
-    const [alertTypeState, setAlertTypeState] = useState(alertType)
-    const setStatusAlert = (newMsg: string, newAlertType: AlertType) => {
-        setMsgState(newMsg)
-        setAlertTypeState(newAlertType)
-    }
-    return [{
-        msg: msgState,
-        alertType: alertTypeState,
-    }, setStatusAlert]
+export const useStatusAlert = (msg: string, alertType: AlertType): [StatusAlertProps, StatusAlertSetter] => {
+    const [props, setProps] = useState<StatusAlertProps>(() => ({
+        msg: msg,
+        alertType: alertType,
+    }))
+    // Wrap function in useCallback with no deps because this function should always be the same object
+    // this mimics the guarantee set by useState()
+    const setStatusAlert = useCallback((newMsg: string, newAlertType: AlertType) => {
+        setProps({
+            msg: newMsg,
+            alertType: newAlertType
+        })
+    }, [])
+    return [props, setStatusAlert]
 }

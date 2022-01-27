@@ -39,19 +39,19 @@ export class GeojsonDownloader {
     constructor(onWrite: (_: number) => void) {
         this.onWrite = onWrite
     }
-    download = async (results: QueryResults, fileHandle: FileSystemFileHandle, outFields: string[], numConcurrent: number) => {
+    download = async (results: QueryResults, fileHandle: FileSystemFileHandle, outFields: string[], numConcurrent: number, where: string) => {
         const layer = results.getLayer()
         if (!layer) {
             throw new Error("layer not defined")
         }
         const writable = await fileHandle.createWritable()
         const writer = writable.getWriter()
-        const numPages = await results.getNumPages()
+        const numPages = await results.getNumPages(where)
         writer.write(header)
         // Create callable functions that fetch results for each page
         let firstPage = true
         const fetchResults = async (pageNum: number): Promise<void> => {
-            const features = await results.getPage(pageNum, outFields)
+            const features = await results.getPage(pageNum, outFields, where)
             const json = features.toJSON()
             const geojson = arcgisToGeoJSON(json) as unknown as FeatureCollection
             let stringified = geojson.features.map(f => JSON.stringify(f)).join(",")

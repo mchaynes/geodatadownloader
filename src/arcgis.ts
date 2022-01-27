@@ -106,34 +106,28 @@ export type GeometryUpdateListener = (_?: Geometry) => void
 
 export class QueryResults {
     private paginatedObjectIds: number[][] = []
-    private initialized = false
     private where: string
     private layer?: FeatureLayer
     private queryExtent?: Geometry
     private pageSize: number
-    private totalCount: number
 
-    constructor(layer?: FeatureLayer, queryExtent?: Geometry, pageSize = 200, where = "1=1") {
+    constructor(layer?: FeatureLayer, queryExtent?: Geometry, pageSize = 200) {
         this.layer = layer
         this.queryExtent = queryExtent
-        this.where = where
         this.pageSize = pageSize
-        this.totalCount = 0
     }
 
-    private initialize = async (): Promise<void> => {
-        if (this.initialized) {
+    private initialize = async (where: string): Promise<void> => {
+        if (this.where === where) {
             return
         }
-        const objectIds = await this.getObjectIds(this.where)
-        this.totalCount = objectIds.length
+        const objectIds = await this.getObjectIds(where)
+        this.where = where
         this.paginatedObjectIds = this.paginateIds(objectIds, this.pageSize)
-        this.initialized = true
-
     }
 
-    getPage = async (page: number, outFields: string[]): Promise<FeatureSet> => {
-        await this.initialize()
+    getPage = async (page: number, outFields: string[], where: string): Promise<FeatureSet> => {
+        await this.initialize(where)
         if (!this.layer) {
             throw new Error("layer is not set")
         }
@@ -148,13 +142,14 @@ export class QueryResults {
         })
     }
 
-    getTotalCount = async () => {
-        await this.initialize()
-        return this.totalCount
+    getTotalCount = async (where: string): Promise<number> => {
+        return await this.layer?.queryFeatureCount({
+            where: where,
+        }) || 0
     }
 
-    getNumPages = async () => {
-        await this.initialize()
+    getNumPages = async (where: string) => {
+        await this.initialize(where)
         return this.paginatedObjectIds.length
     }
 

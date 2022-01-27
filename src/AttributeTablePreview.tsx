@@ -4,12 +4,14 @@ import { DataGrid, GridColumnVisibilityChangeParams, GridToolbarColumnsButton, G
 import Box from '@mui/material/Box';
 import Field from '@arcgis/core/layers/support/Field';
 import { setLoadingWhile } from './loading';
+import { StatusAlert, useStatusAlert } from './StatusAlert';
 
 
 export type AttributeTableProps = {
     queryResults?: QueryResults
     fields: Field[]
     onFieldSelectionChange: (_: string[]) => void
+    where: string
 }
 
 type ExportedField = {
@@ -27,10 +29,11 @@ function CustomFooter({ total, fetched }: { total: number, fetched: number }) {
     )
 }
 
-export function AttributeTablePreview({ queryResults, fields, onFieldSelectionChange }: AttributeTableProps) {
+export function AttributeTablePreview({ queryResults, fields, where, onFieldSelectionChange }: AttributeTableProps) {
 
     const [loading, setLoading] = useState(false)
     const [totalFeaturesCount, setTotalFeaturesCount] = useState(0)
+    const [alertProps, setAlertProps] = useStatusAlert("", undefined)
     const [rows, setRows] = useState<Row[]>([])
     const [fieldsToExport, setFieldsToExport] = useState<ExportedField[]>(() => {
         // all fields are selected by default 
@@ -44,7 +47,7 @@ export function AttributeTablePreview({ queryResults, fields, onFieldSelectionCh
             return {
                 field: field.name,
                 headerName: field.name,
-                minWidth: field.length,
+                minWidth: Math.max(field.length, 110),
             }
         })
     }, [fields]) ?? []
@@ -53,21 +56,32 @@ export function AttributeTablePreview({ queryResults, fields, onFieldSelectionCh
         async function loadPreview() {
             if (queryResults) {
                 setLoadingWhile(async () => {
-                    const featureSet = await queryResults.getPage(0, exportedFieldsToOutFields(fieldsToExport))
-                    const rows = featureSet?.features?.map((feature, i) => {
-                        const item: Row = { id: i }
-                        fields.forEach(f => {
-                            item[f.name] = feature.getAttribute(f.name)
-                        })
-                        return item
-                    }) ?? []
-                    setRows(rows)
-                    setTotalFeaturesCount(await queryResults.getTotalCount())
+                    try {
+                        const featureSet = await queryResults.getPage(0, exportedFieldsToOutFields(fieldsToExport), where)
+                        const rows = featureSet?.features?.map((feature, i) => {
+                            const item: Row = { id: i }
+                            fields.forEach(f => {
+                                item[f.name] = feature.getAttribute(f.name)
+                            })
+                            return item
+                        }) ?? []
+                        setRows(rows)
+                        setAlertProps("", undefined)
+                    } catch (e) {
+                        const err = e as Error
+                        setAlertProps(`Failed: ${err.message}`, "error")
+                        setRows([])
+                    }
+
                 }, setLoading)
             }
         }
         void loadPreview()
-    }, [queryResults, fieldsToExport, fields])
+    }, [queryResults, fieldsToExport, fields, where, setAlertProps])
+
+    useEffect(() => {
+        setTotalFeaturesCount(rows?.length ?? 0)
+    }, [rows])
 
     useEffect(() => {
         onFieldSelectionChange(exportedFieldsToOutFields(fieldsToExport))
@@ -97,6 +111,9 @@ export function AttributeTablePreview({ queryResults, fields, onFieldSelectionCh
 
     return (
         <Box>
+            <StatusAlert
+                {...alertProps}
+            />
             <div style={{ height: 400, width: '100%' }}>
                 <DataGrid
                     loading={loading}

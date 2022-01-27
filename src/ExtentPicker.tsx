@@ -37,10 +37,11 @@ const esriDocLinkProps = (t: "POLYGON" | "ENVELOPE") => ({
 export type ExtentPickerProps = {
     // TODO make this not optional after arcgis.ts/picklayer.tsx refactor
     layer?: FeatureLayer
+    where: string
     onFilterGeometryChange: GeometryUpdateListener
 }
 
-export function ExtentPicker({ layer, onFilterGeometryChange }: ExtentPickerProps) {
+export function ExtentPicker({ layer, where, onFilterGeometryChange }: ExtentPickerProps) {
 
     // Form State variables
     const [loading, setLoading] = useState(false)
@@ -131,10 +132,11 @@ export function ExtentPicker({ layer, onFilterGeometryChange }: ExtentPickerProp
             filter: new FeatureFilter({
                 geometry: filterGeometry,
                 spatialRelationship: "intersects",
+                where: where
             }),
             excludedEffect: "grayscale(100%) opacity(30%)"
         }))
-    }, [filterGeometry])
+    }, [filterGeometry, where])
 
     // Apply featureEffect to layer on update
     useEffect(() => {
