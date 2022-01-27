@@ -9,7 +9,6 @@ import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
 import Link from '@mui/material/Link'
 // import './App.css';
-import { Arcgis } from './arcgis';
 import { FileHandler } from './FileHandler';
 import { Workflow } from './Workflow';
 import logo from './icons/icon-128.png'
@@ -26,11 +25,10 @@ const openInNewTab = (url: string) => () => {
 }
 
 export type AppProps = {
-  arc: Arcgis
   fileHandler: FileHandler
 }
 
-function App({ arc, fileHandler }: AppProps) {
+function App({ fileHandler }: AppProps) {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -64,7 +62,6 @@ function App({ arc, fileHandler }: AppProps) {
           <CompatibilityCheck />
         </Box>
         <Workflow
-          arc={arc}
           fileHandler={fileHandler}
         />
         <Footer />

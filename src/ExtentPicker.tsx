@@ -35,8 +35,7 @@ const esriDocLinkProps = (t: "POLYGON" | "ENVELOPE") => ({
 })
 
 export type ExtentPickerProps = {
-    // TODO make this not optional after arcgis.ts/picklayer.tsx refactor
-    layer?: FeatureLayer
+    layer: FeatureLayer
     where: string
     onFilterGeometryChange: GeometryUpdateListener
 }
@@ -70,7 +69,7 @@ export function ExtentPicker({ layer, where, onFilterGeometryChange }: ExtentPic
         availableCreateTools: ["polygon", "rectangle", "circle"],
         layout: "vertical",
     }))
-    const [featureEffect, setFeatureEffect] = useState<FeatureEffect | undefined>(undefined)
+    const [featureEffect, setFeatureEffect] = useState<FeatureEffect>(new FeatureEffect())
 
 
     // Updates filterGeometry and textBoxValue when sketchLayer is updated
@@ -107,6 +106,7 @@ export function ExtentPicker({ layer, where, onFilterGeometryChange }: ExtentPic
     // Add sketch widget to map
     useEffect(() => {
         mapView.ui.add(sketch, "top-right")
+        return () => mapView.ui.remove(sketch)
     }, [mapView, sketch])
 
     // Register update listen for new sketch geometries to set filterGeometry
@@ -120,13 +120,12 @@ export function ExtentPicker({ layer, where, onFilterGeometryChange }: ExtentPic
     }, [map, sketchLayer])
 
     useEffect(() => {
-        if (layer) {
-            map.add(layer)
-        }
+        map.add(layer)
+        return () => { map.remove(layer) }
     }, [map, layer])
 
 
-    // Grayscale out non-included layers. Update on each filterGeometry update
+    // Grayscale out non-included layers.
     useEffect(() => {
         setFeatureEffect(new FeatureEffect({
             filter: new FeatureFilter({
@@ -140,9 +139,7 @@ export function ExtentPicker({ layer, where, onFilterGeometryChange }: ExtentPic
 
     // Apply featureEffect to layer on update
     useEffect(() => {
-        if (layer && featureEffect) {
-            layer.featureEffect = featureEffect
-        }
+        layer.featureEffect = featureEffect
     }, [featureEffect, layer])
 
     // Notify listener when filterGeometry changes
