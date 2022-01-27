@@ -23,7 +23,7 @@ function CustomFooter({ total, fetched }: { total: number, fetched: number }) {
     return (
         <Box>
             <Box sx={{ padding: '10px', display: 'flex', justifyContent: "flex-end" }}>
-                Total Features {total}, Displaying {fetched}
+                Displaying {fetched} / {total} features
             </Box>
         </Box>
     )
@@ -57,6 +57,7 @@ export function AttributeTablePreview({ queryResults, fields, where, onFieldSele
             if (queryResults) {
                 setLoadingWhile(async () => {
                     try {
+                        setTotalFeaturesCount(await queryResults.getTotalCount(where))
                         const featureSet = await queryResults.getPage(0, exportedFieldsToOutFields(fieldsToExport), where)
                         const rows = featureSet?.features?.map((feature, i) => {
                             const item: Row = { id: i }
@@ -71,17 +72,13 @@ export function AttributeTablePreview({ queryResults, fields, where, onFieldSele
                         const err = e as Error
                         setAlertProps(`Failed: ${err.message}`, "error")
                         setRows([])
+                        setTotalFeaturesCount(0)
                     }
-
                 }, setLoading)
             }
         }
         void loadPreview()
     }, [queryResults, fieldsToExport, fields, where, setAlertProps])
-
-    useEffect(() => {
-        setTotalFeaturesCount(rows?.length ?? 0)
-    }, [rows])
 
     useEffect(() => {
         onFieldSelectionChange(exportedFieldsToOutFields(fieldsToExport))
