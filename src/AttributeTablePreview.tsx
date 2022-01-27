@@ -8,7 +8,7 @@ import { StatusAlert, useStatusAlert } from './StatusAlert';
 
 
 export type AttributeTableProps = {
-    queryResults?: QueryResults
+    queryResults: QueryResults
     fields: Field[]
     onFieldSelectionChange: (_: string[]) => void
     where: string
@@ -40,6 +40,17 @@ export function AttributeTablePreview({ queryResults, fields, where, onFieldSele
         return fields.map(f => ({ name: f.name, selected: true }))
     })
 
+    useEffect(() => {
+        setFieldsToExport(fields.map(f => ({ name: f.name, selected: true })))
+    }, [fields])
+
+    useEffect(() => {
+        async function setTotal() {
+            setTotalFeaturesCount(await queryResults.getTotalCount(where))
+        }
+        void setTotal()
+    }, [queryResults, where])
+
     // DataGrid needs column definitions to be memoized or defined out of render loop
     // We need access to 'fields' prop to figure out columns, so therefore 'useMemo' 
     const columns = useMemo(() => {
@@ -54,28 +65,27 @@ export function AttributeTablePreview({ queryResults, fields, where, onFieldSele
 
     useEffect(() => {
         async function loadPreview() {
-            if (queryResults) {
-                setLoadingWhile(async () => {
-                    try {
-                        setTotalFeaturesCount(await queryResults.getTotalCount(where))
-                        const featureSet = await queryResults.getPage(0, exportedFieldsToOutFields(fieldsToExport), where)
-                        const rows = featureSet?.features?.map((feature, i) => {
-                            const item: Row = { id: i }
-                            fields.forEach(f => {
-                                item[f.name] = feature.getAttribute(f.name)
-                            })
-                            return item
-                        }) ?? []
-                        setRows(rows)
-                        setAlertProps("", undefined)
-                    } catch (e) {
-                        const err = e as Error
-                        setAlertProps(`Failed: ${err.message}`, "error")
-                        setRows([])
-                        setTotalFeaturesCount(0)
-                    }
-                }, setLoading)
-            }
+            setLoadingWhile(async () => {
+                try {
+                    setTotalFeaturesCount(await queryResults.getTotalCount(where))
+                    const featureSet = await queryResults.getPage(0, exportedFieldsToOutFields(fieldsToExport), where)
+                    const rows = featureSet?.features?.map((feature, i) => {
+                        const item: Row = { id: i }
+                        fields.forEach(f => {
+                            item[f.name] = feature.getAttribute(f.name)
+                        })
+                        return item
+                    }) ?? []
+                    setRows(rows)
+                    setAlertProps("", undefined)
+                } catch (e) {
+                    console.error(e)
+                    const err = e as Error
+                    setAlertProps(`Failed: ${err.message}`, "error")
+                    setRows([])
+                    setTotalFeaturesCount(0)
+                }
+            }, setLoading)
         }
         void loadPreview()
     }, [queryResults, fieldsToExport, fields, where, setAlertProps])
@@ -125,7 +135,7 @@ export function AttributeTablePreview({ queryResults, fields, where, onFieldSele
                     componentsProps={{
                         footer: {
                             total: totalFeaturesCount,
-                            fetched: 100, // mui datagrid is limited to 100 w/out pagination
+                            fetched: Math.min(rows.length, 100), // mui datagrid is limited to 100 w/out pagination
                         }
                     }}
                     pagination

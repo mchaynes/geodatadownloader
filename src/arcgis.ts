@@ -4,49 +4,6 @@ import Geometry from '@arcgis/core/geometry/Geometry'
 import EsriExtent from '@arcgis/core/geometry/Extent'
 import EsriPolygon from '@arcgis/core/geometry/Polygon'
 
-export class Arcgis {
-    layerUrl?: string
-    layer?: FeatureLayer
-    outFields: string[] = []
-    getLayerUrl() {
-        return this.layerUrl
-    }
-
-    getLayer() {
-        return this.layer
-    }
-
-    getTitle() {
-        return this.layer?.title
-    }
-
-    getFields() {
-        return this.layer?.fields
-    }
-
-    setOutFields(outFields: string[]) {
-        this.outFields = outFields
-    }
-
-    getOutFields() {
-        return this.outFields
-    }
-
-    /**
-     * Responsible for loading the layer and adding to the map 
-     * @returns title of layer
-     */
-    loadLayer = async (layerUrl: string): Promise<string> => {
-        this.layerUrl = layerUrl
-        this.layer = new FeatureLayer({
-            url: layerUrl,
-        })
-        await this.layer?.load()
-        return this.layer?.title ?? "<No Title>"
-    }
-
-}
-
 type SpatialReference = {
     wkid: number,
     latestWkid: number,

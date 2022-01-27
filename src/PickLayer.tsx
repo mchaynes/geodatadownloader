@@ -3,37 +3,37 @@ import TextField from '@mui/material/TextField'
 import Box from '@mui/material/Box'
 import React, { useState } from 'react'
 import type { } from '@mui/x-data-grid/themeAugmentation';
-import { AlertType, StatusAlert } from './StatusAlert';
+import { StatusAlert, useStatusAlert } from './StatusAlert';
+import FeatureLayer from '@arcgis/core/layers/FeatureLayer';
+import { setLoadingWhile } from './loading';
 
 export type Status = "not_started" | "loading" | "error" | "loaded"
 
 
 export type PickLayerProps = {
-    onSuccess: () => void
-    loadLayer: (layerUrl: string) => Promise<string>
+    onLayerLoad: (layer: FeatureLayer) => void
 }
 
-export function PickLayer({ onSuccess, loadLayer }: PickLayerProps) {
+export function PickLayer({ onLayerLoad }: PickLayerProps) {
 
     const [loading, setLoading] = useState(false)
-    const [msg, setMsg] = useState("Layer options will appear after load")
-    const [alertType, setAlertType] = useState<AlertType>("info")
+    const [alertProps, setAlertProps] = useStatusAlert("Layer options will appear after load", "info")
     const [url, setUrl] = useState("")
 
-    async function onLoadClick() {
-        try {
-            setLoading(true)
-            const title = await loadLayer(url)
-            setMsg(`Successfully loaded layer "${title}"`)
-            setAlertType("success")
-            onSuccess()
-        } catch (e) {
-            console.error(e)
-            setMsg(`${e}`)
-            setAlertType("error")
-        } finally {
-            setLoading(false)
-        }
+    function onLoadClick() {
+        setLoadingWhile(async () => {
+            try {
+                const layer = new FeatureLayer({
+                    url: url,
+                })
+                await layer.load()
+                setAlertProps(`Successfully loaded layer "${layer.title}"`, "success")
+                onLayerLoad(layer)
+            } catch (e) {
+                const err = e as Error
+                setAlertProps(`${err.message}`, "error")
+            }
+        }, setLoading)
     }
 
     return (
@@ -50,7 +50,7 @@ export function PickLayer({ onSuccess, loadLayer }: PickLayerProps) {
                 <Button
                     variant="contained"
                     sx={{ mt: 3, ml: 1 }}
-                    onClick={() => onLoadClick()}
+                    onClick={onLoadClick}
                 >
                     Load
                 </Button>
@@ -58,8 +58,7 @@ export function PickLayer({ onSuccess, loadLayer }: PickLayerProps) {
             <Box sx={{ ml: 1, mt: 2 }}>
                 <StatusAlert
                     loading={loading}
-                    msg={msg}
-                    alertType={alertType}
+                    {...alertProps}
                 />
             </Box>
 

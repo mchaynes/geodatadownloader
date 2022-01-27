@@ -3,16 +3,13 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import { Arcgis } from './arcgis';
 import { FileHandler } from './FileHandler';
 
-const arc = new Arcgis()
 const fileHandler = new FileHandler()
 
 ReactDOM.render(
   <React.StrictMode>
     <App
-      arc={arc}
       fileHandler={fileHandler}
     />
   </React.StrictMode>,
