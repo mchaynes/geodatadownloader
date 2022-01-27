@@ -30,7 +30,7 @@ export function Where({ defaultWhere, onWhereChange }: WhereProps) {
                 fullWidth sx={{ m: 1 }}
                 variant="outlined"
                 label="Where"
-                helperText={`Ex: population BETWEEN 100 AND 500, population <= 100, city = 'Seattle'`}
+                helperText={`Ex: population BETWEEN 100 AND 500, population <= 100, city = 'Seattle'. Use 1=1 to return all features`}
                 value={where}
                 onBlur={handleBlur}
                 onChange={(e) => setWhere(e.currentTarget.value)}
