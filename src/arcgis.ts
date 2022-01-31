@@ -64,11 +64,11 @@ export type GeometryUpdateListener = (_?: Geometry) => void
 export class QueryResults {
     private paginatedObjectIds: number[][] = []
     private where: string
-    private layer?: FeatureLayer
+    private layer: FeatureLayer
     private queryExtent?: Geometry
     private pageSize: number
 
-    constructor(layer?: FeatureLayer, queryExtent?: Geometry, pageSize = 200) {
+    constructor(layer: FeatureLayer, queryExtent?: Geometry, pageSize = 200) {
         this.layer = layer
         this.queryExtent = queryExtent
         this.pageSize = pageSize
@@ -88,12 +88,15 @@ export class QueryResults {
         if (!this.layer) {
             throw new Error("layer is not set")
         }
+        // Find the object id field, default to OBJECTID
+        const objectIdField = this.layer.fields.find(f => f.type === "oid")?.name ?? "OBJECTID"
 
-        return await this.layer?.queryFeatures({
-            where: `OBJECTID IN (${this.paginatedObjectIds[page].join(",")})`,
+        return await this.layer.queryFeatures({
+            where: `${objectIdField} IN (${this.paginatedObjectIds[page].join(",")})`,
             outFields: outFields,
             returnGeometry: true,
             outSpatialReference: {
+                // geojson is always in 4326
                 wkid: 4326
             }
         })

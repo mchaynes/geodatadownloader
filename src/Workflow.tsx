@@ -12,6 +12,7 @@ import { ExtentPicker } from './ExtentPicker'
 import Geometry from '@arcgis/core/geometry/Geometry'
 import { Where } from './Where'
 import FeatureLayer from 'esri/layers/FeatureLayer'
+import Box from '@mui/material/Box'
 
 
 const paperSx = { my: { xs: 3, md: 6 }, p: { xs: 2, md: 3 } }
@@ -23,18 +24,20 @@ export type WorkflowProps = {
 export function Workflow({ fileHandler }: WorkflowProps) {
     const [layer, setLayer] = useState<FeatureLayer>()
     return (
-        <Paper variant="outlined" sx={paperSx}>
-            <SectionHeader header="Layer Info" />
-            <PickLayer
-                onLayerLoad={setLayer}
-            />
-            {layer && (
+        <Box>
+            <Paper variant="outlined" sx={paperSx}>
+                <SectionHeader header="Layer Info" />
+                <PickLayer
+                    onLayerLoad={setLayer}
+                />
+                {layer && (
                 <WorkflowItems
                     layer={layer}
                     fileHandler={fileHandler}
                 />
             )}
-        </Paper>
+            </Paper>
+        </Box>
     )
 }
 
@@ -68,7 +71,7 @@ function WorkflowItems({ layer, fileHandler }: WorkflowItemsProps) {
             <SectionHeader header="Attribute Table Preview" />
             <Where
                 defaultWhere={where}
-                onWhereChange={setWhere}
+                onChange={setWhere}
             />
             <AttributeTablePreview
                 onFieldSelectionChange={setSelectedFields}

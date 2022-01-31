@@ -6,10 +6,10 @@ export type OnWhereChange = (where: string) => void
 
 export type WhereProps = {
     defaultWhere: string
-    onWhereChange: OnWhereChange
+    onChange: OnWhereChange
 }
 
-export function Where({ defaultWhere, onWhereChange }: WhereProps) {
+export function Where({ defaultWhere, onChange: onWhereChange }: WhereProps) {
     const [where, setWhere] = useState(defaultWhere)
 
     useEffect(() => {

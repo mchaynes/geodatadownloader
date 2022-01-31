@@ -57,6 +57,7 @@ function App({ fileHandler }: AppProps) {
           </IconButton>
         </Toolbar>
       </AppBar>
+
       <Container component="main" maxWidth="lg" sx={{ mb: 4 }}>
         <Box sx={{ mt: 3 }}>
           <CompatibilityCheck />
