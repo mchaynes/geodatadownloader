@@ -3,6 +3,7 @@ import { QueryResults } from './arcgis'
 import { DataGrid, GridColumnVisibilityChangeParams, GridToolbarColumnsButton, GridToolbarContainer } from '@mui/x-data-grid';
 import Box from '@mui/material/Box';
 import Field from '@arcgis/core/layers/support/Field';
+import EsriError from "@arcgis/core/core/Error";
 import { setLoadingWhile } from './loading';
 import { StatusAlert, useStatusAlert } from './StatusAlert';
 
@@ -69,7 +70,7 @@ export function AttributeTablePreview({ queryResults, fields, where, onFieldSele
                 try {
                     setTotalFeaturesCount(await queryResults.getTotalCount(where))
                     const featureSet = await queryResults.getPage(0, exportedFieldsToOutFields(fieldsToExport), where)
-                    const rows = featureSet?.features?.map((feature, i) => {
+                    const rows = featureSet.features?.map((feature, i) => {
                         const item: Row = { id: i }
                         fields.forEach(f => {
                             item[f.name] = feature.getAttribute(f.name)
@@ -80,8 +81,9 @@ export function AttributeTablePreview({ queryResults, fields, where, onFieldSele
                     setAlertProps("", undefined)
                 } catch (e) {
                     console.error(e)
-                    const err = e as Error
-                    setAlertProps(`Failed: ${err.message}`, "error")
+                    const { details } = e as EsriError
+                    const { messages } = details as { messages: string[] }
+                    setAlertProps(`Failed: ${messages}`, "error")
                     setRows([])
                     setTotalFeaturesCount(0)
                 }
@@ -111,7 +113,7 @@ export function AttributeTablePreview({ queryResults, fields, where, onFieldSele
     function Toolbar() {
         return (
             <GridToolbarContainer>
-                <GridToolbarColumnsButton />
+                <GridToolbarColumnsButton id="choose-columns-button" />
             </GridToolbarContainer>
         )
     }

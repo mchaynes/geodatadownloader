@@ -129,6 +129,7 @@ export function Downloader({ queryResults, fileHandler, outFields, where }: Down
                             </Grid>
                             <Grid item>
                                 <Input
+                                    id="concurrent-requests-input"
                                     value={concRequests}
                                     size="small"
                                     onChange={handleInputChange}

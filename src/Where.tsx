@@ -26,6 +26,7 @@ export function Where({ defaultWhere, onChange: onWhereChange }: WhereProps) {
     return (
         <Box>
             <TextField
+                id="where-text-field"
                 required
                 fullWidth sx={{ m: 1 }}
                 variant="outlined"
