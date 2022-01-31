@@ -24,10 +24,12 @@
   },
   "scripts": {
     "develop": "webpack-dev-server --mode development --open --hot",
+    "start:ci": "npx serve build",
     "start": "export HTTPS=true&&SSL_CRT_FILE=cert.pem&&SSL_KEY_FILE=key.pem react-scripts start",
     "analyze": "source-map-explorer 'build/static/js/*.js'",
     "build": "react-scripts build",
     "test": "jest",
+    "cypress:open": "cypress open",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -72,6 +74,7 @@
     "babel-jest": "^27.4.5",
     "copy-webpack-plugin": "^10.2.0",
     "css-loader": "^6.5.1",
+    "cypress": "^9.3.1",
     "file-loader": "^6.2.0",
     "html-webpack-plugin": "^5.5.0",
     "jest": "^27.4.5",

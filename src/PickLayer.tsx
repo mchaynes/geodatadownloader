@@ -39,6 +39,7 @@ export function PickLayer({ onLayerLoad }: PickLayerProps) {
     return (
         <React.Fragment>
             <TextField
+                id="layer-url"
                 required
                 autoComplete='url'
                 fullWidth sx={{ m: 1 }}
@@ -49,6 +50,7 @@ export function PickLayer({ onLayerLoad }: PickLayerProps) {
             />
             <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <Button
+                    id="load-layer"
                     variant="contained"
                     sx={{ mt: 3, ml: 1 }}
                     onClick={onLoadClick}

@@ -222,6 +222,7 @@ export function ExtentPicker({ layer, where, onFilterGeometryChange }: ExtentPic
                         title={textBoxDisabled ? "Enable editing" : "Disable editing"}
                     >
                         <IconButton
+                            id="extent-edit-toggle"
                             aria-label="toggle extent textbox editing"
                             onClick={handleEditClick}
                         >
@@ -238,6 +239,7 @@ export function ExtentPicker({ layer, where, onFilterGeometryChange }: ExtentPic
             <div ref={elRef} style={{ height: 500, width: '100%' }} />
             <Box sx={{ mt: 2, mb: 2, ml: 1, mr: 1 }}>
                 <TextField
+                    id="boundary-text-field"
                     variant="outlined"
                     label="Boundary"
                     fullWidth
