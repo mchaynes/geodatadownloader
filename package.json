@@ -29,7 +29,8 @@
     "analyze": "source-map-explorer 'build/static/js/*.js'",
     "build": "webpack --mode production",
     "test": "jest",
-    "cypress:open": "cypress open",
+    "cy:open": "cypress open",
+    "cy:run": "cypress run",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
