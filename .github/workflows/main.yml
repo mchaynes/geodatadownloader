@@ -1,5 +1,9 @@
 name: Cypress Tests
 
+on: 
+  pull_request:
+    types: [opened, reopened, synchronize]
+
 jobs:
   cypress-run:
     runs-on: ubuntu-latest
