@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { QueryResults } from './arcgis'
 import { DataGrid, GridColumnVisibilityChangeParams, GridToolbarColumnsButton, GridToolbarContainer } from '@mui/x-data-grid';
 import Box from '@mui/material/Box';
@@ -10,6 +10,7 @@ import { StatusAlert, useStatusAlert } from './StatusAlert';
 
 export type AttributeTableProps = {
     queryResults: QueryResults
+    defaultSelectedFields: string[]
     fields: Field[]
     onFieldSelectionChange: (_: string[]) => void
     where: string
@@ -30,20 +31,26 @@ function CustomFooter({ total, fetched }: { total: number, fetched: number }) {
     )
 }
 
-export function AttributeTablePreview({ queryResults, fields, where, onFieldSelectionChange }: AttributeTableProps) {
+export function AttributeTablePreview({ queryResults, fields, where, onFieldSelectionChange, defaultSelectedFields }: AttributeTableProps) {
 
     const [loading, setLoading] = useState(false)
     const [totalFeaturesCount, setTotalFeaturesCount] = useState(0)
     const [alertProps, setAlertProps] = useStatusAlert("", undefined)
     const [rows, setRows] = useState<Row[]>([])
-    const [fieldsToExport, setFieldsToExport] = useState<ExportedField[]>(() => {
+
+    const determineSelectedFields = useCallback(() => {
+        if (defaultSelectedFields.length > 0) {
+            return fields.map(f => ({ name: f.name, selected: defaultSelectedFields.includes(f.name) }))
+        }
         // all fields are selected by default 
         return fields.map(f => ({ name: f.name, selected: true }))
-    })
+    }, [fields, defaultSelectedFields])
+
+    const [fieldsToExport, setFieldsToExport] = useState<ExportedField[]>(() => determineSelectedFields())
 
     useEffect(() => {
-        setFieldsToExport(fields.map(f => ({ name: f.name, selected: true })))
-    }, [fields])
+        setFieldsToExport(determineSelectedFields())
+    }, [fields, defaultSelectedFields, determineSelectedFields])
 
     useEffect(() => {
         async function setTotal() {
@@ -143,7 +150,7 @@ export function AttributeTablePreview({ queryResults, fields, where, onFieldSele
                     pagination
                     onColumnVisibilityChange={onColumnVisibilityChange}
                     columns={columns}
-                    rows={loading ? [] : rows}
+                    rows={rows}
                 />
             </div>
         </Box>

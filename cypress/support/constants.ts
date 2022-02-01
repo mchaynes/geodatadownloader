@@ -1,0 +1,9 @@
+// Layer Constants
+export const layerUrlFieldId = "#layer-url"
+export const layerUrl = "https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/World_Countries_(Generalized)/FeatureServer/0"
+// Boundary Constants
+export const boundaryFieldId = "#boundary-text-field"
+export const boundaryText = `{"spatialReference":{"latestWkid":3857,"wkid":102100},"rings":[[[-2201093.8041135576,3412689.3667972824],[-933581.5598892272,4234326.510105794],[769043.690534085,4649686.516135898],[1380693.9852004703,4427921.199166456],[2529067.177556716,4101232.9232614003],[3654198.736000005,3856767.003219833],[4624387.660795018,1693388.9009221364],[4939778.782785241,1310187.3858858775],[6181665.513276974,1565053.5190884937],[6786303.90492676,-2767442.6285996893],[5363942.184682375,-4582451.808516387],[484521.1846853979,-5626481.291291993],[-3641735.917403764,1509420.5001111354],[-2201093.8041135576,3412689.3667972824]]]}`
+// Where constants
+export const whereTextfieldId = "#where-text-field"
+export const whereClause = `ISO = 'EG'`

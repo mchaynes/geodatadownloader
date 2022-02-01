@@ -1,7 +1,7 @@
 import Button from '@mui/material/Button'
 import TextField from '@mui/material/TextField'
 import Box from '@mui/material/Box'
-import React, { useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import type { } from '@mui/x-data-grid/themeAugmentation';
 import { StatusAlert, useStatusAlert } from './StatusAlert';
 import FeatureLayer from '@arcgis/core/layers/FeatureLayer';
@@ -11,20 +11,21 @@ export type Status = "not_started" | "loading" | "error" | "loaded"
 
 
 export type PickLayerProps = {
+    defaultLayerUrl: string
     onLayerLoad: (layer: FeatureLayer) => void
 }
 
-export function PickLayer({ onLayerLoad }: PickLayerProps) {
+export function PickLayer({ defaultLayerUrl, onLayerLoad }: PickLayerProps) {
 
     const [loading, setLoading] = useState(false)
     const [alertProps, setAlertProps] = useStatusAlert("Layer options will appear after load", "info")
-    const [url, setUrl] = useState("")
+    const [url, setUrl] = useState(defaultLayerUrl)
 
-    function onLoadClick() {
+    const loadLayer = useCallback(async (layerUrl: string) => {
         setLoadingWhile(async () => {
             try {
                 const layer = new FeatureLayer({
-                    url: url,
+                    url: layerUrl,
                 })
                 await layer.load()
                 setAlertProps(`Successfully loaded layer "${layer.title}"`, "success")
@@ -34,6 +35,17 @@ export function PickLayer({ onLayerLoad }: PickLayerProps) {
                 setAlertProps(`${err.message}`, "error")
             }
         }, setLoading)
+    }, [onLayerLoad, setAlertProps, setLoading])
+
+    useEffect(() => {
+        if (defaultLayerUrl) {
+            void loadLayer(defaultLayerUrl)
+        }
+    }, [defaultLayerUrl, loadLayer])
+
+
+    function onLoadClick() {
+        void loadLayer(url)
     }
 
     return (

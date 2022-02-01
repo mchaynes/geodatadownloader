@@ -35,12 +35,13 @@ const esriDocLinkProps = (t: "POLYGON" | "ENVELOPE") => ({
 })
 
 export type ExtentPickerProps = {
+    defaultBoundaryExtent: string
     layer: FeatureLayer
     where: string
     onFilterGeometryChange: GeometryUpdateListener
 }
 
-export function ExtentPicker({ layer, where, onFilterGeometryChange }: ExtentPickerProps) {
+export function ExtentPicker({ layer, where, onFilterGeometryChange, defaultBoundaryExtent }: ExtentPickerProps) {
 
     // Form State variables
     const [loading, setLoading] = useState(false)
@@ -70,7 +71,6 @@ export function ExtentPicker({ layer, where, onFilterGeometryChange }: ExtentPic
         layout: "vertical",
     }))
     const [featureEffect, setFeatureEffect] = useState<FeatureEffect>(new FeatureEffect())
-
 
     // Updates filterGeometry and textBoxValue when sketchLayer is updated
     const onSketchUpdate = useCallback(() => {
@@ -150,7 +150,7 @@ export function ExtentPicker({ layer, where, onFilterGeometryChange }: ExtentPic
 
     // Test if new text in TextField contains filter geometry
     // If so, update filterGeometry and remove any previous geometries on the layer
-    function onTextBoxChange(val: string) {
+    const onTextBoxChange = useCallback((val: string) => {
         setTextBoxValue(val)
         setLoadingWhile(async () => {
             try {
@@ -188,7 +188,13 @@ export function ExtentPicker({ layer, where, onFilterGeometryChange }: ExtentPic
             }
         }, setLoading)
 
-    }
+    }, [filterGeometry, sketchLayer, mapView, setLoading])
+
+    useEffect(() => {
+        if (defaultBoundaryExtent) {
+            onTextBoxChange(defaultBoundaryExtent)
+        }
+    }, [defaultBoundaryExtent, onTextBoxChange])
 
     // ExtentAdornment contains an EditToggle and a Copy to Clipboard button 
     function BoundaryAdornment({ content }: { content: string }) {
