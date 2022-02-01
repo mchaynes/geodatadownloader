@@ -18,7 +18,11 @@ module.exports = {
                 use: ['style-loader', 'css-loader'],
             },
             {
-                test: /\.(png|jpe?g|gif|jp2|webp|ico)$/,
+                test: /\.png/,
+                type: 'asset/inline'
+            },
+            {
+                test: /\.(jpe?g|gif|jp2|webp|ico)$/,
                 loader: 'file-loader',
                 options: {
                     name: '[name].[ext]',
