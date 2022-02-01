@@ -17,7 +17,7 @@ jobs:
           start: yarn start:ci
           wait-on: 'http://localhost:3000/'
           browser: chrome
-          recrord: true
+          record: true
         env:
           CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
