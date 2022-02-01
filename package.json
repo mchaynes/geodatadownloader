@@ -23,15 +23,13 @@
     "web-vitals": "^2.1.0"
   },
   "scripts": {
-    "develop": "webpack-dev-server --mode development --open --hot",
     "start:ci": "npx serve build",
-    "start": "export HTTPS=true&&SSL_CRT_FILE=cert.pem&&SSL_KEY_FILE=key.pem react-scripts start",
+    "start": "webpack-dev-server --mode development --open --hot --port 3000",
     "analyze": "source-map-explorer 'build/static/js/*.js'",
     "build": "webpack --mode production",
     "test": "jest",
     "cy:open": "cypress open",
-    "cy:run": "cypress run",
-    "eject": "react-scripts eject"
+    "cy:run": "cypress run"
   },
   "eslintConfig": {
     "extends": [
@@ -80,7 +78,6 @@
     "html-webpack-plugin": "^5.5.0",
     "jest": "^27.4.5",
     "jest-canvas-mock": "^2.3.1",
-    "react-scripts": "^5.0.0",
     "react-test-renderer": "^17.0.2",
     "source-map-explorer": "^2.5.2",
     "ts-jest": "^27.1.2",
