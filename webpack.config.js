@@ -56,9 +56,6 @@ module.exports = {
                 minifyURLs: true,
             },
         }),
-        new ArcGISPlugin({
-            copyAssets: false,
-        }),
         new CopyWebpackPlugin({
             patterns: [
                 { from: 'public', to: './', globOptions: { ignore: ["**/index.html"] } }
