@@ -56,7 +56,6 @@ function WorkflowItems({ layer, fileHandler }: WorkflowItemsProps) {
         return new QueryResults(layer, filterExtent)
     })
     const boundaryExtent = getQueryParameter("boundary") ?? ""
-    const [defaultSelectedFields] = useState(() => (getQueryParameter("fields") ?? "").split(","))
 
     useEffect(() => {
         setQueryResults(new QueryResults(layer, filterExtent, 500))
@@ -80,11 +79,11 @@ function WorkflowItems({ layer, fileHandler }: WorkflowItemsProps) {
                 onChange={setWhere}
             />
             <AttributeTablePreview
-                onFieldSelectionChange={setSelectedFields}
+                selectedFields={selectedFields}
+                setSelectedFields={setSelectedFields}
                 queryResults={queryResults}
                 fields={layer.fields}
                 where={where}
-                defaultSelectedFields={defaultSelectedFields}
             />
             <SectionDivider />
             <SectionHeader header="Download Options" />
