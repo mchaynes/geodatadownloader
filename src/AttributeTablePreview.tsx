@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { QueryResults } from './arcgis'
-import { DataGrid, GridColumnVisibilityChangeParams, GridToolbarColumnsButton, GridToolbarContainer } from '@mui/x-data-grid';
+import { DataGrid, GridToolbarColumnsButton, GridToolbarContainer } from '@mui/x-data-grid';
 import Box from '@mui/material/Box';
 import Field from '@arcgis/core/layers/support/Field';
 import EsriError from "@arcgis/core/core/Error";
@@ -10,15 +10,10 @@ import { StatusAlert, useStatusAlert } from './StatusAlert';
 
 export type AttributeTableProps = {
     queryResults: QueryResults
-    defaultSelectedFields: string[]
+    selectedFields: string[]
+    setSelectedFields: (fields: string[]) => void
     fields: Field[]
-    onFieldSelectionChange: (_: string[]) => void
     where: string
-}
-
-type ExportedField = {
-    name: string
-    selected: boolean
 }
 
 function CustomFooter({ total, fetched }: { total: number, fetched: number }) {
@@ -31,26 +26,13 @@ function CustomFooter({ total, fetched }: { total: number, fetched: number }) {
     )
 }
 
-export function AttributeTablePreview({ queryResults, fields, where, onFieldSelectionChange, defaultSelectedFields }: AttributeTableProps) {
+export function AttributeTablePreview({ queryResults, fields, where, selectedFields, setSelectedFields }: AttributeTableProps) {
 
     const [loading, setLoading] = useState(false)
     const [totalFeaturesCount, setTotalFeaturesCount] = useState(0)
     const [alertProps, setAlertProps] = useStatusAlert("", undefined)
     const [rows, setRows] = useState<Row[]>([])
 
-    const determineSelectedFields = useCallback(() => {
-        if (defaultSelectedFields.length > 0) {
-            return fields.map(f => ({ name: f.name, selected: defaultSelectedFields.includes(f.name) }))
-        }
-        // all fields are selected by default 
-        return fields.map(f => ({ name: f.name, selected: true }))
-    }, [fields, defaultSelectedFields])
-
-    const [fieldsToExport, setFieldsToExport] = useState<ExportedField[]>(() => determineSelectedFields())
-
-    useEffect(() => {
-        setFieldsToExport(determineSelectedFields())
-    }, [fields, defaultSelectedFields, determineSelectedFields])
 
     useEffect(() => {
         async function setTotal() {
@@ -76,7 +58,7 @@ export function AttributeTablePreview({ queryResults, fields, where, onFieldSele
             setLoadingWhile(async () => {
                 try {
                     setTotalFeaturesCount(await queryResults.getTotalCount(where))
-                    const featureSet = await queryResults.getPage(0, exportedFieldsToOutFields(fieldsToExport), where)
+                    const featureSet = await queryResults.getPage(0, selectedFields, where)
                     const rows = featureSet.features?.map((feature, i) => {
                         const item: Row = { id: i }
                         fields.forEach(f => {
@@ -97,25 +79,8 @@ export function AttributeTablePreview({ queryResults, fields, where, onFieldSele
             }, setLoading)
         }
         void loadPreview()
-    }, [queryResults, fieldsToExport, fields, where, setAlertProps])
+    }, [selectedFields, queryResults, fields, where, setAlertProps])
 
-    useEffect(() => {
-        onFieldSelectionChange(exportedFieldsToOutFields(fieldsToExport))
-    }, [fieldsToExport, onFieldSelectionChange])
-
-    function exportedFieldsToOutFields(exportedFields: ExportedField[]) {
-        return exportedFields.filter(f => f.selected).map(f => f.name)
-    }
-
-    function onColumnVisibilityChange({ field, isVisible }: GridColumnVisibilityChangeParams) {
-        setFieldsToExport((prevState) => {
-            return prevState.map(f => ({
-                name: f.name,
-                // if the column name matches, set selected status to isVisible. Otherwise keep the same
-                selected: f.name === field ? isVisible : f.selected
-            }))
-        })
-    }
 
     function Toolbar() {
         return (
@@ -148,7 +113,17 @@ export function AttributeTablePreview({ queryResults, fields, where, onFieldSele
                         }
                     }}
                     pagination
-                    onColumnVisibilityChange={onColumnVisibilityChange}
+                    columnVisibilityModel={
+                        fields.map(f => f.name) // take name of each field
+                            .reduce((acc, cur) => ({ [cur]: selectedFields.includes(cur), ...acc }), {}) // if field is selected, set to true
+                    }
+                    onColumnVisibilityModelChange={
+                        (model) => setSelectedFields(
+                            Object.keys(model) // {"field1": true, "field2": false, ...}
+                                .filter(k => model[k]) // only grab fields that are true
+                                .reduce((acc, cur) => [...acc, cur], []) // flatten in to array ["field1"]
+                        )
+                    }
                     columns={columns}
                     rows={rows}
                 />
