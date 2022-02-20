@@ -54,6 +54,11 @@ export function Downloader({ queryResults, fileHandler, outFields, where }: Down
     }, [queryResults, where])
 
     useEffect(() => {
+        if (concRequests < 1) {
+            setConcRequests(1);
+        } else if (concRequests > MAX_CONCURRENT_REQUESTS) {
+            setConcRequests(MAX_CONCURRENT_REQUESTS);
+        }
         if (concRequests > DEFAULT_CONCURRENT_REQUESTS) {
             setConcAlertProps("Careful, setting higher than default concurrency can cause timeouts (it can also speed things up!)", "warning")
         } else {
@@ -78,16 +83,8 @@ export function Downloader({ queryResults, fileHandler, outFields, where }: Down
         }
     }
 
-    const handleBlur = () => {
-        if (concRequests < 0) {
-            setConcRequests(0);
-        } else if (concRequests > MAX_CONCURRENT_REQUESTS) {
-            setConcRequests(MAX_CONCURRENT_REQUESTS);
-        }
-    };
-
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setConcRequests(event.target.value === '' ? 0 : Number(event.target.value));
+        setConcRequests(event.target.value === '' ? 1 : Number(event.target.value));
     };
 
     const handleSliderChange = (event: Event, newValue: number) => {
@@ -133,10 +130,9 @@ export function Downloader({ queryResults, fileHandler, outFields, where }: Down
                                     value={concRequests}
                                     size="small"
                                     onChange={handleInputChange}
-                                    onBlur={handleBlur}
                                     inputProps={{
                                         step: 1,
-                                        min: 0,
+                                        min: 1,
                                         max: MAX_CONCURRENT_REQUESTS,
                                         type: 'number',
                                         'aria-labelledby': 'input-slider',
