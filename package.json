@@ -27,7 +27,7 @@
     "start:ci": "npx serve build",
     "start": "webpack-dev-server --mode development --open --hot --port 3000",
     "analyze": "source-map-explorer 'build/static/js/*.js'",
-    "build": "webpack --mode production",
+    "build": "node esbuild.js",
     "test": "jest",
     "cy:open": "cypress open",
     "cy:run": "cypress run"
@@ -75,6 +75,8 @@
     "copy-webpack-plugin": "^10.2.0",
     "css-loader": "^6.5.1",
     "cypress": "^9.4.1",
+    "esbuild": "^0.14.23",
+    "esbuild-copy-static-files": "^0.1.0",
     "file-loader": "^6.2.0",
     "html-webpack-plugin": "^5.5.0",
     "jest": "^27.4.5",
