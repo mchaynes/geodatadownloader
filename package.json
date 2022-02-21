@@ -25,9 +25,8 @@
   },
   "scripts": {
     "start:ci": "npx serve build",
-    "start": "webpack-dev-server --mode development --open --hot --port 3000",
-    "analyze": "source-map-explorer 'build/static/js/*.js'",
     "build": "node esbuild.js",
+    "start": "ESBUILD_WATCH=true yarn build",
     "test": "jest",
     "cy:open": "cypress open",
     "cy:run": "cypress run"
