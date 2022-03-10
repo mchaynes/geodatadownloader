@@ -1,0 +1,8 @@
+config:
+  aws:region: us-west-2
+  geodatadownloader:certificateArn:
+    secure: AAABAH6QH6lym+Vy/dZkPsucTVRSmbiruNzUuexp1TolUefNJqxlF4XagMnllUTxU4In+otF4CocqVXNIG3gz0BX2nBPmJMXMRkf5XzIrHgVC6ev1mvpEbeSWPHFdIDp4zhUqoyU8LNwLlabRwAM9G4EKg==
+  geodatadownloader:includeWWW: "true"
+  geodatadownloader:outDir: build
+  geodatadownloader:targetDomain: aws.geodatadownloader.com
+  geodatadownloader:bucket: geodatadownloader.com

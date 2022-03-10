@@ -1,0 +1,13 @@
+{
+    "name": "geodatadownloader",
+    "devDependencies": {
+        "@types/node": "^14"
+    },
+    "dependencies": {
+        "@aws-sdk/client-s3": "^3.53.1",
+        "@pulumi/aws": "^4.0.0",
+        "@pulumi/awsx": "^0.30.0",
+        "@pulumi/pulumi": "^3.0.0",
+        "fdir": "^5.2.0"
+    }
+}

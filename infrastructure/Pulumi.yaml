@@ -1,0 +1,3 @@
+name: geodatadownloader
+runtime: nodejs
+description: A downloader of geodata
