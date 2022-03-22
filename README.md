@@ -1,8 +1,7 @@
 # geodatadownloader.com (GDD)
 This repo contains *all* of the code for https://geodatadownloader.com
 
-[![Netlify Status](https://api.netlify.com/api/v1/badges/55727701-8ed9-4074-8a16-829dcb4601db/deploy-status)](https://app.netlify.com/sites/geodatadownloader/deploys) [![geodatadownloader](https://img.shields.io/endpoint?url=https://dashboard.cypress.io/badge/simple/8tricd/master&style=flat&logo=cypress)](https://dashboard.cypress.io/projects/8tricd/runs)
-
+[![Netlify Status](https://api.netlify.com/api/v1/badges/55727701-8ed9-4074-8a16-829dcb4601db/deploy-status)](https://app.netlify.com/sites/geodatadownloader/deploys) [![geodatadownloader](https://img.shields.io/endpoint?url=https://dashboard.cypress.io/badge/detailed/8tricd/master&style=flat&logo=cypress)](https://dashboard.cypress.io/projects/8tricd/runs)
 ## What is geodatadownloader?
 GDD is client side browser application that will download all the data in a ArcGIS feature layer onto your computer. It is not limited by max query size, and can download any size of dataset (yes that includes those huge parcel layers from your local county). You can choose a custom extent for your download, and pick the output columns you want to use
 
