@@ -5,7 +5,6 @@ This repo contains *all* of the code for https://geodatadownloader.com
 ## What is geodatadownloader?
 GDD is client side browser application that will download all the data in a ArcGIS feature layer onto your computer. It is not limited by max query size, and can download any size of dataset (yes that includes those huge parcel layers from your local county). You can choose a custom extent for your download, and pick the output columns you want to use
 
-## Does this steal my data or do anything nefarious?
 GDD runs entirely in your browser and stores nothing besides what your browser caches locally. There is no backend to the application, besides the CDN used to serve up the html/javascript. In order to draw an extent the map uses ESRI's javascript library (and therefore ESRI's servers to serve up the data for the map). Conversion to from arcgis json to geojson is done browser side as well.
 
 ## What formats does this support?
