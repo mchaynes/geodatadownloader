@@ -42,10 +42,10 @@ function App({ fileHandler }: AppProps) {
       >
         <Toolbar>
           <img src={logo} width="32px" height="32px" alt="Pine" />
-          <Typography sx={{ ml: 3 }} variant="h6" color="inherit" noWrap>
+          <Typography sx={{ ml: 3 }} variant="h6" color="inherit" noWrap={true}>
             geodatadownloader
           </Typography>
-          <Box sx={{ flexGrow: 1 }}></Box>
+          <Box sx={{ flexGrow: 1 }} />
 
           <IconButton
             color="inherit"
@@ -57,6 +57,16 @@ function App({ fileHandler }: AppProps) {
               <GithubSvg />
             </SvgIcon>
           </IconButton>
+        </Toolbar>
+      </AppBar>
+
+      <Container component="main" maxWidth="lg" sx={{ mb: 4 }}>
+        <Box sx={{ mt: 3 }}>
+          <CompatibilityCheck />
+        </Box>
+        <Workflow fileHandler={fileHandler} />
+        <Footer />
+        <Container align="center" sx={{ mt: 5 }}>
           <form
             action="https://www.paypal.com/donate"
             method="post"
@@ -86,15 +96,7 @@ function App({ fileHandler }: AppProps) {
               height="1"
             />
           </form>
-        </Toolbar>
-      </AppBar>
-
-      <Container component="main" maxWidth="lg" sx={{ mb: 4 }}>
-        <Box sx={{ mt: 3 }}>
-          <CompatibilityCheck />
-        </Box>
-        <Workflow fileHandler={fileHandler} />
-        <Footer />
+        </Container>
       </Container>
     </ThemeProvider>
   );
