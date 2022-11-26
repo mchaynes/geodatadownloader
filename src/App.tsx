@@ -46,17 +46,6 @@ function App({ fileHandler }: AppProps) {
             geodatadownloader
           </Typography>
           <Box sx={{ flexGrow: 1 }} />
-
-          <IconButton
-            color="inherit"
-            onClick={openInNewTab(
-              "https://github.com/mchaynes/geodatadownloader"
-            )}
-          >
-            <SvgIcon>
-              <GithubSvg />
-            </SvgIcon>
-          </IconButton>
         </Toolbar>
       </AppBar>
 
