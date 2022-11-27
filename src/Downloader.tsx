@@ -113,6 +113,7 @@ export function Downloader({
 			);
 		} catch (e) {
 			const err = e as Error;
+			console.error(err);
 			setAlertProps(err.message, "error");
 		} finally {
 			setDownloading(false);
