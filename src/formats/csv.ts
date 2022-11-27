@@ -1,55 +1,16 @@
-import { QueryResults } from "../arcgis";
 import { arcgisToGeoJSON } from "@terraformer/arcgis";
-import fastq from "fastq";
-import type { queueAsPromised } from "fastq";
+import { createObjectCsvStringifier } from "csv-writer-browser";
+import { QueryResults } from "../arcgis";
+import { FeatureCollection } from "./geojson";
+import fastq, { queueAsPromised } from "fastq";
 
-export interface Downloader {
-	download(
-		results: QueryResults,
-		fileHandle: FileSystemFileHandle,
-		outFields: string[],
-		numConcurrent: number,
-		where: string,
-	): Promise<void>;
-}
-
-// Open geojson FeatureCollection object and "features" array
-const header = `
-{
-    "type": "FeatureCollection",
-    "features" : [
-`;
-
-// Close "features" array opened in header. Close geojson object
-const footer = `
-    ]
-}
-`;
-
-export type FeatureCollection = {
-	features: Feature[];
-};
-
-export type Feature = {
-	geometry: {
-		type: string;
-		coordinates: number[][][];
-	};
-	id: number | string;
-	properties: {
-		[key: string]: any;
-	};
-};
-
-export const DEFAULT_CONCURRENT_REQUESTS = 2;
-export const MAX_CONCURRENT_REQUESTS = 20;
-
-export class GeojsonDownloader {
-	featuresWritten = 0;
+export class CsvDownloader {
 	onWrite: (featuresWritten: number) => void;
+	featuresWritten: number;
 	constructor(onWrite: (_: number) => void) {
 		this.onWrite = onWrite;
 	}
+
 	download = async (
 		results: QueryResults,
 		fileHandle: FileSystemFileHandle,
@@ -64,22 +25,31 @@ export class GeojsonDownloader {
 		const writable = await fileHandle.createWritable();
 		const writer = writable.getWriter();
 		const numPages = await results.getNumPages(where);
-		writer.write(header);
 		// Create callable functions that fetch results for each page
 		let firstPage = true;
 		const fetchResults = async (pageNum: number): Promise<void> => {
 			const features = await results.getPage(pageNum, outFields, where);
 			const json = features.toJSON();
 			const geojson = arcgisToGeoJSON(json) as unknown as FeatureCollection;
-			let stringified = geojson.features
-				.map((f) => JSON.stringify(f))
-				.join(",");
+			const csvStringifier = createObjectCsvStringifier({
+				header: [
+					{ id: "geometry", title: "geometry" },
+					...features.fields.map((f) => ({ id: f.name, title: f.name })),
+				],
+			});
+			let stringified = csvStringifier.stringifyRecords(
+				geojson.features.map((f) => ({
+					geometry: JSON.stringify(f.geometry),
+					...f.properties,
+				})),
+			);
 			if (firstPage) {
+				writer.write(csvStringifier.getHeaderString());
 				// we are the first page, so new pages are no longer first
 				firstPage = false;
 			} else {
 				// add a leading "," if this isn't the first page we fetched
-				stringified = `, ${stringified}`;
+				stringified = "\n" + stringified;
 			}
 			// Join features in chunk together, write to file
 			await writer.write(stringified);
@@ -87,7 +57,7 @@ export class GeojsonDownloader {
 			// Notify listeners that we've written more features
 			this.onWrite(this.featuresWritten);
 		};
-		const promises: Promise<void>[] = [];
+		const promises: Array<Promise<void>> = [];
 		const q: queueAsPromised<number, void> = fastq.promise(
 			fetchResults,
 			numConcurrent,
@@ -96,7 +66,6 @@ export class GeojsonDownloader {
 			promises.push(q.push(i));
 		}
 		await Promise.all(promises);
-		writer.write(footer);
 		writer.close();
 		this.featuresWritten = 0;
 	};
