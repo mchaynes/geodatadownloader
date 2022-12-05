@@ -12,9 +12,6 @@ import Link from "@mui/material/Link";
 import { FileHandler } from "./FileHandler";
 import { Workflow } from "./Workflow";
 import logo from "./icons/icon-128.png";
-import IconButton from "@mui/material/IconButton";
-import GithubSvg from "./icons/GithubSvg";
-import SvgIcon from "@mui/material/SvgIcon";
 import CompatibilityCheck from "./CompatibilityCheck";
 
 const theme = createTheme();
