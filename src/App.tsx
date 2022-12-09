@@ -8,17 +8,12 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import Link from "@mui/material/Link";
-// import './App.css';
 import { FileHandler } from "./FileHandler";
 import { Workflow } from "./Workflow";
 import logo from "./icons/icon-128.png";
 import CompatibilityCheck from "./CompatibilityCheck";
 
 const theme = createTheme();
-
-const openInNewTab = (url: string) => () => {
-  window.open(url, "_blank");
-};
 
 export type AppProps = {
   fileHandler: FileHandler;
