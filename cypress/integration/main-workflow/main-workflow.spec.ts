@@ -9,7 +9,6 @@ import {
 describe("Main Workflow", () => {
     it("can download data", () => {
         cy.visit("/");
-        cy.contains("Layer Url");
         cy.get(layerUrlFieldId).type(layerUrl).should("have.value", layerUrl);
         cy.get("#load-layer").click();
         cy.contains("Successfully loaded layer");
