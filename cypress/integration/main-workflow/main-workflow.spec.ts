@@ -21,7 +21,7 @@ describe("Main Workflow", () => {
         cy.get(whereTextfieldId).clear().type(`ISO = 'EG'`);
         cy.contains("Displaying 1 / 1 features", { timeout: 15000 });
 
-        cy.on("uncaught:exception", function(err, runnable) {
+        cy.on("uncaught:exception", function() {
             return false;
         });
 
