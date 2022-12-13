@@ -64,6 +64,12 @@ export function PickLayer({ defaultLayerUrl, onLayerLoad }: PickLayerProps) {
     void loadLayer(url);
   }
 
+  const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      onLoadClick();
+    }
+  };
+
   return (
     <React.Fragment>
       <TextField
@@ -77,6 +83,7 @@ export function PickLayer({ defaultLayerUrl, onLayerLoad }: PickLayerProps) {
         value={url}
         inputRef={textFieldRef}
         onChange={(e) => setUrl(e.currentTarget.value)}
+        onKeyPress={handleKeyPress}
       />
       <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
         <Button
