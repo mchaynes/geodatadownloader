@@ -37,7 +37,7 @@ export type DownloaderProps = {
 	where: string;
 };
 
-export function Downloader({
+export function DownloaderForm({
 	queryResults,
 	fileHandler,
 	outFields,
@@ -72,7 +72,7 @@ export function Downloader({
 		if (concRequests > DEFAULT_CONCURRENT_REQUESTS) {
 			setConcAlertProps(
 				"Careful, setting higher than default concurrency can cause timeouts (it can also speed things up!)",
-				"warning",
+				"warning"
 			);
 		} else {
 			setConcAlertProps("", undefined);
@@ -94,7 +94,7 @@ export function Downloader({
 				throw new Error(`invalid export type: "${exportType}"`);
 		}
 		const fileHandle = await fileHandler.getFileHandle(
-			`${queryResults.getLayer()?.title ?? "Layer"}.${exportType}`,
+			`${queryResults.getLayer()?.title ?? "Layer"}.${exportType}`
 		);
 		try {
 			setDownloading(true);
@@ -105,11 +105,11 @@ export function Downloader({
 				fileHandle,
 				outFields,
 				concRequests,
-				where,
+				where
 			);
 			setAlertProps(
 				`Successfully downloaded ${totalFeatures} features to "${fileHandle.name}"`,
-				"success",
+				"success"
 			);
 		} catch (e) {
 			const err = e as Error;

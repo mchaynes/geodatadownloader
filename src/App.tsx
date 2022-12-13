@@ -11,7 +11,7 @@ import Link from "@mui/material/Link";
 import { FileHandler } from "./FileHandler";
 import { Workflow } from "./Workflow";
 import logo from "./icons/icon-128.png";
-import CompatibilityCheck from "./CompatibilityCheck";
+import { CompatibilityCheck } from "./CompatibilityCheck";
 
 const theme = createTheme();
 

@@ -1,31 +1,27 @@
 {
   "compilerOptions": {
     "module": "es2020",
-    "target": "es2020",
-    "jsx": "react",
-    "sourceMap": true,
-    "esModuleInterop": true,
+    "target": "ESNext",
+    "jsx": "react-jsx",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "esModuleInterop": false,
     "moduleResolution": "node",
     "noImplicitAny": false,
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "strictNullChecks": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowSyntheticDefaultImports": true,
     "removeComments": true,
     "outDir": "./build/",
     "allowJs": true,
-    "typeRoots": [
-      "src/types",
-      "./node_modules/@types"
-    ]
+    "typeRoots": ["src/types", "./node_modules/@types"]
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "index.d.ts"
+  "include": ["src/**/*.ts", "src/**/*.tsx", "index.d.ts"],
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    }
   ],
-  "exclude": [
-    "node_modules",
-    "**/*.spec.ts",
-    "**/*.test.ts"
-  ]
+  "exclude": ["node_modules", "**/*.spec.ts", "**/*.test.ts"]
 }
