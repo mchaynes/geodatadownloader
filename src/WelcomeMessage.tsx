@@ -154,15 +154,7 @@ export function WelcomeMessage() {
                 mt: 2,
               }}
             >
-              <Button
-                variant="outlined"
-                onClick={() =>
-                  setData((d) => ({
-                    ...d,
-                    dismissed: "true",
-                  }))
-                }
-              >
+              <Button variant="outlined" onClick={onClose}>
                 Dismiss
               </Button>
               <Button variant="contained" onClick={submit}>
