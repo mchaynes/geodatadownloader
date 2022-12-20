@@ -11,15 +11,11 @@ export function WelcomeMessage() {
   const [data, setData] = useState({
     email: "",
     suggestions: "",
-    dismissed: "false",
+    dismissed: localStorage.getItem(localStorageKey) ?? "false",
   });
   const [loading, setLoading] = useState(false);
 
   const [submissionProps, setSubmissionProps] = useStatusAlert("", undefined);
-
-  const [isFeedbackDismissed, setFeedbackDismissed] = useState(
-    localStorage.getItem(localStorageKey) === "true"
-  );
 
   const submit = async () => {
     setLoading(true);
@@ -47,15 +43,14 @@ export function WelcomeMessage() {
   };
 
   useEffect(() => {
-    localStorage.setItem(localStorageKey, `${isFeedbackDismissed}`);
+    localStorage.setItem(localStorageKey, data.dismissed);
+  }, [data]);
+
+  const onClose = () => {
     setData((data) => ({
       ...data,
       dismissed: `${isFeedbackDismissed}`,
     }));
-  }, [isFeedbackDismissed]);
-
-  const onClose = () => {
-    setFeedbackDismissed(true);
     submit();
   };
 
@@ -160,7 +155,12 @@ export function WelcomeMessage() {
             >
               <Button
                 variant="outlined"
-                onClick={() => setFeedbackDismissed(true)}
+                onClick={() =>
+                  setData((d) => ({
+                    ...d,
+                    dismissed: "true",
+                  }))
+                }
               >
                 Dismiss
               </Button>
@@ -176,7 +176,7 @@ export function WelcomeMessage() {
           </Box>
         </>
       }
-      alertType={isFeedbackDismissed ? undefined : "info"}
+      alertType={data.dismissed === "true" ? undefined : "info"}
     />
   );
 }
