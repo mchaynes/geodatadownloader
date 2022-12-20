@@ -49,7 +49,7 @@ export function WelcomeMessage() {
   const onClose = () => {
     setData((data) => ({
       ...data,
-      dismissed: `${isFeedbackDismissed}`,
+      dismissed: data.dismissed,
     }));
     submit();
   };
