@@ -33,10 +33,14 @@ export function WelcomeMessage() {
           `Error from server: ${response.status} - ${await response.text()}`
         );
       }
-      setSubmissionProps("Thank you for the feedback :)", "success");
+      if (data.dismissed !== "true") {
+        setSubmissionProps("Thank you for the feedback :)", "success");
+      }
     } catch (e) {
       console.error(`Failed submit form: ${e.toString()}`, e);
-      setSubmissionProps(`Failed to submit form: ${e.toString()}`, "error");
+      if (data.dismissed !== "true") {
+        setSubmissionProps(`Failed to submit form: ${e.toString()}`, "error");
+      }
     } finally {
       setLoading(false);
     }
@@ -49,7 +53,7 @@ export function WelcomeMessage() {
   const onClose = () => {
     setData((data) => ({
       ...data,
-      dismissed: data.dismissed,
+      dismissed: "true",
     }));
     submit();
   };
