@@ -32,7 +32,10 @@ export function WelcomeMessage() {
       const response = await fetch("/", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({ "form-name": "feedback", ...data }),
+        body: new URLSearchParams({
+          "form-name": "feedback",
+          ...data,
+        }).toString(),
       });
       if (response.status !== 200) {
         throw new Error(
