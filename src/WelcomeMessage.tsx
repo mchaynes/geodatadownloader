@@ -11,6 +11,7 @@ export function WelcomeMessage() {
   const [data, setData] = useState({
     email: "",
     suggestions: "",
+    dismissed: "false",
   });
   const [loading, setLoading] = useState(false);
 
@@ -20,15 +21,7 @@ export function WelcomeMessage() {
     localStorage.getItem(localStorageKey) === "true"
   );
 
-  useEffect(() => {
-    localStorage.setItem(localStorageKey, `${isFeedbackDismissed}`);
-  }, [isFeedbackDismissed]);
-
-  const onClose = () => {
-    setFeedbackDismissed(true);
-  };
-
-  const onSubmit = async () => {
+  const submit = async () => {
     setLoading(true);
     try {
       const response = await fetch("/", {
@@ -52,6 +45,20 @@ export function WelcomeMessage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    localStorage.setItem(localStorageKey, `${isFeedbackDismissed}`);
+    setData((data) => ({
+      ...data,
+      dismissed: `{isFeedbackDismissed}`,
+    }));
+    submit();
+  }, [isFeedbackDismissed]);
+
+  const onClose = () => {
+    setFeedbackDismissed(true);
+  };
+
   return (
     <StatusAlert
       onClose={onClose}
@@ -157,7 +164,7 @@ export function WelcomeMessage() {
               >
                 Dismiss
               </Button>
-              <Button variant="contained" onClick={onSubmit}>
+              <Button variant="contained" onClick={submit}>
                 Submit
               </Button>
             </Box>
