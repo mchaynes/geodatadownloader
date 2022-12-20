@@ -47,7 +47,7 @@ export function WelcomeMessage() {
   return (
     <StatusAlert
       onClose={onClose}
-      sx={{ mt: 2 }}
+      sx={{ m: 3 }}
       msg={
         <>
           <div
