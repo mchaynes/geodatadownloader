@@ -50,7 +50,7 @@ export function WelcomeMessage() {
     localStorage.setItem(localStorageKey, `${isFeedbackDismissed}`);
     setData((data) => ({
       ...data,
-      dismissed: `{isFeedbackDismissed}`,
+      dismissed: `${isFeedbackDismissed}`,
     }));
   }, [isFeedbackDismissed]);
 
