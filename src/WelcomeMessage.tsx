@@ -3,7 +3,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import React, { useEffect, useState } from "react";
-import { StatusAlert } from "./StatusAlert";
+import { StatusAlert, useStatusAlert } from "./StatusAlert";
 
 const localStorageKey = "feedback_dismissed";
 
@@ -14,6 +14,8 @@ export function WelcomeMessage() {
   });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  const [submissionProps, setSubmissionProps] = useStatusAlert("", undefined);
 
   const [isFeedbackDismissed, setFeedbackDismissed] = useState(
     localStorage.getItem(localStorageKey) === "true"
@@ -28,6 +30,7 @@ export function WelcomeMessage() {
   };
 
   const onSubmit = async () => {
+    setLoading(true);
     try {
       const response = await fetch("/", {
         method: "POST",
@@ -42,9 +45,12 @@ export function WelcomeMessage() {
           `Error from server: ${response.status} - ${await response.text()}`
         );
       }
+      setSubmissionProps("Thank you for the feedback :)", "success");
     } catch (e) {
-      console.log(`Failed submit form: ${e.toString()}`);
-      throw e;
+      console.error(`Failed submit form: ${e.toString()}`, e);
+      setSubmissionProps(`Failed to submit form: ${e.toString()}`, "error");
+    } finally {
+      setLoading(false);
     }
   };
   return (
@@ -155,6 +161,11 @@ export function WelcomeMessage() {
                 Submit
               </Button>
             </Box>
+            <StatusAlert
+              loading={loading}
+              {...submissionProps}
+              sx={{ mt: 1 }}
+            />
           </Box>
         </>
       }

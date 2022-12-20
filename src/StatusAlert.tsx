@@ -48,7 +48,10 @@ export function StatusAlert({
     return <></>;
 }
 
-export type StatusAlertSetter = (msg: string, alertType: AlertType) => void;
+export type StatusAlertSetter = (
+    msg: JSX.Element | string,
+    alertType: AlertType
+) => void;
 
 export const useStatusAlert = (
     msg: string,
