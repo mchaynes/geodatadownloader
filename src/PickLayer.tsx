@@ -2,7 +2,7 @@ import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
 import React, { useCallback, useEffect, useState } from "react";
-import type {} from "@mui/x-data-grid/themeAugmentation";
+import type { } from "@mui/x-data-grid/themeAugmentation";
 import { StatusAlert, useStatusAlert } from "./StatusAlert";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import { setLoadingWhile } from "./loading";
@@ -21,16 +21,6 @@ export function PickLayer({ defaultLayerUrl, onLayerLoad }: PickLayerProps) {
     "info"
   );
   const [url, setUrl] = useState(defaultLayerUrl);
-
-  // Use the `useRef` hook to store a reference to the text field DOM element
-  const textFieldRef = React.useRef<HTMLInputElement>(null);
-
-  // Focus the text field when the component is first rendered
-  React.useEffect(() => {
-    if (textFieldRef.current) {
-      textFieldRef.current.focus();
-    }
-  }, []);
 
   const loadLayer = useCallback(
     async (layerUrl: string) => {
@@ -81,7 +71,6 @@ export function PickLayer({ defaultLayerUrl, onLayerLoad }: PickLayerProps) {
         variant="outlined"
         placeholder="https://gismaps.kingcounty.gov/arcgis/rest/services/Environment/KingCo_SensitiveAreas/MapServer/11"
         value={url}
-        inputRef={textFieldRef}
         onChange={(e) => setUrl(e.currentTarget.value)}
         onKeyPress={handleKeyPress}
       />
