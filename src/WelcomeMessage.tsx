@@ -52,11 +52,11 @@ export function WelcomeMessage() {
       ...data,
       dismissed: `{isFeedbackDismissed}`,
     }));
-    submit();
   }, [isFeedbackDismissed]);
 
   const onClose = () => {
     setFeedbackDismissed(true);
+    submit();
   };
 
   return (
