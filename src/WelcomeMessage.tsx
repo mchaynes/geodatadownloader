@@ -13,7 +13,6 @@ export function WelcomeMessage() {
     suggestions: "",
   });
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
 
   const [submissionProps, setSubmissionProps] = useStatusAlert("", undefined);
 
@@ -109,6 +108,7 @@ export function WelcomeMessage() {
 
           <Box sx={{ mt: 1, flex: "flex-basis" }}>
             <div>
+              <input type="hidden" name="form-name" value="feedback" />
               <TextField
                 fullWidth={true}
                 id="email"
