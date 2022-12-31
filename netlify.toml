@@ -8,6 +8,7 @@
   external_node_modules = ["@arcgis/core"]
 
 [dev]
+  framework = "remix"
   command = "remix watch"
   port = 3000
 
