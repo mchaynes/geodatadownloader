@@ -4,7 +4,7 @@
     "target": "ESNext",
     "jsx": "react-jsx",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "esModuleInterop": false,
+    "esModuleInterop": true,
     "moduleResolution": "node",
     "noImplicitAny": false,
     "noImplicitReturns": true,
@@ -15,9 +15,17 @@
     "removeComments": true,
     "outDir": "./build/",
     "allowJs": true,
-    "typeRoots": ["src/types", "./node_modules/@types"]
+    "typeRoots": ["src/types", "./node_modules/@types"],
+    "baseUrl": ".",
+    "strict": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "paths": {
+      "~/*": ["./app/*"]
+    }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "index.d.ts"],
+  "include": ["remix.env.d.ts", "**/*.ts", "**/*.tsx", "index.d.ts"],
   "references": [
     {
       "path": "./tsconfig.node.json"

@@ -1,5 +1,5 @@
 import React from "react";
-import { StatusAlert } from "./StatusAlert";
+import { StatusAlert } from "~/StatusAlert";
 
 export function CompatibilityCheck() {
   const isCompatible = "showSaveFilePicker" in window;

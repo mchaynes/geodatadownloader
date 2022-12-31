@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
 import { ThemeProvider } from "@emotion/react";
+import "~/index.css";
 import AppBar from "@mui/material/AppBar";
 import Container from "@mui/material/Container";
 import { createTheme } from "@mui/material";
@@ -8,19 +8,19 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import Link from "@mui/material/Link";
-import { FileHandler } from "./FileHandler";
-import { Workflow } from "./Workflow";
-import logo from "./icons/icon-128.png";
-import { CompatibilityCheck } from "./CompatibilityCheck";
-import { WelcomeMessage } from "./WelcomeMessage";
+import { Workflow } from "~/components/Workflow.client";
+import logo from "~/icons/icon-128.png";
+import { CompatibilityCheck } from "~/components/CompatibilityCheck.client";
+import { WelcomeMessage } from "~/components/WelcomeMessage.client";
+import { useEffect, useState } from "react";
 
 const theme = createTheme();
 
-export type AppProps = {
-  fileHandler: FileHandler;
-};
-
-function App({ fileHandler }: AppProps) {
+export default function Index() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -40,15 +40,16 @@ function App({ fileHandler }: AppProps) {
           </Typography>
         </Toolbar>
       </AppBar>
-      <WelcomeMessage />
-
-      <Container component="main" maxWidth="lg" sx={{ mb: 4 }}>
-        <Box sx={{ mt: 3 }}>
-          <CompatibilityCheck />
-        </Box>
-        <Workflow fileHandler={fileHandler} />
-        <Footer />
-      </Container>
+      {mounted ? (
+        <Container component="main" maxWidth="lg" sx={{ mb: 4 }}>
+          <WelcomeMessage />
+          <Box sx={{ mt: 3 }}>
+            <CompatibilityCheck />
+          </Box>
+          <Workflow />
+          <Footer />
+        </Container>
+      ) : null}
     </ThemeProvider>
   );
 }
@@ -97,5 +98,3 @@ function Footer() {
     </Box>
   );
 }
-
-export default App;

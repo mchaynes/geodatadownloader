@@ -3,17 +3,17 @@ import { useEffect, useState } from "react";
 import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
-import { QueryResults } from "./arcgis";
-import { DownloaderForm } from "./Downloader";
-import { AttributeTablePreview } from "./AttributeTablePreview";
-import { PickLayer } from "./PickLayer";
-import { FileHandler } from "./FileHandler";
-import { ExtentPicker } from "./ExtentPicker";
-import Geometry from "@arcgis/core/geometry/Geometry";
-import { Where } from "./Where";
-import FeatureLayer from "esri/layers/FeatureLayer";
+import { QueryResults } from "~/arcgis";
+import { DownloaderForm } from "~/Downloader";
+import { AttributeTablePreview } from "~/AttributeTablePreview";
+import { PickLayer } from "~/PickLayer";
+import { FileHandler } from "~/components/FileHandler.client";
+import { ExtentPicker } from "~/components/ExtentPicker.client";
+import type Geometry from "@arcgis/core/geometry/Geometry";
+import { Where } from "~/Where";
+import type FeatureLayer from "esri/layers/FeatureLayer";
 import Box from "@mui/material/Box";
-import { getQueryParameter } from "./url";
+import { getQueryParameter } from "~/url";
 
 const paperSx = { my: { xs: 3, md: 6 }, p: { xs: 2, md: 3 } };
 
@@ -21,7 +21,8 @@ export type WorkflowProps = {
   fileHandler: FileHandler;
 };
 
-export function Workflow({ fileHandler }: WorkflowProps) {
+export function Workflow() {
+  const [fileHandler] = useState(new FileHandler());
   const layerUrl = getQueryParameter("layer_url") || "";
   const [layer, setLayer] = useState<FeatureLayer>();
   return (

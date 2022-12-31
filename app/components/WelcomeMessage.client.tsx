@@ -3,7 +3,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import React, { useEffect, useState } from "react";
-import { StatusAlert, useStatusAlert } from "./StatusAlert";
+import { StatusAlert, useStatusAlert } from "~/StatusAlert";
 
 const localStorageKey = "feedback_dismissed";
 
