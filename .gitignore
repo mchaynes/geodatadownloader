@@ -33,3 +33,7 @@ dist/
 
 # Local Netlify folder
 .netlify
+
+.cache
+
+public/build/
