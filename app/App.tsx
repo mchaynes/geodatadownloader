@@ -64,6 +64,20 @@ function Footer() {
           Github
         </Link>{" "}
       </Typography>
+      <a
+        href="https://www.buymeacoffee.com/myleschayng"
+        target="_blank"
+        style={{ textAlign: "center", display: "block", marginTop: 20 }}
+      >
+        <img
+          src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
+          alt="Buy Me A Coffee"
+          style={{
+            height: "40px",
+            width: "144px",
+          }}
+        />
+      </a>
       <form
         action="https://www.paypal.com/donate"
         method="post"
