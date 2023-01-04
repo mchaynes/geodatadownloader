@@ -31,7 +31,6 @@
     "web-vitals": "^3.1.0"
   },
   "scripts": {
-    "start:ci": "npx serve build",
     "build": "vite build",
     "start": "vite --port 3000",
     "test": "jest",
