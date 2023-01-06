@@ -28,6 +28,7 @@
     "postcss": "8.4.20",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-loadable": "^5.5.0",
     "vite": "^4.0.4",
     "web-vitals": "^3.1.0"
   },
@@ -36,7 +37,8 @@
     "start": "vite --port 3000",
     "test": "jest",
     "cy:open": "cypress open",
-    "cy:run": "cypress run"
+    "cy:run": "cypress run",
+    "analyze": "source-map-explorer dist/assets/index-*"
   },
   "eslintConfig": {
     "extends": [
@@ -87,6 +89,7 @@
     "netlify-plugin-cypress": "^2.2.0",
     "prettier-eslint": "^15.0.1",
     "react-test-renderer": "^18.2.0",
+    "rollup-plugin-visualizer": "^5.9.0",
     "style-loader": "^3.3.1",
     "ts-jest": "^29.0.3",
     "typescript": "^4.9.4"

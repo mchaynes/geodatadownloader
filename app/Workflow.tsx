@@ -8,8 +8,7 @@ import { DownloaderForm } from "./Downloader";
 import { AttributeTablePreview } from "./AttributeTablePreview";
 import { PickLayer } from "./PickLayer";
 import { FileHandler } from "./FileHandler";
-import { ExtentPicker } from "./ExtentPicker";
-import Geometry from "@arcgis/core/geometry/Geometry";
+import { ExtentPicker, Geometry } from "./async";
 import { Where } from "./Where";
 import FeatureLayer from "esri/layers/FeatureLayer";
 import Box from "@mui/material/Box";
@@ -43,7 +42,7 @@ function WorkflowItems({ layer, fileHandler }: WorkflowItemsProps) {
   const [selectedFields, setSelectedFields] = useState<string[]>(
     layer.fields.map((f) => f.name)
   );
-  const [filterExtent, setFilterExtent] = useState<Geometry | undefined>(
+  const [filterExtent, setFilterExtent] = useState<typeof Geometry | undefined>(
     undefined
   );
   const [where, setWhere] = useState(() => getQueryParameter("where") || "1=1");
