@@ -37,3 +37,4 @@ dist/
 .cache
 
 public/build/
+stats.html
