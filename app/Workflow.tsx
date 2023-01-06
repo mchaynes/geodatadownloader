@@ -10,7 +10,7 @@ import { PickLayer } from "./PickLayer";
 import { FileHandler } from "./FileHandler";
 import { ExtentPicker, Geometry } from "./async";
 import { Where } from "./Where";
-import FeatureLayer from "esri/layers/FeatureLayer";
+import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import Box from "@mui/material/Box";
 import { getQueryParameter } from "./url";
 
