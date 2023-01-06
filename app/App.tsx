@@ -14,6 +14,11 @@ import logo from "./icons/icon-128.png";
 import { CompatibilityCheck } from "./CompatibilityCheck";
 import { WelcomeMessage } from "./WelcomeMessage";
 
+import "@fontsource/roboto/300.css";
+import "@fontsource/roboto/400.css";
+import "@fontsource/roboto/500.css";
+import "@fontsource/roboto/700.css";
+
 const theme = createTheme();
 
 export type AppProps = {
