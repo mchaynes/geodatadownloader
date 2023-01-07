@@ -1,4 +1,3 @@
-import React from "react";
 import { useEffect, useState } from "react";
 import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";

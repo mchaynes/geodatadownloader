@@ -1,4 +1,4 @@
-import React from "react";
+import * as React from "react";
 import InputLabel from "@mui/material/InputLabel";
 import { styled } from "@mui/material/styles";
 import Box from "@mui/material/Box";

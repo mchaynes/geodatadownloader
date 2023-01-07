@@ -1,4 +1,4 @@
-import React from 'react';
+import { StrictMode } from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
@@ -8,11 +8,11 @@ import { FileHandler } from './FileHandler';
 const fileHandler = new FileHandler()
 
 ReactDOM.render(
-  <React.StrictMode>
+  <StrictMode>
     <App
       fileHandler={fileHandler}
     />
-  </React.StrictMode>,
+  </StrictMode>,
   document.getElementById('root')
 );
 

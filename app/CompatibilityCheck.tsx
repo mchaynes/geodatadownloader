@@ -1,4 +1,3 @@
-import React from "react";
 import { StatusAlert } from "./StatusAlert";
 
 export function CompatibilityCheck() {

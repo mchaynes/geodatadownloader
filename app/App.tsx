@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ThemeProvider } from "@emotion/react";
 import AppBar from "@mui/material/AppBar";
 import Container from "@mui/material/Container";

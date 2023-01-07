@@ -1,6 +1,5 @@
 
 import { test, expect } from '@jest/globals';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import App from './App';
 import { FileHandler } from './FileHandler';
