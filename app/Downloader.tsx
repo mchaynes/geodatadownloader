@@ -24,6 +24,10 @@ import MuiInput from "@mui/material/Input";
 import Stack from "@mui/material/Stack";
 import { CsvDownloader } from "./formats/csv";
 
+import ThumbUpIcon from "@mui/icons-material/ThumbUp";
+import CheckBox from "@mui/icons-material/CheckBox";
+import { Chip, CircularProgress, Divider, ListItemText } from "@mui/material";
+
 type SupportedExportTypes = "geojson" | "csv";
 
 const Input = styled(MuiInput)`
@@ -139,12 +143,21 @@ export function DownloaderForm({
 							id="type-type"
 							value={exportType}
 							label="Export File Type"
-							onChange={(e) =>
-								setExportType(e.target.value as SupportedExportTypes)
-							}
+							onChange={(e) => {
+								if (e.target.value !== "shp") {
+									setExportType(e.target.value as SupportedExportTypes);
+								}
+							}}
 						>
+							<Divider>Supported Formats</Divider>
 							<MenuItem value="geojson">GeoJSON</MenuItem>
 							<MenuItem value="csv">CSV</MenuItem>
+							<Divider>Not yet supported (click thumbs up to vote)</Divider>
+							<PotentialExportType format="Shapefile (SHP)" />
+							<PotentialExportType format="KML" />
+							<PotentialExportType format="Geopackage (GPKG)" />
+							<PotentialExportType format="Esri Geodatabase (GDB)" />
+							<PotentialExportType format="Raster formats? (TIFF, etc)" />
 						</Select>
 					</FormControl>
 					<Box>
@@ -207,5 +220,53 @@ export function DownloaderForm({
 				<StatusAlert {...alertProps} />
 			</Box>
 		</div>
+	);
+}
+
+type PotentialExportTypeProps = {
+	format: string;
+};
+
+function PotentialExportType({ format }: PotentialExportTypeProps) {
+	const [state, setState] = useState("");
+
+	async function onClick() {
+		try {
+			setState("loading");
+			const response = await fetch("/", {
+				method: "POST",
+				headers: { "Content-Type": "application/x-www-form-urlencoded" },
+				body: new URLSearchParams({
+					"form-name": "formats",
+					format: format,
+				}).toString(),
+			});
+			if (response.status !== 200) {
+				throw new Error(
+					`Error from server: ${response.status} - ${await response.text()}`
+				);
+			}
+			setState("success");
+		} catch (e) {
+			setState("error");
+		}
+	}
+
+	return (
+		<MenuItem value={format} disableRipple={true} disableTouchRipple={true}>
+			<ListItemText>{format}</ListItemText>{" "}
+			<Button onClick={onClick} disabled={state !== ""}>
+				{(function render() {
+					switch (state) {
+						case "success":
+							return <CheckBox color="success" />;
+						case "loading":
+							return <CircularProgress size={20} />;
+						default:
+							return <ThumbUpIcon />;
+					}
+				})()}
+			</Button>
+		</MenuItem>
 	);
 }
