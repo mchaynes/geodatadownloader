@@ -77,6 +77,7 @@ export function AttributeTablePreview({
                         featureSet.features?.map((feature, i) => {
                             const item: Row = { id: i };
                             fields.forEach((f) => {
+                                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                                 item[f.name] = feature.getAttribute(f.name);
                             });
                             return item;
@@ -85,9 +86,10 @@ export function AttributeTablePreview({
                     setAlertProps("", undefined);
                 } catch (e) {
                     console.error(e);
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                     const { details } = e as EsriError;
                     const { messages } = details as { messages: string[] };
-                    setAlertProps(`Failed: ${messages}`, "error");
+                    setAlertProps(`Failed: ${messages.join(", ")}`, "error");
                     setRows([]);
                     setTotalFeaturesCount(0);
                 }
