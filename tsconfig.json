@@ -17,11 +17,18 @@
     "allowJs": true,
     "typeRoots": ["src/types", "./node_modules/@types"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "index.d.ts"],
+  "include": [
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "index.d.ts",
+    "cypress/**/*.ts",
+    "**.ts",
+    "**.cjs"
+  ],
   "references": [
     {
       "path": "./tsconfig.node.json"
     }
   ],
-  "exclude": ["node_modules", "**/*.spec.ts", "**/*.test.ts"]
+  "exclude": ["node_modules"]
 }

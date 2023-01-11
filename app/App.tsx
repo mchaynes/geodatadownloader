@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { ThemeProvider } from "@emotion/react";
 import AppBar from "@mui/material/AppBar";
 import Container from "@mui/material/Container";
@@ -39,14 +38,13 @@ function App({ fileHandler }: AppProps) {
         }}
       >
         <Toolbar>
-          <img src={logo} width="32px" height="32px" alt="Pine" />
+          <img src={logo as string} width="32px" height="32px" alt="Pine" />
           <Typography sx={{ ml: 3 }} variant="h6" color="inherit" noWrap={true}>
             geodatadownloader
           </Typography>
         </Toolbar>
       </AppBar>
       <WelcomeMessage />
-
       <Container component="main" maxWidth="lg" sx={{ mb: 4 }}>
         <Box sx={{ mt: 3 }}>
           <CompatibilityCheck />
