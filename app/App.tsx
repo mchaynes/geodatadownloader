@@ -7,10 +7,8 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import Link from "@mui/material/Link";
-import { FileHandler } from "./FileHandler";
 import { Workflow } from "./Workflow";
 import logo from "./icons/icon-128.png";
-import { CompatibilityCheck } from "./CompatibilityCheck";
 import { WelcomeMessage } from "./WelcomeMessage";
 
 import "@fontsource/roboto/300.css";
@@ -20,11 +18,7 @@ import "@fontsource/roboto/700.css";
 
 const theme = createTheme();
 
-export type AppProps = {
-  fileHandler: FileHandler;
-};
-
-function App({ fileHandler }: AppProps) {
+function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -46,10 +40,7 @@ function App({ fileHandler }: AppProps) {
       </AppBar>
       <WelcomeMessage />
       <Container component="main" maxWidth="lg" sx={{ mb: 4 }}>
-        <Box sx={{ mt: 3 }}>
-          <CompatibilityCheck />
-        </Box>
-        <Workflow fileHandler={fileHandler} />
+        <Workflow />
         <Footer />
       </Container>
     </ThemeProvider>
