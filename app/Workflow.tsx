@@ -6,7 +6,6 @@ import { QueryResults } from "./arcgis";
 import { DownloaderForm } from "./Downloader";
 import { AttributeTablePreview } from "./AttributeTablePreview";
 import { PickLayer } from "./PickLayer";
-import { FileHandler } from "./FileHandler";
 import { ExtentPicker } from "./ExtentPicker";
 import Geometry from "@arcgis/core/geometry/Geometry";
 import { Where } from "./Where";
@@ -16,11 +15,7 @@ import { getQueryParameter } from "./url";
 
 const paperSx = { my: { xs: 3, md: 6 }, p: { xs: 2, md: 3 } };
 
-export type WorkflowProps = {
-  fileHandler: FileHandler;
-};
-
-export function Workflow({ fileHandler }: WorkflowProps) {
+export function Workflow() {
   const layerUrl = getQueryParameter("layer_url") || "";
   const [layer, setLayer] = useState<FeatureLayer>();
   return (
@@ -28,17 +23,17 @@ export function Workflow({ fileHandler }: WorkflowProps) {
       <Paper variant="outlined" sx={paperSx}>
         <SectionHeader header="Layer Info" />
         <PickLayer defaultLayerUrl={layerUrl} onLayerLoad={setLayer} />
-        {layer && <WorkflowItems layer={layer} fileHandler={fileHandler} />}
+        {layer && <WorkflowItems layer={layer} />}
       </Paper>
     </Box>
   );
 }
 
-export type WorkflowItemsProps = WorkflowProps & {
+export type WorkflowItemsProps = {
   layer: FeatureLayer;
 };
 
-function WorkflowItems({ layer, fileHandler }: WorkflowItemsProps) {
+function WorkflowItems({ layer }: WorkflowItemsProps) {
   const [selectedFields, setSelectedFields] = useState<string[]>(
     layer.fields.map((f) => f.name)
   );
@@ -79,7 +74,6 @@ function WorkflowItems({ layer, fileHandler }: WorkflowItemsProps) {
       <SectionDivider />
       <SectionHeader header="Download Options" />
       <DownloaderForm
-        fileHandler={fileHandler}
         outFields={selectedFields}
         queryResults={queryResults}
         where={where}

@@ -1,20 +1,59 @@
-import { arcgisToGeoJSON } from "@terraformer/arcgis";
-import { createObjectCsvStringifier } from "csv-writer-browser";
 import { QueryResults } from "../arcgis";
-import { FeatureCollection } from "./geojson";
-import fastq, { queueAsPromised } from "fastq";
-import { Writer } from "./writer";
+import { arcgisToGeoJSON } from "@terraformer/arcgis";
+import fastq from "fastq";
+import type { queueAsPromised } from "fastq";
+import shpwrite from "shp-write";
 
-export class CsvDownloader {
+export interface Downloader {
+  download(
+    results: QueryResults,
+    fileHandle: FileSystemFileHandle,
+    outFields: string[],
+    numConcurrent: number,
+    where: string
+  ): Promise<void>;
+}
+
+// Open geojson FeatureCollection object and "features" array
+const header = `
+{
+    "type": "FeatureCollection",
+    "features" : [
+`;
+
+// Close "features" array opened in header. Close geojson object
+const footer = `
+    ]
+}
+`;
+
+export type FeatureCollection = {
+  features: Feature[];
+};
+
+export type Feature = {
+  geometry: {
+    type: string;
+    coordinates: number[][][];
+  };
+  id: number | string;
+  properties: {
+    [key: string]: any;
+  };
+};
+
+export const DEFAULT_CONCURRENT_REQUESTS = 2;
+export const MAX_CONCURRENT_REQUESTS = 20;
+
+export class ShpDownloader {
+  featuresWritten = 0;
   onWrite: (featuresWritten: number) => void;
-  featuresWritten: number;
   constructor(onWrite: (_: number) => void) {
     this.onWrite = onWrite;
   }
-
   download = async (
     results: QueryResults,
-    writer: Writer,
+    fileHandle: FileSystemFileHandle,
     outFields: string[],
     numConcurrent: number,
     where: string
@@ -23,42 +62,32 @@ export class CsvDownloader {
     if (!layer) {
       throw new Error("layer not defined");
     }
+    let bigWholeString = header;
+    const writer = writable.getWriter();
     const numPages = await results.getNumPages(where);
     // Create callable functions that fetch results for each page
     let firstPage = true;
     const fetchResults = async (pageNum: number): Promise<void> => {
       const features = await results.getPage(pageNum, outFields, where);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const json = features.toJSON();
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       const geojson = arcgisToGeoJSON(json) as unknown as FeatureCollection;
-      const csvStringifier = createObjectCsvStringifier({
-        header: [
-          { id: "geometry", title: "geometry" },
-          ...features.fields.map((f) => ({ id: f.name, title: f.name })),
-        ],
-      });
-      let stringified = csvStringifier.stringifyRecords(
-        geojson.features.map((f) => ({
-          geometry: JSON.stringify(f.geometry),
-          ...f.properties,
-        }))
-      );
+      let stringified = geojson.features
+        .map((f) => JSON.stringify(f))
+        .join(",");
       if (firstPage) {
-        await writer.write(csvStringifier.getHeaderString() ?? "");
         // we are the first page, so new pages are no longer first
         firstPage = false;
       } else {
         // add a leading "," if this isn't the first page we fetched
-        stringified = "\n" + stringified;
+        stringified = `, ${stringified}`;
       }
       // Join features in chunk together, write to file
-      await writer.write(stringified);
+      bigWholeString += stringified;
       this.featuresWritten += geojson.features.length;
       // Notify listeners that we've written more features
       this.onWrite(this.featuresWritten);
     };
-    const promises: Array<Promise<void>> = [];
+    const promises: Promise<void>[] = [];
     const q: queueAsPromised<number, void> = fastq.promise(
       fetchResults,
       numConcurrent
@@ -67,7 +96,8 @@ export class CsvDownloader {
       promises.push(q.push(i));
     }
     await Promise.all(promises);
-    await writer.save();
+    bigWholeString += footer;
+    shpwrite.download(bigWholeString);
     this.featuresWritten = 0;
   };
 }
