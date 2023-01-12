@@ -2,14 +2,15 @@ import { QueryResults } from "../arcgis";
 import { arcgisToGeoJSON } from "@terraformer/arcgis";
 import fastq from "fastq";
 import type { queueAsPromised } from "fastq";
+import { Writer } from "./writer";
 
 export interface Downloader {
 	download(
 		results: QueryResults,
-		fileHandle: FileSystemFileHandle,
+		writer: Writer,
 		outFields: string[],
 		numConcurrent: number,
-		where: string,
+		where: string
 	): Promise<void>;
 }
 
@@ -52,19 +53,17 @@ export class GeojsonDownloader {
 	}
 	download = async (
 		results: QueryResults,
-		fileHandle: FileSystemFileHandle,
+		writer: Writer,
 		outFields: string[],
 		numConcurrent: number,
-		where: string,
+		where: string
 	) => {
 		const layer = results.getLayer();
 		if (!layer) {
 			throw new Error("layer not defined");
 		}
-		const writable = await fileHandle.createWritable();
-		const writer = writable.getWriter();
 		const numPages = await results.getNumPages(where);
-		writer.write(header);
+		await writer.write(header);
 		// Create callable functions that fetch results for each page
 		let firstPage = true;
 		const fetchResults = async (pageNum: number): Promise<void> => {
@@ -90,14 +89,14 @@ export class GeojsonDownloader {
 		const promises: Promise<void>[] = [];
 		const q: queueAsPromised<number, void> = fastq.promise(
 			fetchResults,
-			numConcurrent,
+			numConcurrent
 		);
 		for (let i = 0; i < numPages; i++) {
 			promises.push(q.push(i));
 		}
 		await Promise.all(promises);
-		writer.write(footer);
-		writer.close();
+		await writer.write(footer);
+		await writer.save();
 		this.featuresWritten = 0;
 	};
 }

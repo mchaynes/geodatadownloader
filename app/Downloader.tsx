@@ -5,7 +5,6 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import { useEffect, useState } from "react";
 import { QueryResults } from "./arcgis";
-import { FileHandler } from "./FileHandler";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
@@ -27,6 +26,7 @@ import { CsvDownloader } from "./formats/csv";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import CheckBox from "@mui/icons-material/CheckBox";
 import { CircularProgress, Divider, ListItemText } from "@mui/material";
+import { Writer } from "./formats/writer";
 
 type SupportedExportTypes = "geojson" | "csv";
 
@@ -37,13 +37,11 @@ const Input = styled(MuiInput)`
 export type DownloaderProps = {
   queryResults: QueryResults;
   outFields: string[];
-  fileHandler: FileHandler;
   where: string;
 };
 
 export function DownloaderForm({
   queryResults,
-  fileHandler,
   outFields,
   where,
 }: DownloaderProps) {
@@ -97,7 +95,7 @@ export function DownloaderForm({
       default:
         throw new Error(`invalid export type: "${exportType}"`);
     }
-    const fileHandle = await fileHandler.getFileHandle(
+    const writer = new Writer(
       `${queryResults.getLayer()?.title ?? "Layer"}.${exportType}`
     );
     try {
@@ -106,13 +104,13 @@ export function DownloaderForm({
       setTotalFeatures(await queryResults.getTotalCount(where));
       await downloader.download(
         queryResults,
-        fileHandle,
+        writer,
         outFields,
         concRequests,
         where
       );
       setAlertProps(
-        `Successfully downloaded ${totalFeatures} features to "${fileHandle.name}"`,
+        `Successfully downloaded ${totalFeatures} features to "${writer.key}"`,
         "success"
       );
     } catch (e) {
