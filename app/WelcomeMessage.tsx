@@ -55,7 +55,6 @@ export function WelcomeMessage() {
       ...data,
       dismissed: "true",
     }));
-    submit();
   };
 
   return (
