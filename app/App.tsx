@@ -38,10 +38,10 @@ function App() {
           </Typography>
         </Toolbar>
       </AppBar>
-      <WelcomeMessage />
       <Container component="main" maxWidth="lg" sx={{ mb: 4 }}>
         <Workflow />
         <Footer />
+        <WelcomeMessage />
       </Container>
     </ThemeProvider>
   );
