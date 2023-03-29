@@ -7,11 +7,14 @@ export class Writer {
     this.data = [];
   }
 
-  async write(data: string) {
+  write(data: string) {
     this.data.push(data);
   }
 
-  async save() {
-    saveAs(new Blob(this.data, { type: "application/geo+json" }), this.key);
+  save(contentType?: string) {
+    saveAs(
+      new Blob(this.data, { type: contentType ?? "application/geo+json" }),
+      this.key
+    );
   }
 }

@@ -45,7 +45,7 @@ export class CsvDownloader {
         }))
       );
       if (firstPage) {
-        await writer.write(csvStringifier.getHeaderString() ?? "");
+        writer.write(csvStringifier.getHeaderString() ?? "");
         // we are the first page, so new pages are no longer first
         firstPage = false;
       } else {
@@ -53,7 +53,7 @@ export class CsvDownloader {
         stringified = "\n" + stringified;
       }
       // Join features in chunk together, write to file
-      await writer.write(stringified);
+      writer.write(stringified);
       this.featuresWritten += geojson.features.length;
       // Notify listeners that we've written more features
       this.onWrite(this.featuresWritten);
@@ -67,7 +67,7 @@ export class CsvDownloader {
       promises.push(q.push(i));
     }
     await Promise.all(promises);
-    await writer.save();
+    writer.save("text/csv");
     this.featuresWritten = 0;
   };
 }
