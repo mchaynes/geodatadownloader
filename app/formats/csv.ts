@@ -49,7 +49,7 @@ export class CsvDownloader {
         // we are the first page, so new pages are no longer first
         firstPage = false;
       } else {
-        // add a leading "," if this isn't the first page we fetched
+        // add a leading "\n" if this isn't the first page we fetched
         stringified = "\n" + stringified;
       }
       // Join features in chunk together, write to file
