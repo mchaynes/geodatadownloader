@@ -38,3 +38,4 @@ dist/
 
 public/build/
 stats.html
+*.numbers

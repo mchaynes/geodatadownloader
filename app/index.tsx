@@ -1,19 +1,14 @@
-import { StrictMode } from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
-import { FileHandler } from './FileHandler';
-
-const fileHandler = new FileHandler()
+import { StrictMode } from "react";
+import ReactDOM from "react-dom";
+import "./index.css";
+import App from "./App";
+import reportWebVitals from "./reportWebVitals";
 
 ReactDOM.render(
   <StrictMode>
-    <App
-      fileHandler={fileHandler}
-    />
+    <App />
   </StrictMode>,
-  document.getElementById('root')
+  document.getElementById("root")
 );
 
 // If you want to start measuring performance in your app, pass a function
