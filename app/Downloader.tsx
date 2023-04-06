@@ -28,8 +28,9 @@ import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import CheckBox from "@mui/icons-material/CheckBox";
 import { CircularProgress, Divider, ListItemText } from "@mui/material";
 import { Writer } from "./formats/writer";
+import { GpkgDownloader } from "./formats/gpkg";
 
-type SupportedExportTypes = "geojson" | "csv" | "shp";
+type SupportedExportTypes = "gpkg" | "geojson" | "csv" | "shp";
 
 const Input = styled(MuiInput)`
   width: 42px;
@@ -46,7 +47,7 @@ export function DownloaderForm({
   outFields,
   where,
 }: DownloaderProps) {
-  const [exportType, setExportType] = useState<SupportedExportTypes>("geojson");
+  const [exportType, setExportType] = useState<SupportedExportTypes>("gpkg");
   const [featuresWritten, setFeaturesWritten] = useState(0);
   const [concRequests, setConcRequests] = useState(DEFAULT_CONCURRENT_REQUESTS);
   const [concAlertProps, setConcAlertProps] = useStatusAlert("", undefined);
@@ -95,6 +96,10 @@ export function DownloaderForm({
       }
       case "shp": {
         downloader = new ShpDownloader(setFeaturesWritten);
+        break;
+      }
+      case "gpkg": {
+        downloader = new GpkgDownloader(setFeaturesWritten);
         break;
       }
       default:
@@ -153,11 +158,10 @@ export function DownloaderForm({
               <Divider>Supported Formats</Divider>
               <MenuItem value="geojson">GeoJSON</MenuItem>
               <MenuItem value="csv">CSV</MenuItem>
-              <MenuItem value="shp">SHP</MenuItem>
+              <MenuItem value="shp">Shapefile (SHP)</MenuItem>
+              <MenuItem value="gpkg">Geopackage (GPKG)</MenuItem>
               <Divider>Not yet supported (click thumbs up to vote)</Divider>
               <PotentialExportType format="KML" />
-              <PotentialExportType format="Geopackage (GPKG)" />
-              <PotentialExportType format="Esri Geodatabase (GDB)" />
               <PotentialExportType format="Raster formats? (TIFF, etc)" />
             </Select>
           </FormControl>
