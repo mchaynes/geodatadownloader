@@ -6,6 +6,7 @@ import { Writer } from "./writer";
 import JSZip from "jszip";
 import initGdalJs from "gdal3.js";
 import saveAs from "file-saver";
+import { getGdalJs } from "../gdal";
 
 export interface Downloader {
 	download(
@@ -101,7 +102,7 @@ export class ShpDownloader {
 		}
 		await Promise.all(promises);
 		writer.write(footer);
-		const Gdal = await initGdalJs();
+		const Gdal = await getGdalJs();
 		const srcDataset = await Gdal.open(new File(writer.data, "layer.geojson"));
 		await Gdal.ogr2ogr(srcDataset.datasets[0], ["-f", "ESRI Shapefile"]);
 		const files = await Gdal.getOutputFiles();
