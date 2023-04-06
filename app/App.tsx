@@ -1,7 +1,7 @@
 import { ThemeProvider } from "@emotion/react";
 import AppBar from "@mui/material/AppBar";
 import Container from "@mui/material/Container";
-import { createTheme } from "@mui/material";
+import { Button, createTheme } from "@mui/material";
 import CssBaseline from "@mui/material/CssBaseline";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
@@ -67,8 +67,8 @@ function Footer() {
           src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
           alt="Buy Me A Coffee"
           style={{
-            height: "20px",
-            width: "72px",
+            height: "25px",
+            width: "100px",
           }}
         />
       </a>

@@ -22,13 +22,14 @@ import Grid from "@mui/material/Grid";
 import MuiInput from "@mui/material/Input";
 import Stack from "@mui/material/Stack";
 import { CsvDownloader } from "./formats/csv";
+import { ShpDownloader } from "./formats/shp";
 
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import CheckBox from "@mui/icons-material/CheckBox";
 import { CircularProgress, Divider, ListItemText } from "@mui/material";
 import { Writer } from "./formats/writer";
 
-type SupportedExportTypes = "geojson" | "csv";
+type SupportedExportTypes = "geojson" | "csv" | "shp";
 
 const Input = styled(MuiInput)`
   width: 42px;
@@ -92,6 +93,10 @@ export function DownloaderForm({
         downloader = new CsvDownloader(setFeaturesWritten);
         break;
       }
+      case "shp": {
+        downloader = new ShpDownloader(setFeaturesWritten);
+        break;
+      }
       default:
         throw new Error(`invalid export type: "${exportType}"`);
     }
@@ -142,16 +147,14 @@ export function DownloaderForm({
               value={exportType}
               label="Export File Type"
               onChange={(e) => {
-                if (e.target.value !== "shp") {
-                  setExportType(e.target.value as SupportedExportTypes);
-                }
+                setExportType(e.target.value as SupportedExportTypes);
               }}
             >
               <Divider>Supported Formats</Divider>
               <MenuItem value="geojson">GeoJSON</MenuItem>
               <MenuItem value="csv">CSV</MenuItem>
+              <MenuItem value="shp">SHP</MenuItem>
               <Divider>Not yet supported (click thumbs up to vote)</Divider>
-              <PotentialExportType format="Shapefile (SHP)" />
               <PotentialExportType format="KML" />
               <PotentialExportType format="Geopackage (GPKG)" />
               <PotentialExportType format="Esri Geodatabase (GDB)" />
