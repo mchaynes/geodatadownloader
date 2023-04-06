@@ -41,6 +41,18 @@
       <input name="format" type="text" />
     </form>
 
+    <!-- helper for netlify bots to create forms -->
+    <form
+      name="downloads"
+      data-netlify="true"
+      netlify-honeypot="bot-field"
+      hidden
+    >
+      <input name="layer_url" type="text" />
+      <input name="format" type="text" />
+      <input name="error" type="text" />
+    </form>
+
     <script type="module" src="/app/index.tsx"></script>
 
     <noscript>You need to enable JavaScript to run this app.</noscript>

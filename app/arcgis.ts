@@ -1,95 +1,102 @@
-import FeatureLayer from '@arcgis/core/layers/FeatureLayer'
+import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import FeatureSet from "@arcgis/core/rest/support/FeatureSet";
-import Geometry from '@arcgis/core/geometry/Geometry'
-import EsriExtent from '@arcgis/core/geometry/Extent'
-import EsriPolygon from '@arcgis/core/geometry/Polygon'
+import Geometry from "@arcgis/core/geometry/Geometry";
+import EsriExtent from "@arcgis/core/geometry/Extent";
+import EsriPolygon from "@arcgis/core/geometry/Polygon";
 
 type SpatialReference = {
-    wkid: number,
-    latestWkid: number,
-}
+    wkid: number;
+    latestWkid: number;
+};
 
 type Polygon = {
-    type: "polygon"
-    rings: number[][][]
-    spatialReference: SpatialReference
-}
+    type: "polygon";
+    rings: number[][][];
+    spatialReference: SpatialReference;
+};
 
 type Extent = {
-    type: "extent",
-    xmin: number,
-    ymin: number,
-    xmax: number,
-    ymax: number,
-    spatialReference: SpatialReference
-}
+    type: "extent";
+    xmin: number;
+    ymin: number;
+    xmax: number;
+    ymax: number;
+    spatialReference: SpatialReference;
+};
 
-type Geo = Polygon | Extent
+type Geo = Polygon | Extent;
 
 export function parseGeometryFromString(str: string): Geometry {
-    const geo = JSON.parse(str) as Geo
+    const geo = JSON.parse(str) as Geo;
     // allow for type to not be defined
-    let type = geo.type
+    let type = geo.type;
     if (!type) {
-        if ((geo as Polygon).rings) { // if it has "rings", then assume a polygon
-            type = "polygon"
-        } else if ((geo as Extent).xmax) { // if it has "xmax" then assume an extent
-            type = "extent"
+        if ((geo as Polygon).rings) {
+            // if it has "rings", then assume a polygon
+            type = "polygon";
+        } else if ((geo as Extent).xmax) {
+            // if it has "xmax" then assume an extent
+            type = "extent";
         }
     }
-    geo.type = type
+    geo.type = type;
     switch (geo.type) {
         case "extent":
             return EsriExtent.fromJSON({
-                "type": "extent",
-                "xmin": geo.xmin,
-                "ymin": geo.ymin,
-                "xmax": geo.xmax,
-                "ymax": geo.ymax,
-                "spatialReference": geo.spatialReference,
-            })
+                type: "extent",
+                xmin: geo.xmin,
+                ymin: geo.ymin,
+                xmax: geo.xmax,
+                ymax: geo.ymax,
+                spatialReference: geo.spatialReference,
+            });
         case "polygon":
             return EsriPolygon.fromJSON({
-                "type": geo.type,
-                "spatialReference": geo.spatialReference,
-                "rings": geo.rings
-            })
+                type: geo.type,
+                spatialReference: geo.spatialReference,
+                rings: geo.rings,
+            });
         default:
-            throw new Error(`Unable to parse geometry: ${str}`)
+            throw new Error(`Unable to parse geometry: ${str}`);
     }
 }
 
-export type GeometryUpdateListener = (_?: Geometry) => void
+export type GeometryUpdateListener = (_?: Geometry) => void;
 
 export class QueryResults {
-    private paginatedObjectIds: number[][] = []
-    private where: string
-    private layer: FeatureLayer
-    private queryExtent?: Geometry
-    private pageSize: number
+    private paginatedObjectIds: number[][] = [];
+    private where: string;
+    layer: FeatureLayer;
+    private queryExtent?: Geometry;
+    private pageSize: number;
 
     constructor(layer: FeatureLayer, queryExtent?: Geometry, pageSize = 200) {
-        this.layer = layer
-        this.queryExtent = queryExtent
-        this.pageSize = pageSize
+        this.layer = layer;
+        this.queryExtent = queryExtent;
+        this.pageSize = pageSize;
     }
 
     private initialize = async (where: string): Promise<void> => {
         if (this.where === where) {
-            return
+            return;
         }
-        const objectIds = await this.getObjectIds(where)
-        this.where = where
-        this.paginatedObjectIds = this.paginateIds(objectIds, this.pageSize)
-    }
+        const objectIds = await this.getObjectIds(where);
+        this.where = where;
+        this.paginatedObjectIds = this.paginateIds(objectIds, this.pageSize);
+    };
 
-    getPage = async (page: number, outFields: string[], where: string): Promise<FeatureSet> => {
-        await this.initialize(where)
+    getPage = async (
+        page: number,
+        outFields: string[],
+        where: string
+    ): Promise<FeatureSet> => {
+        await this.initialize(where);
         if (!this.layer) {
-            throw new Error("layer is not set")
+            throw new Error("layer is not set");
         }
         // Find the object id field, default to OBJECTID
-        const objectIdField = this.layer.fields.find(f => f.type === "oid")?.name ?? "OBJECTID"
+        const objectIdField =
+            this.layer.fields.find((f) => f.type === "oid")?.name ?? "OBJECTID";
 
         return await this.layer.queryFeatures({
             where: `${objectIdField} IN (${this.paginatedObjectIds[page].join(",")})`,
@@ -97,45 +104,46 @@ export class QueryResults {
             returnGeometry: true,
             outSpatialReference: {
                 // geojson is always in 4326
-                wkid: 4326
-            }
-        })
-    }
+                wkid: 4326,
+            },
+        });
+    };
 
     getTotalCount = async (where: string): Promise<number> => {
-        return await this.layer?.queryFeatureCount({
-            where: where,
-        }) || 0
-    }
+        return (
+            (await this.layer?.queryFeatureCount({
+                where: where,
+            })) || 0
+        );
+    };
 
     getNumPages = async (where: string) => {
-        await this.initialize(where)
-        return this.paginatedObjectIds.length
-    }
+        await this.initialize(where);
+        return this.paginatedObjectIds.length;
+    };
 
     getLayer() {
-        return this.layer
+        return this.layer;
     }
 
     getPageSize() {
-        return this.pageSize
+        return this.pageSize;
     }
 
-
     /**
-      * Queries layer for all objectIds
-      * @returns list of all object ids for the server
-      */
+     * Queries layer for all objectIds
+     * @returns list of all object ids for the server
+     */
     private getObjectIds = async (where: string): Promise<number[]> => {
         if (!this.layer) {
-            throw new Error("layer is not set")
+            throw new Error("layer is not set");
         }
         return await this.layer?.queryObjectIds({
             where: where,
             geometry: this.queryExtent,
-            spatialRelationship: this.queryExtent ? "intersects" : undefined
-        })
-    }
+            spatialRelationship: this.queryExtent ? "intersects" : undefined,
+        });
+    };
 
     /**
      * From:
@@ -143,23 +151,23 @@ export class QueryResults {
      * To (chunkSize=2):
      *   [[1,2], [3,4], [5,6], [7,8], [9,10]]
      * @param ids object ids to chunk
-     * @param pageSize size of each page 
-     * @returns pages of ids 
+     * @param pageSize size of each page
+     * @returns pages of ids
      */
     private paginateIds(ids: number[], pageSize = 200): number[][] {
-        const chunkedIds: number[][] = []
-        let currentChunk: number[] = []
+        const chunkedIds: number[][] = [];
+        let currentChunk: number[] = [];
         for (const i in ids) {
-            const id = ids[i]
-            currentChunk.push(id)
+            const id = ids[i];
+            currentChunk.push(id);
             if (currentChunk.length === pageSize) {
-                chunkedIds.push(currentChunk)
-                currentChunk = []
+                chunkedIds.push(currentChunk);
+                currentChunk = [];
             }
         }
         if (currentChunk.length !== pageSize) {
-            chunkedIds.push(currentChunk)
+            chunkedIds.push(currentChunk);
         }
-        return chunkedIds
+        return chunkedIds;
     }
 }

@@ -108,6 +108,7 @@ export function DownloaderForm({
     const writer = new Writer(
       `${queryResults.getLayer()?.title ?? "Layer"}.${exportType}`
     );
+    let error = "";
     try {
       setDownloading(true);
       // set the total again here in case it was still loading as we hit download
@@ -126,9 +127,20 @@ export function DownloaderForm({
     } catch (e) {
       const err = e as Error;
       console.error(err);
+      error = err.message;
       setAlertProps(err.message, "error");
     } finally {
       setDownloading(false);
+      await fetch("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          "form-name": "downloads",
+          layer_url: `${queryResults.layer.url}/${queryResults.layer.layerId}`,
+          format: exportType,
+          error: error,
+        }).toString(),
+      });
     }
   }
 
