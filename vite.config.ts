@@ -12,15 +12,15 @@ export default defineConfig({
       targets: [
         {
           src: "node_modules/gdal3.js/dist/package/gdal3.js",
-          dest: "/",
+          dest: ".",
         },
         {
           src: "node_modules/gdal3.js/dist/package/gdal3WebAssembly.data",
-          dest: "/",
+          dest: ".",
         },
         {
           src: "node_modules/gdal3.js/dist/package/gdal3WebAssembly.wasm",
-          dest: "/",
+          dest: ".",
         },
       ],
     }),
