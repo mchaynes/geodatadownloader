@@ -3,6 +3,9 @@ import { arcgisToGeoJSON } from "@terraformer/arcgis";
 import fastq from "fastq";
 import type { queueAsPromised } from "fastq";
 import { Writer } from "./writer";
+import JSZip from "jszip";
+import initGdalJs from "gdal3.js";
+import saveAs from "file-saver";
 
 export interface Downloader {
 	download(
@@ -45,11 +48,13 @@ export type Feature = {
 export const DEFAULT_CONCURRENT_REQUESTS = 2;
 export const MAX_CONCURRENT_REQUESTS = 20;
 
-export class GeojsonDownloader {
+export class ShpDownloader {
 	featuresWritten = 0;
 	onWrite: (featuresWritten: number) => void;
+	zipper: JSZip;
 	constructor(onWrite: (_: number) => void) {
 		this.onWrite = onWrite;
+		this.zipper = new JSZip();
 	}
 	download = async (
 		results: QueryResults,
@@ -96,7 +101,21 @@ export class GeojsonDownloader {
 		}
 		await Promise.all(promises);
 		writer.write(footer);
-		writer.save();
+		const Gdal = await initGdalJs();
+		const srcDataset = await Gdal.open(new File(writer.data, "layer.geojson"));
+		await Gdal.ogr2ogr(srcDataset.datasets[0], ["-f", "ESRI Shapefile"]);
+		const files = await Gdal.getOutputFiles();
+		const zip = new JSZip();
+		for (const f of files) {
+			const shp = new Blob([await Gdal.getFileBytes(f.path)]);
+			const fileName = f.path.split("/")[2];
+			zip.file(fileName, new Blob([shp]));
+		}
+		const zipBytes = await zip.generateAsync({ type: "blob" });
+		saveAs(zipBytes, "layer.zip");
+		for (const d of srcDataset.datasets) {
+			await Gdal.close(d);
+		}
 		this.featuresWritten = 0;
 	};
 }
