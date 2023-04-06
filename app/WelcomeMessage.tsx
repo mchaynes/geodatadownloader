@@ -91,24 +91,24 @@ export function WelcomeMessage() {
               <p>
                 Here's a couple of features I am thinking of adding (only ones
                 that can't be done in-browser would be paid):
-                <ul>
-                  <li>Add support for more formats (SHP/GPKG)</li>
-                  <li>Add support for Safari and Firefox</li>
-                  <li>
-                    Synchronize Feature Layer to ArcGIS Online layer
-                    (authenticated feature layers would be supported)
-                  </li>
-                  <li>
-                    Allow a user to schedule (hourly, daily, weekly, monthly) an
-                    automatic download, which would then be saved to a backend
-                    for the site.
-                  </li>
-                  <li>
-                    Resumable downloads (so if you navigate away from the
-                    website accidentally, you could resume a download)
-                  </li>
-                </ul>
               </p>
+              <ul>
+                <li>Add support for more formats (SHP/GPKG)</li>
+                <li>Add support for Safari and Firefox</li>
+                <li>
+                  Synchronize Feature Layer to ArcGIS Online layer
+                  (authenticated feature layers would be supported)
+                </li>
+                <li>
+                  Allow a user to schedule (hourly, daily, weekly, monthly) an
+                  automatic download, which would then be saved to a backend for
+                  the site.
+                </li>
+                <li>
+                  Resumable downloads (so if you navigate away from the website
+                  accidentally, you could resume a download)
+                </li>
+              </ul>
             </div>
           </div>
 
