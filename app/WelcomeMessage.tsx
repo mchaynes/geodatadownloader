@@ -93,8 +93,6 @@ export function WelcomeMessage() {
                 that can't be done in-browser would be paid):
               </p>
               <ul>
-                <li>Add support for more formats (SHP/GPKG)</li>
-                <li>Add support for Safari and Firefox</li>
                 <li>
                   Synchronize Feature Layer to ArcGIS Online layer
                   (authenticated feature layers would be supported)
