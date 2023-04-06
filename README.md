@@ -24,12 +24,12 @@ Conversion to from arcgis json to geojson is done browser side as well.
 
 - GeoJSON
 - CSV
+- SHP (ESRI Shapefile)
 
-I want to add more support for other formats in the future (especially geopackage),
-but most other good formats are binary formats and have iffy support in a client-side browser application.
-I'm hoping to either make or find a good wasm port of `ogr2ogr`,
-then I'll be able to support any format with no work.
-I believe I can add `shp` support via [shp-write](https://github.com/mapbox/shp-write).
+### Coming Soon
+
+- GPKG
+- GBP (ESRI Geodatabase)
 
 ## How does geodatadownloader download all of the data for a layer?
 
