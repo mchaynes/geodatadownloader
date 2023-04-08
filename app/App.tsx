@@ -30,21 +30,14 @@ const theme = createTheme();
 
 const paperSx = { my: { xs: 3, md: 6 }, p: { xs: 2, md: 3 } };
 
-const defaultLayerUrl =
-  "https://gismaps.kingcounty.gov/arcgis/rest/services/Environment/KingCo_SensitiveAreas/MapServer/11";
-
 type SupportedExportTypes = "gpkg" | "geojson" | "csv" | "shp";
 
 function App() {
   const [exportType, setExportType] = useState(
     getQueryParameter("format") ?? "gpkg"
   );
-  const layerUrl = getQueryParameter("layer_url") || defaultLayerUrl;
-  const [layer, setLayer] = useState<FeatureLayer>(
-    new FeatureLayer({
-      url: layerUrl,
-    })
-  );
+  const layerUrl = getQueryParameter("layer_url") ?? "";
+  const [layer, setLayer] = useState<FeatureLayer | undefined>();
   const [selectedFields, setSelectedFields] = useState<string[]>([]);
   const [filterExtent, setFilterExtent] = useState<Geometry | undefined>(
     undefined
@@ -54,14 +47,16 @@ function App() {
   const boundaryExtent = getQueryParameter("boundary") ?? "";
 
   useEffect(() => {
-    if (layer.loaded) {
+    if (layer?.loaded) {
       setSelectedFields(layer.fields.map((f) => f.name));
       setQueryResults(new QueryResults(layer, filterExtent));
     }
   }, [layer]);
 
   useEffect(() => {
-    setQueryResults(new QueryResults(layer, filterExtent, 500));
+    if (layer) {
+      setQueryResults(new QueryResults(layer, filterExtent, 500));
+    }
   }, [filterExtent, layer]);
 
   return (
@@ -107,7 +102,7 @@ function App() {
           <Paper variant="outlined" sx={paperSx}>
             <SectionHeader header="Layer Info" />
             <PickLayer defaultLayerUrl={layerUrl} onLayerLoad={setLayer} />
-            {layer.loaded && queryResults && (
+            {layer?.loaded && queryResults && (
               <div>
                 <SectionDivider />
                 <SectionHeader header="Draw Boundary (if you want)" />
