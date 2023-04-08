@@ -157,8 +157,7 @@ export class QueryResults {
     private paginateIds(ids: number[], pageSize = 200): number[][] {
         const chunkedIds: number[][] = [];
         let currentChunk: number[] = [];
-        for (const i in ids) {
-            const id = ids[i];
+        for (const id of ids) {
             currentChunk.push(id);
             if (currentChunk.length === pageSize) {
                 chunkedIds.push(currentChunk);

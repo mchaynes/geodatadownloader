@@ -40,14 +40,17 @@ export type DownloaderProps = {
   queryResults: QueryResults;
   outFields: string[];
   where: string;
+  exportType: string;
+  setExportType: (string) => void;
 };
 
 export function DownloaderForm({
   queryResults,
   outFields,
   where,
+  exportType,
+  setExportType,
 }: DownloaderProps) {
-  const [exportType, setExportType] = useState<SupportedExportTypes>("gpkg");
   const [featuresWritten, setFeaturesWritten] = useState(0);
   const [concRequests, setConcRequests] = useState(DEFAULT_CONCURRENT_REQUESTS);
   const [concAlertProps, setConcAlertProps] = useStatusAlert("", undefined);
