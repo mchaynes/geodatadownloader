@@ -131,16 +131,16 @@ export function DownloaderForm({
       setAlertProps(err.message, "error");
     } finally {
       setDownloading(false);
-      await fetch("/", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          "form-name": "downloads",
-          layer_url: `${queryResults.layer.url}/${queryResults.layer.layerId}`,
-          format: exportType,
-          error: error,
-        }).toString(),
-      });
+      // await fetch("/", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      //   body: new URLSearchParams({
+      //     "form-name": "downloads",
+      //     layer_url: `${queryResults.layer.url}/${queryResults.layer.layerId}`,
+      //     format: exportType,
+      //     error: error,
+      //   }).toString(),
+      // });
     }
   }
 
