@@ -34,7 +34,7 @@ export function Where({ defaultWhere, onChange: onWhereChange }: WhereProps) {
         size="small"
         label="Where"
         helperText={
-          <Typography variant="body2">
+          <Typography variant="caption">
             {
               "Ex: population BETWEEN 100 AND 500, population <= 100, city = 'Seattle'. Use 1=1 to return all features"
             }

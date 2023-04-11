@@ -7,7 +7,6 @@ import type {} from "@mui/x-data-grid/themeAugmentation";
 import { StatusAlert, useStatusAlert } from "./StatusAlert";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import { setLoadingWhile } from "./loading";
-import Typography from "@mui/material/Typography";
 
 export type Status = "not_started" | "loading" | "error" | "loaded";
 
@@ -18,10 +17,7 @@ export type PickLayerProps = {
 
 export function PickLayer({ defaultLayerUrl, onLayerLoad }: PickLayerProps) {
   const [loading, setLoading] = useState(false);
-  const [alertProps, setAlertProps] = useStatusAlert(
-    "Map and layer options will appear after load",
-    "info"
-  );
+  const [alertProps, setAlertProps] = useStatusAlert("", undefined);
   const [url, setUrl] = useState(defaultLayerUrl);
 
   const loadLayer = useCallback(
@@ -88,7 +84,12 @@ export function PickLayer({ defaultLayerUrl, onLayerLoad }: PickLayerProps) {
           onChange={(e) => setUrl(e.currentTarget.value)}
           onKeyPress={handleKeyPress}
         />
-        <Button id="load-layer" variant="contained" onClick={onLoadClick}>
+        <Button
+          disabled={!url}
+          id="load-layer"
+          variant="contained"
+          onClick={onLoadClick}
+        >
           Load
         </Button>
       </div>

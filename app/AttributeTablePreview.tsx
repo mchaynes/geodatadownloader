@@ -13,7 +13,7 @@ import { StatusAlert, useStatusAlert } from "./StatusAlert";
 import Typography from "@mui/material/Typography";
 
 export type AttributeTableProps = {
-  queryResults: QueryResults;
+  queryResults?: QueryResults;
   selectedFields: string[];
   setSelectedFields: (fields: string[]) => void;
   fields: Field[];
@@ -44,6 +44,9 @@ export function AttributeTablePreview({
 
   useEffect(() => {
     async function setTotal() {
+      if (!queryResults) {
+        return;
+      }
       setTotalFeaturesCount(await queryResults.getTotalCount(where));
     }
     void setTotal();
@@ -65,6 +68,9 @@ export function AttributeTablePreview({
   useEffect(() => {
     async function loadPreview() {
       await setLoadingWhile(async () => {
+        if (!queryResults) {
+          return;
+        }
         try {
           setTotalFeaturesCount(await queryResults.getTotalCount(where));
           const featureSet = await queryResults.getPage(

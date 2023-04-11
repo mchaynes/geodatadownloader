@@ -1,28 +1,17 @@
 import { ThemeProvider } from "@emotion/react";
-import AppBar from "@mui/material/AppBar";
 import Container from "@mui/material/Container";
-import Paper from "@mui/material/Paper";
 import Divider from "@mui/material/Divider";
 import {
   createTheme,
   CssBaseline,
   responsiveFontSizes,
-  Skeleton,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import Link from "@mui/material/Link";
-import {
-  green,
-  blue,
-  teal,
-  cyan,
-  grey,
-  lightGreen,
-} from "@mui/material/colors";
+import { green, cyan } from "@mui/material/colors";
 import logo from "/IMG_1039.png";
 import { WelcomeMessage } from "./WelcomeMessage";
 
@@ -120,77 +109,72 @@ function App() {
             justifyContent: "stretch",
           }}
         >
-          {layer?.loaded && queryResults ? (
+          <div
+            style={{
+              display: "flex",
+              flexGrow: 1,
+              flexDirection: "column",
+              justifyItems: "stretch",
+              alignSelf: "stretch",
+              gap: "1rem 1rem",
+              alignItems: "stretch",
+              paddingBottom: "2rem",
+            }}
+          >
+            <div>
+              <ExtentPicker
+                defaultBoundaryExtent={boundaryExtent}
+                layer={layer}
+                onFilterGeometryChange={(g) => setFilterExtent(g)}
+                where={where}
+              />
+            </div>
+            <Divider sx={{ paddingTop: 0 }} />
             <div
               style={{
                 display: "flex",
-                flexGrow: 1,
-                flexDirection: "column",
-                justifyItems: "stretch",
+                flexDirection: isLg ? "row" : "column",
                 alignSelf: "stretch",
+                alignContent: "space-between",
                 gap: "1rem 1rem",
-                alignItems: "stretch",
-                paddingTop: "1rem",
-                paddingBottom: "2rem",
               }}
             >
-              <div>
-                <ExtentPicker
-                  defaultBoundaryExtent={boundaryExtent}
-                  layer={layer}
-                  onFilterGeometryChange={(g) => setFilterExtent(g)}
-                  where={where}
-                />
-              </div>
-              <Divider sx={{ paddingTop: 0 }} />
               <div
                 style={{
                   display: "flex",
-                  flexDirection: isLg ? "row" : "column",
-                  alignSelf: "stretch",
-                  alignContent: "space-between",
-                  gap: "1rem 1rem",
+                  flexDirection: "column",
+                  minWidth: "50%",
+                  flexGrow: 1,
                 }}
               >
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    minWidth: "50%",
-                    flexGrow: 1,
-                  }}
-                >
-                  <Typography variant="h3">Attribute Table Preview</Typography>
-                  <Where defaultWhere={where} onChange={setWhere} />
-                  <AttributeTablePreview
-                    selectedFields={selectedFields}
-                    setSelectedFields={setSelectedFields}
-                    queryResults={queryResults}
-                    fields={layer.fields}
-                    where={where}
-                  />
-                </div>
-                {isLg && <Divider orientation="vertical" flexItem={true} />}
-                <div
-                  style={{
-                    flexGrow: 1,
-                    minWidth: "48%",
-                  }}
-                >
-                  <Typography variant="h3">Download Options</Typography>
-                  <DownloaderForm
-                    outFields={selectedFields}
-                    queryResults={queryResults}
-                    where={where}
-                    exportType={exportType}
-                    setExportType={setExportType}
-                  />
-                </div>
+                <Typography variant="h3">Attribute Table Preview</Typography>
+                <Where defaultWhere={where} onChange={setWhere} />
+                <AttributeTablePreview
+                  selectedFields={selectedFields}
+                  setSelectedFields={setSelectedFields}
+                  queryResults={queryResults}
+                  fields={layer?.fields ?? []}
+                  where={where}
+                />
+              </div>
+              {isLg && <Divider orientation="vertical" flexItem={true} />}
+              <div
+                style={{
+                  flexGrow: 1,
+                  minWidth: "48%",
+                }}
+              >
+                <Typography variant="h3">Download Options</Typography>
+                <DownloaderForm
+                  outFields={selectedFields}
+                  queryResults={queryResults}
+                  where={where}
+                  exportType={exportType}
+                  setExportType={setExportType}
+                />
               </div>
             </div>
-          ) : (
-            <div style={{ minHeight: "28rem" }} />
-          )}
+          </div>
         </div>
         <Footer />
         <WelcomeMessage />
@@ -292,7 +276,7 @@ export default function WithStyles() {
           fontWeightBold: 400,
           fontSize: 14,
           h1: {
-            fontSize: "2.5rem",
+            fontSize: "1.9rem",
             flexGrow: 1,
           },
           h2: {
@@ -343,9 +327,9 @@ export default function WithStyles() {
                 gap: "1rem 1rem",
                 alignItems: "stretch",
                 paddingTop: "1rem",
-                paddingLeft: "2rem",
-                paddingRight: "2rem",
-                paddingBottom: "2rem",
+                paddingLeft: "3rem",
+                paddingRight: "3rem",
+                paddingBottom: "1rem",
               },
             },
           },
@@ -353,12 +337,10 @@ export default function WithStyles() {
             styleOverrides: {
               standardSuccess: {
                 justifySelf: "flex-end",
-                flexGrow: 0,
                 fontWeight: 600,
               },
               standardInfo: {
                 justifySelf: "flex-end",
-                flexGrow: 0,
                 fontWeight: 600,
               },
             },

@@ -30,6 +30,7 @@ import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import { ColorModeContext } from "./context";
 import BasemapToggle from "@arcgis/core/widgets/BasemapToggle";
+import Basemap from "@arcgis/core/Basemap";
 
 const GEOMETRY_LINK =
   "https://developers.arcgis.com/documentation/common-data-types/geometry-objects.htm";
@@ -41,7 +42,7 @@ const esriDocLinkProps = (t: "POLYGON" | "ENVELOPE") => ({
 
 export type ExtentPickerProps = {
   defaultBoundaryExtent: string;
-  layer: FeatureLayer;
+  layer?: FeatureLayer;
   where: string;
   onFilterGeometryChange: GeometryUpdateListener;
 };
@@ -69,7 +70,7 @@ export function ExtentPicker({
   const [map] = useState(
     () =>
       new EsriMap({
-        basemap: colorMode.mode === "dark" ? "dark-gray-vector" : "topo-vector",
+        basemap: Basemap.fromId("topo-vector"),
       })
   );
 
@@ -77,8 +78,8 @@ export function ExtentPicker({
     () =>
       new MapView({
         map: map,
-        center: [0, 0],
-        zoom: 1,
+        center: [-97.498699, 39.079974],
+        zoom: 3,
       })
   );
   const [sketchLayer] = useState(() => new GraphicsLayer());
@@ -100,8 +101,7 @@ export function ExtentPicker({
     () =>
       new BasemapToggle({
         view: mapView,
-        nextBasemap:
-          colorMode.mode === "dark" ? "topo-vector" : "dark-gray-vector",
+        nextBasemap: "dark-gray-vector",
       })
   );
 
@@ -120,6 +120,7 @@ export function ExtentPicker({
       setTextBoxDisabled(true);
     } else {
       setFilterGeometry(undefined);
+      setTextBoxValue("");
     }
   }, [sketchLayer]);
 
@@ -127,14 +128,18 @@ export function ExtentPicker({
   useEffect(() => {
     async function attachView() {
       await setLoadingWhile(async () => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
         mapView.container = elRef.current as any;
         await mapView.when();
-        const extent = await layer?.queryExtent();
-        await mapView.goTo(extent);
+        if (layer) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          const extent = await layer?.queryExtent();
+          await mapView.goTo(extent);
+        }
       }, setLoading);
     }
     void attachView();
-  }, [layer, mapView, map]);
+  }, [layer, mapView]);
 
   // Add sketch widget to map
   useEffect(() => {
@@ -153,6 +158,9 @@ export function ExtentPicker({
   }, [map, sketchLayer]);
 
   useEffect(() => {
+    if (!layer) {
+      return;
+    }
     map.add(layer);
     return () => {
       map.remove(layer);
@@ -160,25 +168,27 @@ export function ExtentPicker({
   }, [map, layer]);
 
   useEffect(() => {
-    mapView.ui.add(basemapToggle, "bottom-right");
+    mapView.ui.add(basemapToggle, "bottom-left");
     return () => mapView.ui.remove(basemapToggle);
-  });
+  }, [mapView, basemapToggle]);
 
   useEffect(() => {
+    const modeToId: { [k: typeof colorMode.mode]: string } = {
+      dark: "dark-gray-vector",
+      light: "topo-vector",
+    };
     // toggle basemap depending on dark vs light mode in the theme
-    if (
-      (basemapToggle.activeBasemap.id !== "dark-gray-vector") !==
-      (colorMode.mode !== "dark")
-    ) {
-      const prevBaseMap = basemapToggle.activeBasemap;
+    if (modeToId[colorMode.mode] !== map.basemap.id) {
+      const prevMap = map.basemap.id;
+      map.set("basemap", Basemap.fromId(modeToId[colorMode.mode]));
       basemapToggle
         .toggle()
         .then(() => {
-          basemapToggle.set("nextBasemap", prevBaseMap);
+          basemapToggle.set("nextBasemap", prevMap);
         })
         .catch((err) => console.error(err));
     }
-  }, [colorMode, basemapToggle]);
+  }, [map, colorMode, basemapToggle]);
 
   // Grayscale out non-included layers.
   useEffect(() => {
@@ -196,6 +206,9 @@ export function ExtentPicker({
 
   // Apply featureEffect to layer on update
   useEffect(() => {
+    if (!layer) {
+      return;
+    }
     layer.featureEffect = featureEffect;
   }, [featureEffect, layer]);
 
@@ -207,9 +220,9 @@ export function ExtentPicker({
   // Test if new text in TextField contains filter geometry
   // If so, update filterGeometry and remove any previous geometries on the layer
   const onTextBoxChange = useCallback(
-    (val: string) => {
+    async (val: string) => {
       setTextBoxValue(val);
-      setLoadingWhile(async () => {
+      await setLoadingWhile(async () => {
         try {
           const geo = parseGeometryFromString(val);
           // If the change hasn't actually changed the geometry, bail out of expensive op early
@@ -252,9 +265,13 @@ export function ExtentPicker({
 
   useEffect(() => {
     if (defaultBoundaryExtent) {
-      onTextBoxChange(defaultBoundaryExtent);
+      onTextBoxChange(defaultBoundaryExtent).catch((err) => {
+        if (typeof err === "string") {
+          throw new Error(err);
+        }
+      });
     }
-  }, [defaultBoundaryExtent, onTextBoxChange]);
+  }, []);
 
   // ExtentAdornment contains an EditToggle and a Copy to Clipboard button
   function BoundaryAdornment({ content }: { content: string }) {
@@ -278,7 +295,7 @@ export function ExtentPicker({
           >
             <IconButton
               aria-label="copy extent to clipboard"
-              onClick={handleCopyClick}
+              onClick={() => void handleCopyClick()}
             >
               <CopyAll />
             </IconButton>
@@ -311,7 +328,7 @@ export function ExtentPicker({
         fullWidth
         disabled={textBoxDisabled}
         value={textBoxValue}
-        onChange={(e) => onTextBoxChange(e.currentTarget.value)}
+        onChange={(e) => void onTextBoxChange(e.currentTarget.value)}
         size="small"
         InputProps={{
           endAdornment: <BoundaryAdornment content={textBoxValue} />,

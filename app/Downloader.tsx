@@ -37,7 +37,7 @@ const Input = styled(MuiInput)`
 `;
 
 export type DownloaderProps = {
-  queryResults: QueryResults;
+  queryResults?: QueryResults;
   outFields: string[];
   where: string;
   exportType: string;
@@ -65,6 +65,9 @@ export function DownloaderForm({
 
   useEffect(() => {
     async function setTotal() {
+      if (!queryResults) {
+        return;
+      }
       setTotalFeatures(await queryResults.getTotalCount(where));
     }
     void setTotal();
@@ -87,6 +90,9 @@ export function DownloaderForm({
   }, [concRequests, setConcAlertProps]);
 
   async function download() {
+    if (!queryResults) {
+      return;
+    }
     let downloader: Downloader;
     switch (exportType) {
       case "geojson": {
@@ -216,7 +222,11 @@ export function DownloaderForm({
         </Stack>
       </Box>
       <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
-        <Button variant="contained" onClick={download}>
+        <Button
+          disabled={!queryResults}
+          variant="contained"
+          onClick={() => void download()}
+        >
           Download
         </Button>
       </Box>
@@ -225,7 +235,7 @@ export function DownloaderForm({
           <LinearProgress
             variant="buffer"
             value={normalise(featuresWritten)}
-            valueBuffer={normalise(queryResults.getPageSize())}
+            valueBuffer={normalise(queryResults?.getPageSize() ?? 0)}
           />
           <Typography
             sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
