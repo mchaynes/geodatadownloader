@@ -52,6 +52,10 @@ export default function ShareUrlButton({ params }: ShareUrlButtonParams) {
           vertical: "bottom",
           horizontal: "left",
         }}
+        transformOrigin={{
+          vertical: "bottom",
+          horizontal: "right",
+        }}
       >
         <Paper
           sx={{
