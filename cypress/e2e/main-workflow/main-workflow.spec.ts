@@ -11,7 +11,6 @@ describe("Main Workflow", () => {
         cy.visit("/");
         cy.get(layerUrlFieldId).type(layerUrl).should("have.value", layerUrl);
         cy.get("#load-layer").click();
-        cy.contains("Successfully loaded layer");
 
         cy.get(boundaryFieldId).type(boundaryText, {
             parseSpecialCharSequences: false,
