@@ -1,22 +1,37 @@
 import { ThemeProvider } from "@emotion/react";
 import AppBar from "@mui/material/AppBar";
 import Container from "@mui/material/Container";
-import { Button, createTheme, Divider, IconButton, Paper } from "@mui/material";
-import CssBaseline from "@mui/material/CssBaseline";
+import Paper from "@mui/material/Paper";
+import Divider from "@mui/material/Divider";
+import {
+  createTheme,
+  CssBaseline,
+  responsiveFontSizes,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import Link from "@mui/material/Link";
-import logo from "./icons/icon-128.png";
+import {
+  green,
+  blue,
+  teal,
+  cyan,
+  grey,
+  lightGreen,
+} from "@mui/material/colors";
+import logo from "/IMG_1039.png";
 import { WelcomeMessage } from "./WelcomeMessage";
 
 import "@fontsource/roboto/300.css";
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
-import { getQueryParameter, setQueryParameter } from "./url";
+import { getQueryParameter } from "./url";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PickLayer } from "./PickLayer";
 import { QueryResults } from "./arcgis";
 import Geometry from "@arcgis/core/geometry/Geometry";
@@ -24,17 +39,28 @@ import { Where } from "./Where";
 import { AttributeTablePreview } from "./AttributeTablePreview";
 import { ExtentPicker } from "./ExtentPicker";
 import { DownloaderForm } from "./Downloader";
-import { Share } from "@mui/icons-material";
+import ShareUrlButton from "./ShareUrlButton";
+import React from "react";
+import { ColorModeContext } from "./context";
 
-const theme = createTheme();
+type SupportedExportType = string;
 
-const paperSx = { my: { xs: 3, md: 6 }, p: { xs: 2, md: 3 } };
-
-type SupportedExportTypes = "gpkg" | "geojson" | "csv" | "shp";
+function isSupportedExportType(
+  value: string | null
+): value is SupportedExportType {
+  return (
+    typeof value === "string" &&
+    ["gpkg", "geojson", "csv", "shp"].includes(value)
+  );
+}
 
 function App() {
-  const [exportType, setExportType] = useState(
-    getQueryParameter("format") ?? "gpkg"
+  const theme = useTheme();
+  const isLg = useMediaQuery(theme.breakpoints.up("lg"));
+
+  const queryParam = useMemo(() => getQueryParameter("format"), []);
+  const [exportType, setExportType] = useState<SupportedExportType>(
+    isSupportedExportType(queryParam) ? queryParam : "gpkg"
   );
   const layerUrl = getQueryParameter("layer_url") ?? "";
   const [layer, setLayer] = useState<FeatureLayer | undefined>();
@@ -60,86 +86,115 @@ function App() {
   }, [filterExtent, layer]);
 
   return (
-    <ThemeProvider theme={theme}>
+    <Container
+      maxWidth={"xl"}
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        paddingLeft: "3rem",
+        paddingRight: "4rem",
+      }}
+    >
       <CssBaseline />
-      <AppBar
-        position="absolute"
-        color="default"
-        elevation={0}
-        sx={{
-          position: "relative",
-          borderBottom: (t) => `1px solid ${t.palette.divider}`,
-        }}
-      >
-        <Toolbar>
-          <img src={logo as string} width="32px" height="32px" alt="Pine" />
-          <Typography
-            sx={{ flexGrow: 1, ml: 3 }}
-            variant="h6"
-            color="inherit"
-            noWrap={true}
-          >
-            geodatadownloader
-          </Typography>
-          <IconButton
-            title="Create shareable URL. You can use this to automatically fill out all fields by just sharing the URL"
-            sx={{ justifyContent: "flex-end" }}
-            onClick={() => {
-              setQueryParameter({
-                where: where,
-                boundary: JSON.stringify(filterExtent?.toJSON()),
-                layer_url: layerUrl,
-                format: exportType,
-              });
-            }}
-          >
-            <Share></Share>
-          </IconButton>
-        </Toolbar>
-      </AppBar>
-      <Container component="main" maxWidth="lg" sx={{ mb: 4 }}>
-        <Box>
-          <Paper variant="outlined" sx={paperSx}>
-            <SectionHeader header="Layer Info" />
-            <PickLayer defaultLayerUrl={layerUrl} onLayerLoad={setLayer} />
-            {layer?.loaded && queryResults && (
+      <div style={{ display: "flex", flexDirection: "row", marginTop: "1rem" }}>
+        <img src={logo as string} width="64px" height="64px" alt="Pine" />
+        <Typography sx={{ ml: 3 }} variant="h1" color="inherit" noWrap={true}>
+          geodatadownloader
+        </Typography>
+        <ShareUrlButton
+          params={{
+            where: where,
+            boundary: filterExtent ? JSON.stringify(filterExtent.toJSON()) : "",
+            layer_url: layerUrl,
+            format: exportType,
+          }}
+        />
+      </div>
+      <PickLayer defaultLayerUrl={layerUrl} onLayerLoad={setLayer} />
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "stretch",
+          }}
+        >
+          {layer?.loaded && queryResults && (
+            <div
+              style={{
+                display: "flex",
+                flexGrow: 1,
+                flexDirection: "column",
+                justifyItems: "stretch",
+                alignSelf: "stretch",
+                gap: "1rem 1rem",
+                alignItems: "stretch",
+                paddingTop: "1rem",
+                paddingBottom: "2rem",
+              }}
+            >
               <div>
-                <SectionDivider />
-                <SectionHeader header="Draw Boundary (if you want)" />
+                <Typography variant="h3">
+                  Draw Boundary (if you want)
+                </Typography>
                 <ExtentPicker
                   defaultBoundaryExtent={boundaryExtent}
                   layer={layer}
                   onFilterGeometryChange={(g) => setFilterExtent(g)}
                   where={where}
                 />
-
-                <SectionDivider />
-                <SectionHeader header="Attribute Table Preview" />
-                <Where defaultWhere={where} onChange={setWhere} />
-                <AttributeTablePreview
-                  selectedFields={selectedFields}
-                  setSelectedFields={setSelectedFields}
-                  queryResults={queryResults}
-                  fields={layer.fields}
-                  where={where}
-                />
-                <SectionDivider />
-                <SectionHeader header="Download Options" />
-                <DownloaderForm
-                  outFields={selectedFields}
-                  queryResults={queryResults}
-                  where={where}
-                  exportType={exportType}
-                  setExportType={setExportType}
-                />
               </div>
-            )}
-          </Paper>
-        </Box>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: isLg ? "row" : "column",
+                  alignSelf: "stretch",
+                  alignContent: "space-between",
+                  gap: "1rem 1rem",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    minWidth: "48%",
+                    flexGrow: 1,
+                  }}
+                >
+                  <Typography variant="h3">Attribute Table Preview</Typography>
+                  <Where defaultWhere={where} onChange={setWhere} />
+                  <AttributeTablePreview
+                    selectedFields={selectedFields}
+                    setSelectedFields={setSelectedFields}
+                    queryResults={queryResults}
+                    fields={layer.fields}
+                    where={where}
+                  />
+                </div>
+                {isLg && <Divider orientation="vertical" flexItem={true} />}
+                <div
+                  style={{
+                    flexGrow: 1,
+                    minWidth: "48%",
+                  }}
+                >
+                  <Typography variant="h3">Download Options</Typography>
+                  <DownloaderForm
+                    outFields={selectedFields}
+                    queryResults={queryResults}
+                    where={where}
+                    exportType={exportType}
+                    setExportType={setExportType}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
         <Footer />
         <WelcomeMessage />
-      </Container>
-    </ThemeProvider>
+      </div>
+    </Container>
   );
 }
 
@@ -157,6 +212,7 @@ function Footer() {
       <a
         href="https://www.buymeacoffee.com/myleschayng"
         target="_blank"
+        rel="noreferrer"
         style={{ textAlign: "center", display: "block", marginTop: 20 }}
       >
         <img
@@ -172,73 +228,157 @@ function Footer() {
   );
 }
 
-export type WorkflowItemsProps = {
-  layer: FeatureLayer;
-};
+export default function WithStyles() {
+  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
+  const [mode, setMode] = React.useState<"light" | "dark">("light");
 
-export function WorkflowItems({ layer }: WorkflowItemsProps) {
-  const [selectedFields, setSelectedFields] = useState<string[]>(
-    layer.fields.map((f) => f.name)
+  const colorMode = useMemo(
+    () => ({
+      mode: mode,
+      setColorMode: (colorMode: typeof mode) => {
+        setMode(colorMode);
+      },
+    }),
+    [mode]
   );
-  const [filterExtent, setFilterExtent] = useState<Geometry | undefined>(
-    undefined
-  );
-  const [where, setWhere] = useState(() => getQueryParameter("where") || "1=1");
-  const [queryResults, setQueryResults] = useState<QueryResults>(() => {
-    return new QueryResults(layer, filterExtent);
-  });
-  const boundaryExtent = getQueryParameter("boundary") ?? "";
-
   useEffect(() => {
-    setQueryResults(new QueryResults(layer, filterExtent, 500));
-  }, [filterExtent, layer]);
+    colorMode.setColorMode(prefersDarkMode ? "dark" : "light");
+  }, [prefersDarkMode, mode]);
+
+  const theme = React.useMemo(() => {
+    return responsiveFontSizes(
+      createTheme({
+        palette: {
+          mode: mode,
+          ...(mode === "light"
+            ? {
+                primary: {
+                  main: cyan.A700,
+                },
+                success: {
+                  light: green.A700,
+                  main: green.A700,
+                  dark: green[900],
+                },
+              }
+            : {
+                primary: {
+                  main: cyan.A400,
+                },
+                success: {
+                  light: green.A700,
+                  main: green.A700,
+                  dark: green[900],
+                },
+              }),
+        },
+        typography: {
+          fontFamily: [
+            "Roboto",
+            "-apple-system",
+            "BlinkMacSystemFont",
+            '"Segoe UI"',
+            '"Helvetica Neue"',
+            "Arial",
+            "sans-serif",
+            '"Apple Color Emoji"',
+            '"Segoe UI Emoji"',
+            '"Segoe UI Symbol"',
+          ].join(" "),
+          fontWeightRegular: 300,
+          fontWeightLight: 200,
+          fontWeightMedium: 350,
+          fontWeightBold: 400,
+          fontSize: 14,
+          h1: {
+            fontSize: "2.5rem",
+            flexGrow: 1,
+          },
+          h2: {
+            alignSelf: "flex-start",
+            fontSize: "2rem",
+            fontWeight: 400,
+            marginBottom: "1rem",
+          },
+          h3: {
+            fontSize: "1.25rem",
+            marginBottom: "0.75rem",
+          },
+          body2: {
+            fontSize: "0.9rem",
+          },
+          caption: {
+            fontSize: "0.9rem",
+            paddingTop: "0.5rem",
+            paddingBottom: "0.5rem",
+            paddingRight: "1rem",
+            display: "flex",
+            justifyContent: "flex-end",
+          },
+        },
+        components: {
+          MuiButton: {
+            styleOverrides: {
+              root: {
+                fontWeight: 900,
+              },
+            },
+          },
+          MuiPaper: {
+            styleOverrides: {
+              outlined: {
+                display: "flex",
+                flexDirection: "column",
+                gap: "1rem 1rem",
+                alignItems: "stretch",
+                paddingTop: "1rem",
+                paddingLeft: "2rem",
+                paddingRight: "2rem",
+                paddingBottom: "2rem",
+              },
+            },
+          },
+          MuiAlert: {
+            styleOverrides: {
+              standardSuccess: {
+                justifySelf: "flex-end",
+                flexGrow: 0,
+                fontWeight: 600,
+              },
+              standardInfo: {
+                justifySelf: "flex-end",
+                flexGrow: 0,
+                fontWeight: 600,
+              },
+            },
+          },
+          MuiDivider: {
+            styleOverrides: {
+              root: {
+                paddingTop: "2rem",
+                paddingBottom: "1rem",
+              },
+            },
+          },
+          MuiContainer: {
+            styleOverrides: {
+              root: {
+                display: "flex",
+                flexDirection: "row",
+                gap: ".5rem .5rem",
+              },
+            },
+          },
+        },
+      })
+    );
+  }, [mode]);
 
   return (
-    <div>
-      <SectionDivider />
-      <SectionHeader header="Draw Boundary (if you want)" />
-      <ExtentPicker
-        defaultBoundaryExtent={boundaryExtent}
-        layer={layer}
-        onFilterGeometryChange={(g) => setFilterExtent(g)}
-        where={where}
-      />
-
-      <SectionDivider />
-      <SectionHeader header="Attribute Table Preview" />
-      <Where defaultWhere={where} onChange={setWhere} />
-      <AttributeTablePreview
-        selectedFields={selectedFields}
-        setSelectedFields={setSelectedFields}
-        queryResults={queryResults}
-        fields={layer.fields}
-        where={where}
-      />
-      <SectionDivider />
-      <SectionHeader header="Download Options" />
-      <DownloaderForm
-        outFields={selectedFields}
-        queryResults={queryResults}
-        where={where}
-      />
-    </div>
+    <ThemeProvider theme={theme}>
+      <ColorModeContext.Provider value={colorMode}>
+        <App />
+      </ColorModeContext.Provider>
+    </ThemeProvider>
   );
 }
-
-type SectionHeaderProps = {
-  header: string;
-};
-
-function SectionHeader({ header }: SectionHeaderProps) {
-  return (
-    <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
-      {header}
-    </Typography>
-  );
-}
-
-function SectionDivider() {
-  return <Divider sx={{ mt: 3, mb: 3 }}></Divider>;
-}
-
-export default App;

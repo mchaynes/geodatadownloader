@@ -1,23 +1,23 @@
 import { useCallback, useEffect, useState } from "react";
 import Alert, { AlertProps } from "@mui/material/Alert";
 import LinearProgress from "@mui/material/LinearProgress";
-import { SxProps, Theme } from "@mui/material";
+import { SxProps, Theme, Typography } from "@mui/material";
 
 export interface StatusAlertProps extends AlertProps {
-    /**
-     * Whether currently loading or not
-     */
-    loading?: boolean;
-    /**
-     * Success message to display if successful
-     */
-    msg?: JSX.Element | string;
+  /**
+   * Whether currently loading or not
+   */
+  loading?: boolean;
+  /**
+   * Success message to display if successful
+   */
+  msg?: JSX.Element | string;
 
-    alertType?: AlertType;
+  alertType?: AlertType;
 
-    onClose?: () => void;
+  onClose?: () => void;
 
-    sx?: SxProps<Theme>;
+  sx?: SxProps<Theme>;
 }
 
 export type AlertType = "error" | "success" | "info" | "warning" | undefined;
@@ -29,48 +29,55 @@ export type AlertType = "error" | "success" | "info" | "warning" | undefined;
  * 3. Nothing, if alertType not defined
  */
 export function StatusAlert({
-    loading,
-    msg,
-    alertType,
-    onClose,
-    sx,
+  loading,
+  msg,
+  alertType,
+  onClose,
 }: StatusAlertProps) {
-    if (loading) {
-        return <LinearProgress />;
-    }
-    if (alertType) {
-        return (
-            <Alert onClose={onClose} severity={alertType} sx={sx}>
-                {msg}
-            </Alert>
-        );
-    }
-    return <></>;
+  if (loading) {
+    return <LinearProgress />;
+  }
+  if (alertType) {
+    return (
+      <Alert
+        onClose={onClose}
+        severity={alertType}
+        sx={{ flexShrink: 0, overflow: "hidden", whiteSpace: "nowrap" }}
+      >
+        {msg}
+      </Alert>
+    );
+  }
+  return <></>;
 }
 
 export type StatusAlertSetter = (
-    msg: JSX.Element | string,
-    alertType: AlertType
+  msg: JSX.Element | string,
+  alertType: AlertType
 ) => void;
 
 export const useStatusAlert = (
-    msg: string,
-    alertType: AlertType
+  msg: string,
+  alertType: AlertType
 ): [StatusAlertProps, StatusAlertSetter] => {
-    const [props, setProps] = useState<StatusAlertProps>(() => ({
-        msg: msg,
-        alertType: alertType,
-    }));
-    // Wrap function in useCallback with no deps because this function should always be the same object
-    // this mimics the guarantee set by useState()
-    const setStatusAlert = useCallback(
-        (newMsg: string, newAlertType: AlertType) => {
-            setProps({
-                msg: newMsg,
-                alertType: newAlertType,
-            });
-        },
-        []
-    );
-    return [props, setStatusAlert];
+  const [props, setProps] = useState<StatusAlertProps>(() => ({
+    msg: msg,
+    alertType: alertType,
+  }));
+  // Wrap function in useCallback with no deps because this function should always be the same object
+  // this mimics the guarantee set by useState()
+  const setStatusAlert = useCallback(
+    (newMsg: string, newAlertType: AlertType) => {
+      setProps({
+        msg: (
+          <Typography sx={{ wordWrap: "break-word" }} noWrap={false}>
+            {newMsg}
+          </Typography>
+        ),
+        alertType: newAlertType,
+      });
+    },
+    []
+  );
+  return [props, setStatusAlert];
 };

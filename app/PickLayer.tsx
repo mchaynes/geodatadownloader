@@ -3,10 +3,13 @@ import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
 import { useCallback, useEffect, useState } from "react";
 import * as React from "react";
-import type { } from "@mui/x-data-grid/themeAugmentation";
+import type {} from "@mui/x-data-grid/themeAugmentation";
 import { StatusAlert, useStatusAlert } from "./StatusAlert";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import { setLoadingWhile } from "./loading";
+import Typography from "@mui/material/Typography";
+import Container from "@mui/material/Container";
+import Paper from "@mui/material/Paper";
 
 export type Status = "not_started" | "loading" | "error" | "loaded";
 
@@ -62,32 +65,41 @@ export function PickLayer({ defaultLayerUrl, onLayerLoad }: PickLayerProps) {
   };
 
   return (
-    <React.Fragment>
-      <TextField
-        id="layer-url"
-        required
-        autoComplete="url"
-        fullWidth
-        sx={{ m: 1 }}
-        variant="outlined"
-        placeholder="https://gismaps.kingcounty.gov/arcgis/rest/services/Environment/KingCo_SensitiveAreas/MapServer/11"
-        value={url}
-        onChange={(e) => setUrl(e.currentTarget.value)}
-        onKeyPress={handleKeyPress}
-      />
-      <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-        <Button
-          id="load-layer"
-          variant="contained"
-          sx={{ mt: 3, ml: 1 }}
-          onClick={onLoadClick}
-        >
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem 1rem",
+        marginTop: "1rem",
+      }}
+    >
+      <Typography variant="h2">Layer Url</Typography>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "stretch",
+          gap: "1rem 1rem",
+        }}
+      >
+        <TextField
+          id="layer-url"
+          required
+          autoComplete="url"
+          fullWidth
+          variant="outlined"
+          placeholder="https://gismaps.kingcounty.gov/arcgis/rest/services/Environment/KingCo_SensitiveAreas/MapServer/11"
+          value={url}
+          onChange={(e) => setUrl(e.currentTarget.value)}
+          onKeyPress={handleKeyPress}
+        />
+        <Button id="load-layer" variant="contained" onClick={onLoadClick}>
           Load
         </Button>
-      </Box>
-      <Box sx={{ ml: 1, mt: 2 }}>
+      </div>
+      <Box>
         <StatusAlert loading={loading} {...alertProps} />
       </Box>
-    </React.Fragment>
+    </div>
   );
 }

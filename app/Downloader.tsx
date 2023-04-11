@@ -111,7 +111,6 @@ export function DownloaderForm({
     const writer = new Writer(
       `${queryResults.getLayer()?.title ?? "Layer"}.${exportType}`
     );
-    let error = "";
     try {
       setDownloading(true);
       // set the total again here in case it was still loading as we hit download
@@ -130,7 +129,6 @@ export function DownloaderForm({
     } catch (e) {
       const err = e as Error;
       console.error(err);
-      error = err.message;
       setAlertProps(err.message, "error");
     } finally {
       setDownloading(false);
@@ -157,7 +155,7 @@ export function DownloaderForm({
 
   return (
     <div>
-      <Box sx={{ mt: 3, ml: 1, mr: 1, mb: 1 }}>
+      <Box>
         <Stack spacing={2}>
           <FormControl fullWidth={true}>
             <InputLabel>File Type</InputLabel>
