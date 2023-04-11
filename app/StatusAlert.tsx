@@ -39,11 +39,7 @@ export function StatusAlert({
   }
   if (alertType) {
     return (
-      <Alert
-        onClose={onClose}
-        severity={alertType}
-        sx={{ flexShrink: 0, overflow: "hidden", whiteSpace: "nowrap" }}
-      >
+      <Alert onClose={onClose} severity={alertType}>
         {msg}
       </Alert>
     );
@@ -69,11 +65,7 @@ export const useStatusAlert = (
   const setStatusAlert = useCallback(
     (newMsg: string, newAlertType: AlertType) => {
       setProps({
-        msg: (
-          <Typography sx={{ wordWrap: "break-word" }} noWrap={false}>
-            {newMsg}
-          </Typography>
-        ),
+        msg: <Typography sx={{ wordWrap: "break-word" }}>{newMsg}</Typography>,
         alertType: newAlertType,
       });
     },

@@ -157,7 +157,7 @@ function App() {
                   style={{
                     display: "flex",
                     flexDirection: "column",
-                    minWidth: "48%",
+                    minWidth: "50%",
                     flexGrow: 1,
                   }}
                 >
