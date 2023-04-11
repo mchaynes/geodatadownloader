@@ -105,7 +105,7 @@ function App() {
           params={{
             where: where,
             boundary: filterExtent ? JSON.stringify(filterExtent.toJSON()) : "",
-            layer_url: layerUrl,
+            layer_url: layer ? `${layer.url}/${layer.layerId}` : layerUrl,
             format: exportType,
           }}
         />

@@ -47,6 +47,7 @@ export default function ShareUrlButton({ params }: ShareUrlButtonParams) {
         open={open}
         anchorEl={anchorEl}
         onClose={handleClose}
+        sx={{ maxWidth: "50%" }}
         anchorOrigin={{
           vertical: "bottom",
           horizontal: "left",
@@ -66,6 +67,7 @@ export default function ShareUrlButton({ params }: ShareUrlButtonParams) {
           <Typography
             component="pre"
             variant="body1"
+            noWrap={true}
             sx={{
               p: 1,
               padding: "1rem",
