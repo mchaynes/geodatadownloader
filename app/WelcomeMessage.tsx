@@ -110,9 +110,8 @@ export function WelcomeMessage() {
             </div>
           </div>
 
-          <Box sx={{ mt: 1, flex: "flex-basis" }}>
-            <div>
-              <input type="hidden" name="form-name" value="feedback" />
+          <Box sx={{ mt: 1 }}>
+            <div style={{ display: "flex", flexDirection: "column" }}>
               <TextField
                 fullWidth={true}
                 id="email"
