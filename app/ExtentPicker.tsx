@@ -3,7 +3,6 @@ import Box from "@mui/material/Box";
 import { useEffect, useRef, useState } from "react";
 import { setLoadingWhile } from "./loading";
 import { GeometryUpdateListener, parseGeometryFromString } from "./arcgis";
-import copy from "clipboard-copy";
 
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
@@ -24,13 +23,13 @@ import FeatureFilter from "@arcgis/core/layers/support/FeatureFilter";
 import Graphic from "@arcgis/core/Graphic";
 import SimpleFillSymbol from "@arcgis/core/symbols/SimpleFillSymbol";
 import { AlertType, StatusAlert } from "./StatusAlert";
-import CopyAll from "@mui/icons-material/CopyAll";
 import InputAdornment from "@mui/material/InputAdornment";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import { ColorModeContext } from "./context";
 import BasemapToggle from "@arcgis/core/widgets/BasemapToggle";
 import Basemap from "@arcgis/core/Basemap";
+import CopyButton from "./CopyButton";
 
 const GEOMETRY_LINK =
   "https://developers.arcgis.com/documentation/common-data-types/geometry-objects.htm";
@@ -275,31 +274,13 @@ export function ExtentPicker({
 
   // ExtentAdornment contains an EditToggle and a Copy to Clipboard button
   function BoundaryAdornment({ content }: { content: string }) {
-    const [copied, setCopied] = useState(false);
-    const handleCopyClick = async () => {
-      await copy(content);
-      setCopied(true);
-    };
     const handleEditClick = () => {
       setTextBoxDisabled((d) => !d);
     };
     return (
       <InputAdornment position="end">
         <Stack direction="row">
-          <Tooltip
-            placement="top-start"
-            title={copied ? "Copied" : "Click to Copy"}
-            TransitionProps={{
-              onExited: () => setCopied(false),
-            }}
-          >
-            <IconButton
-              aria-label="copy extent to clipboard"
-              onClick={() => void handleCopyClick()}
-            >
-              <CopyAll />
-            </IconButton>
-          </Tooltip>
+          <CopyButton data={content} />
           <Tooltip
             placement="top-start"
             title={textBoxDisabled ? "Enable editing" : "Disable editing"}

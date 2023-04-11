@@ -157,5 +157,5 @@ export function AttributeTablePreview({
 }
 
 type Row = {
-  [key: string]: any;
+  [key: string]: string | number | unknown;
 };

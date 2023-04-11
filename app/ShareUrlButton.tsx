@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { Check, ContentCopy, Error, Share } from "@mui/icons-material";
+import { Share } from "@mui/icons-material";
 import IconButton from "@mui/material/IconButton";
 import Popover from "@mui/material/Popover";
 import { generateUrl } from "./url";
 import Typography from "@mui/material/Typography";
-import Badge from "@mui/material/Badge";
 import Paper from "@mui/material/Paper";
+import CopyButton from "./CopyButton";
 
 export type ShareUrlButtonParams = {
   params: {
@@ -14,22 +14,11 @@ export type ShareUrlButtonParams = {
 };
 export default function ShareUrlButton({ params }: ShareUrlButtonParams) {
   const urlStr = generateUrl(params);
-  const [copyState, setCopyState] = useState<"success" | "error" | "">("");
 
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
-  };
-
-  const handleCopy = () => {
-    navigator.clipboard
-      .writeText(urlStr)
-      .then(() => setCopyState("success"))
-      .catch(() => setCopyState("error"));
-    setTimeout(() => {
-      setCopyState("");
-    }, 1500);
   };
 
   const handleClose = () => {
@@ -90,17 +79,7 @@ export default function ShareUrlButton({ params }: ShareUrlButtonParams) {
           >
             {urlStr}
           </Typography>
-          <IconButton onClick={handleCopy}>
-            <Badge
-              invisible={!copyState}
-              badgeContent={
-                <Check sx={{ maxWidth: "1rem", maxHeight: "1rem" }} />
-              }
-              color={copyState === "success" ? "success" : "error"}
-            >
-              <ContentCopy />
-            </Badge>
-          </IconButton>
+          <CopyButton data={urlStr} />
         </Paper>
       </Popover>
     </>

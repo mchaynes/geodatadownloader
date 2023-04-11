@@ -41,7 +41,7 @@ export type DownloaderProps = {
   outFields: string[];
   where: string;
   exportType: string;
-  setExportType: (string) => void;
+  setExportType: (exportType: string) => void;
 };
 
 export function DownloaderForm({
@@ -160,7 +160,15 @@ export function DownloaderForm({
   };
 
   return (
-    <div>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "stretch",
+        flexGrow: 1,
+        gap: "2rem 2rem",
+      }}
+    >
       <Box>
         <Stack spacing={2}>
           <FormControl fullWidth={true}>
@@ -218,18 +226,18 @@ export function DownloaderForm({
               </Grid>
             </Grid>
           </Box>
-          <StatusAlert {...concAlertProps} />
         </Stack>
       </Box>
-      <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
-        <Button
-          disabled={!queryResults}
-          variant="contained"
-          onClick={() => void download()}
-        >
-          Download
-        </Button>
-      </Box>
+      <Button
+        disabled={!queryResults}
+        variant="contained"
+        sx={{ alignSelf: "flex-end" }}
+        onClick={() => void download()}
+      >
+        Download
+      </Button>
+
+      <StatusAlert {...concAlertProps} />
       {downloading && (
         <Box sx={{ mt: 3, ml: 1, mr: 1, mb: 3 }}>
           <LinearProgress
@@ -245,9 +253,7 @@ export function DownloaderForm({
           </Typography>
         </Box>
       )}
-      <Box sx={{ mt: 3, ml: 1, mr: 1, mb: 3 }}>
-        <StatusAlert {...alertProps} />
-      </Box>
+      <StatusAlert {...alertProps} />
     </div>
   );
 }
@@ -284,7 +290,7 @@ function PotentialExportType({ format }: PotentialExportTypeProps) {
   return (
     <MenuItem value={format} disableRipple={true} disableTouchRipple={true}>
       <ListItemText>{format}</ListItemText>{" "}
-      <Button onClick={onClick} disabled={state !== ""}>
+      <Button onClick={() => void onClick()} disabled={state !== ""}>
         {(function render() {
           switch (state) {
             case "success":

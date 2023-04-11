@@ -37,9 +37,11 @@ export function WelcomeMessage() {
         setSubmissionProps("Thank you for the feedback :)", "success");
       }
     } catch (e) {
-      console.error(`Failed submit form: ${e.toString()}`, e);
-      if (data.dismissed !== "true") {
-        setSubmissionProps(`Failed to submit form: ${e.toString()}`, "error");
+      if (e instanceof Error) {
+        console.error(`Failed submit form: ${e.toString()}`, e);
+        if (data.dismissed !== "true") {
+          setSubmissionProps(`Failed to submit form: ${e.toString()}`, "error");
+        }
       }
     } finally {
       setLoading(false);
@@ -157,7 +159,7 @@ export function WelcomeMessage() {
               <Button variant="outlined" onClick={onClose}>
                 Dismiss
               </Button>
-              <Button variant="contained" onClick={submit}>
+              <Button variant="contained" onClick={() => void submit()}>
                 Submit
               </Button>
             </Box>

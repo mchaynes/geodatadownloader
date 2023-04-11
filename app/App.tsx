@@ -70,25 +70,25 @@ function App() {
   }, [layer]);
 
   useEffect(() => {
-    console.log("new filterExtent");
     if (layer) {
-      console.log("layer defined");
       setQueryResults(new QueryResults(layer, filterExtent, 500));
     }
   }, [filterExtent, layer]);
 
   return (
     <Container
-      maxWidth={"xl"}
+      maxWidth={false}
       sx={{
         display: "flex",
         flexDirection: "column",
-        paddingLeft: "3rem",
-        paddingRight: "4rem",
+        borderLeft: "20rem",
+        borderRight: "10rem",
+        paddingTop: "1rem",
+        paddingBottom: "2rem",
       }}
     >
       <CssBaseline />
-      <div style={{ display: "flex", flexDirection: "row", marginTop: "1rem" }}>
+      <div style={{ display: "flex", flexDirection: "row" }}>
         <img src={logo as string} width="48px" height="48px" alt="Pine" />
         <Typography sx={{ ml: 3 }} variant="h1" color="inherit" noWrap={true}>
           geodatadownloader
