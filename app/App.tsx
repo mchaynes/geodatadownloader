@@ -70,7 +70,9 @@ function App() {
   }, [layer]);
 
   useEffect(() => {
+    console.log("new filterExtent");
     if (layer) {
+      console.log("layer defined");
       setQueryResults(new QueryResults(layer, filterExtent, 500));
     }
   }, [filterExtent, layer]);

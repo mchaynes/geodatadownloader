@@ -47,6 +47,7 @@ export function AttributeTablePreview({
       if (!queryResults) {
         return;
       }
+      console.log("setting total count");
       setTotalFeaturesCount(await queryResults.getTotalCount(where));
     }
     void setTotal();
