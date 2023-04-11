@@ -160,6 +160,7 @@ export function DownloaderForm({
           <FormControl fullWidth={true}>
             <InputLabel>File Type</InputLabel>
             <Select
+              size="small"
               labelId="file-type-label"
               id="type-type"
               value={exportType}

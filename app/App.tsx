@@ -7,6 +7,7 @@ import {
   createTheme,
   CssBaseline,
   responsiveFontSizes,
+  Skeleton,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
@@ -97,7 +98,7 @@ function App() {
     >
       <CssBaseline />
       <div style={{ display: "flex", flexDirection: "row", marginTop: "1rem" }}>
-        <img src={logo as string} width="64px" height="64px" alt="Pine" />
+        <img src={logo as string} width="48px" height="48px" alt="Pine" />
         <Typography sx={{ ml: 3 }} variant="h1" color="inherit" noWrap={true}>
           geodatadownloader
         </Typography>
@@ -119,7 +120,7 @@ function App() {
             justifyContent: "stretch",
           }}
         >
-          {layer?.loaded && queryResults && (
+          {layer?.loaded && queryResults ? (
             <div
               style={{
                 display: "flex",
@@ -134,9 +135,6 @@ function App() {
               }}
             >
               <div>
-                <Typography variant="h3">
-                  Draw Boundary (if you want)
-                </Typography>
                 <ExtentPicker
                   defaultBoundaryExtent={boundaryExtent}
                   layer={layer}
@@ -144,6 +142,7 @@ function App() {
                   where={where}
                 />
               </div>
+              <Divider sx={{ paddingTop: 0 }} />
               <div
                 style={{
                   display: "flex",
@@ -189,6 +188,8 @@ function App() {
                 </div>
               </div>
             </div>
+          ) : (
+            <div style={{ minHeight: "28rem" }} />
           )}
         </div>
         <Footer />
@@ -304,6 +305,9 @@ export default function WithStyles() {
             fontSize: "1.25rem",
             marginBottom: "0.75rem",
           },
+          body1: {
+            fontSize: "0.9rem",
+          },
           body2: {
             fontSize: "0.9rem",
           },
@@ -321,6 +325,13 @@ export default function WithStyles() {
             styleOverrides: {
               root: {
                 fontWeight: 900,
+              },
+            },
+          },
+          MuiOutlinedInput: {
+            styleOverrides: {
+              sizeSmall: {
+                fontSize: "0.8rem",
               },
             },
           },

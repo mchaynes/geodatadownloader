@@ -31,6 +31,7 @@ export function Where({ defaultWhere, onChange: onWhereChange }: WhereProps) {
         required
         fullWidth
         variant="outlined"
+        size="small"
         label="Where"
         helperText={
           <Typography variant="body2">

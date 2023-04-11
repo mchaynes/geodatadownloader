@@ -302,6 +302,7 @@ export function ExtentPicker({
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: ".5rem .5rem" }}>
+      <div ref={elRef} style={{ height: "25rem", width: "100%" }} />
       <TextField
         id="boundary-text-field"
         variant="outlined"
@@ -311,12 +312,11 @@ export function ExtentPicker({
         disabled={textBoxDisabled}
         value={textBoxValue}
         onChange={(e) => onTextBoxChange(e.currentTarget.value)}
+        size="small"
         InputProps={{
           endAdornment: <BoundaryAdornment content={textBoxValue} />,
         }}
       />
-      <div ref={elRef} style={{ height: 500, width: "100%" }} />
-
       <StatusAlert
         msg={
           <div>
