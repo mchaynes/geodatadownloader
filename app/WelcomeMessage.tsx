@@ -77,18 +77,15 @@ export function WelcomeMessage() {
             <div style={{ flex: 2 }}>
               <p>
                 I'm looking to add more features to the website, but I want to
-                make sure they're features that you'll actually use. That's
-                where you come in! If you could take a moment to fill out this
-                form and share your suggestions and any issues you've
-                encountered, it would be a huge help. Your input is super
-                valuable as I try to make this website the best it can be for
-                everyone.
+                make sure they're features that you'll actually use. If you
+                could take a moment to fill out this form and share your
+                suggestions and any issues you've encountered, it would be a
+                huge help. I really care about your input.
               </p>
               <p>
                 By the way, my name is Myles Haynes, and I am the creator of
-                this website. I've built this entire thing on my own. Long Term,
-                I'd like to make this website my full time job. The site will
-                stay completely open source, including any backend code.
+                this website. I've built this entire thing on my own. The site
+                will stay completely open source, including any backend code.
               </p>
               <p>
                 Here's a couple of features I am thinking of adding (only ones
