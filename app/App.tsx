@@ -292,13 +292,13 @@ export default function WithStyles() {
             marginBottom: "0.75rem",
           },
           body1: {
-            fontSize: "0.9rem",
+            fontSize: "1.0rem",
           },
           body2: {
             fontSize: "0.9rem",
           },
           caption: {
-            fontSize: "0.9rem",
+            fontSize: "0.7rem",
             paddingTop: "0.5rem",
             paddingBottom: "0.5rem",
             paddingRight: "1rem",
