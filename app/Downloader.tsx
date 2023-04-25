@@ -94,6 +94,7 @@ export function DownloaderForm({
       return;
     }
     let downloader: Downloader;
+    let extension = exportType;
     switch (exportType) {
       case "geojson": {
         downloader = new GeojsonDownloader(setFeaturesWritten);
@@ -105,6 +106,7 @@ export function DownloaderForm({
       }
       case "shp": {
         downloader = new ShpDownloader(setFeaturesWritten);
+        extension = "zip";
         break;
       }
       case "gpkg": {
@@ -115,7 +117,7 @@ export function DownloaderForm({
         throw new Error(`invalid export type: "${exportType}"`);
     }
     const writer = new Writer(
-      `${queryResults.getLayer()?.title ?? "Layer"}.${exportType}`
+      `${queryResults.getLayer()?.title ?? "Layer"}.${extension}`
     );
     try {
       setDownloading(true);
