@@ -32,16 +32,18 @@ export default function CreateScheduledDownload(props) {
   } = props;
   const initialValues = {
     job_name: "",
+    layer_url: "",
+    format: "",
     access_key_id: undefined,
     secret_key: undefined,
     destination: "",
     frequency: "",
     column_mapping: "",
     start_at: "",
-    layer_url: "",
-    format: "",
   };
   const [job_name, setJob_name] = React.useState(initialValues.job_name);
+  const [layer_url, setLayer_url] = React.useState(initialValues.layer_url);
+  const [format, setFormat] = React.useState(initialValues.format);
   const [access_key_id, setAccess_key_id] = React.useState(
     initialValues.access_key_id
   );
@@ -54,35 +56,21 @@ export default function CreateScheduledDownload(props) {
     initialValues.column_mapping
   );
   const [start_at, setStart_at] = React.useState(initialValues.start_at);
-  const [layer_url, setLayer_url] = React.useState(initialValues.layer_url);
-  const [format, setFormat] = React.useState(initialValues.format);
   const [errors, setErrors] = React.useState({});
   const resetStateValues = () => {
     setJob_name(initialValues.job_name);
+    setLayer_url(initialValues.layer_url);
+    setFormat(initialValues.format);
     setAccess_key_id(initialValues.access_key_id);
     setSecret_key(initialValues.secret_key);
     setDestination(initialValues.destination);
     setFrequency(initialValues.frequency);
     setColumn_mapping(initialValues.column_mapping);
     setStart_at(initialValues.start_at);
-    setLayer_url(initialValues.layer_url);
-    setFormat(initialValues.format);
     setErrors({});
   };
   const validations = {
     job_name: [],
-    access_key_id: [{ type: "Required" }],
-    secret_key: [{ type: "Required" }],
-    destination: [{ type: "Required" }],
-    frequency: [],
-    column_mapping: [{ type: "JSON" }],
-    start_at: [
-      {
-        type: "Contains",
-        strValues: [":"],
-        validationMessage: "Invalid Format",
-      },
-    ],
     layer_url: [
       { type: "Required" },
       {
@@ -97,6 +85,18 @@ export default function CreateScheduledDownload(props) {
       },
     ],
     format: [],
+    access_key_id: [{ type: "Required" }],
+    secret_key: [{ type: "Required" }],
+    destination: [{ type: "Required" }],
+    frequency: [],
+    column_mapping: [{ type: "JSON" }],
+    start_at: [
+      {
+        type: "Contains",
+        strValues: [":"],
+        validationMessage: "Invalid Format",
+      },
+    ],
   };
   const runValidationTasks = async (
     fieldName,
@@ -125,14 +125,14 @@ export default function CreateScheduledDownload(props) {
         event.preventDefault();
         let modelFields = {
           job_name,
+          layer_url,
+          format,
           access_key_id,
           secret_key,
           destination,
           frequency,
           column_mapping,
           start_at,
-          layer_url,
-          format,
         };
         const validationResponses = await Promise.all(
           Object.keys(validations).reduce((promises, fieldName) => {
@@ -189,14 +189,14 @@ export default function CreateScheduledDownload(props) {
           if (onChange) {
             const modelFields = {
               job_name: value,
+              layer_url,
+              format,
               access_key_id,
               secret_key,
               destination,
               frequency,
               column_mapping,
               start_at,
-              layer_url,
-              format,
             };
             const result = onChange(modelFields);
             value = result?.job_name ?? value;
@@ -211,6 +211,98 @@ export default function CreateScheduledDownload(props) {
         hasError={errors.job_name?.hasError}
         {...getOverrideProps(overrides, "job_name")}
       ></TextField>
+      <TextField
+        label={
+          <span style={{ display: "inline-flex" }}>
+            <span>Layer url</span>
+            <span style={{ color: "red" }}>*</span>
+          </span>
+        }
+        descriptiveText="Url to ArcGIS REST Service Layer"
+        isRequired={true}
+        isReadOnly={false}
+        placeholder="https://gismaps.kingcounty.gov/arcgis/rest/services/Environment/KingCo_SensitiveAreas/MapServer/11"
+        value={layer_url}
+        onChange={(e) => {
+          let { value } = e.target;
+          if (onChange) {
+            const modelFields = {
+              job_name,
+              layer_url: value,
+              format,
+              access_key_id,
+              secret_key,
+              destination,
+              frequency,
+              column_mapping,
+              start_at,
+            };
+            const result = onChange(modelFields);
+            value = result?.layer_url ?? value;
+          }
+          if (errors.layer_url?.hasError) {
+            runValidationTasks("layer_url", value);
+          }
+          setLayer_url(value);
+        }}
+        onBlur={() => runValidationTasks("layer_url", layer_url)}
+        errorMessage={errors.layer_url?.errorMessage}
+        hasError={errors.layer_url?.hasError}
+        {...getOverrideProps(overrides, "layer_url")}
+      ></TextField>
+      <SelectField
+        label="Output Format"
+        placeholder="Please select an option"
+        isDisabled={false}
+        value={format}
+        onChange={(e) => {
+          let { value } = e.target;
+          if (onChange) {
+            const modelFields = {
+              job_name,
+              layer_url,
+              format: value,
+              access_key_id,
+              secret_key,
+              destination,
+              frequency,
+              column_mapping,
+              start_at,
+            };
+            const result = onChange(modelFields);
+            value = result?.format ?? value;
+          }
+          if (errors.format?.hasError) {
+            runValidationTasks("format", value);
+          }
+          setFormat(value);
+        }}
+        onBlur={() => runValidationTasks("format", format)}
+        errorMessage={errors.format?.errorMessage}
+        hasError={errors.format?.hasError}
+        {...getOverrideProps(overrides, "format")}
+      >
+        <option
+          children="PMTILES"
+          value="PMTILES"
+          {...getOverrideProps(overrides, "formatoption0")}
+        ></option>
+        <option
+          children="GPKG"
+          value="GPKG"
+          {...getOverrideProps(overrides, "formatoption1")}
+        ></option>
+        <option
+          children="GEOJSON"
+          value="GEOJSON"
+          {...getOverrideProps(overrides, "formatoption2")}
+        ></option>
+        <option
+          children="SHP"
+          value="SHP"
+          {...getOverrideProps(overrides, "formatoption3")}
+        ></option>
+      </SelectField>
       <PasswordField
         label={
           <span style={{ display: "inline-flex" }}>
@@ -226,14 +318,14 @@ export default function CreateScheduledDownload(props) {
           if (onChange) {
             const modelFields = {
               job_name,
+              layer_url,
+              format,
               access_key_id: value,
               secret_key,
               destination,
               frequency,
               column_mapping,
               start_at,
-              layer_url,
-              format,
             };
             const result = onChange(modelFields);
             value = result?.access_key_id ?? value;
@@ -263,14 +355,14 @@ export default function CreateScheduledDownload(props) {
           if (onChange) {
             const modelFields = {
               job_name,
+              layer_url,
+              format,
               access_key_id,
               secret_key: value,
               destination,
               frequency,
               column_mapping,
               start_at,
-              layer_url,
-              format,
             };
             const result = onChange(modelFields);
             value = result?.secret_key ?? value;
@@ -302,14 +394,14 @@ export default function CreateScheduledDownload(props) {
           if (onChange) {
             const modelFields = {
               job_name,
+              layer_url,
+              format,
               access_key_id,
               secret_key,
               destination: value,
               frequency,
               column_mapping,
               start_at,
-              layer_url,
-              format,
             };
             const result = onChange(modelFields);
             value = result?.destination ?? value;
@@ -334,14 +426,14 @@ export default function CreateScheduledDownload(props) {
           if (onChange) {
             const modelFields = {
               job_name,
+              layer_url,
+              format,
               access_key_id,
               secret_key,
               destination,
               frequency: value,
               column_mapping,
               start_at,
-              layer_url,
-              format,
             };
             const result = onChange(modelFields);
             value = result?.frequency ?? value;
@@ -382,14 +474,14 @@ export default function CreateScheduledDownload(props) {
           if (onChange) {
             const modelFields = {
               job_name,
+              layer_url,
+              format,
               access_key_id,
               secret_key,
               destination,
               frequency,
               column_mapping: value,
               start_at,
-              layer_url,
-              format,
             };
             const result = onChange(modelFields);
             value = result?.column_mapping ?? value;
@@ -415,14 +507,14 @@ export default function CreateScheduledDownload(props) {
           if (onChange) {
             const modelFields = {
               job_name,
+              layer_url,
+              format,
               access_key_id,
               secret_key,
               destination,
               frequency,
               column_mapping,
               start_at: value,
-              layer_url,
-              format,
             };
             const result = onChange(modelFields);
             value = result?.start_at ?? value;
@@ -437,98 +529,6 @@ export default function CreateScheduledDownload(props) {
         hasError={errors.start_at?.hasError}
         {...getOverrideProps(overrides, "start_at")}
       ></TextField>
-      <TextField
-        label={
-          <span style={{ display: "inline-flex" }}>
-            <span>Layer url</span>
-            <span style={{ color: "red" }}>*</span>
-          </span>
-        }
-        descriptiveText="Url to ArcGIS REST Service Layer"
-        isRequired={true}
-        isReadOnly={false}
-        placeholder="https://gismaps.kingcounty.gov/arcgis/rest/services/Environment/KingCo_SensitiveAreas/MapServer/11"
-        value={layer_url}
-        onChange={(e) => {
-          let { value } = e.target;
-          if (onChange) {
-            const modelFields = {
-              job_name,
-              access_key_id,
-              secret_key,
-              destination,
-              frequency,
-              column_mapping,
-              start_at,
-              layer_url: value,
-              format,
-            };
-            const result = onChange(modelFields);
-            value = result?.layer_url ?? value;
-          }
-          if (errors.layer_url?.hasError) {
-            runValidationTasks("layer_url", value);
-          }
-          setLayer_url(value);
-        }}
-        onBlur={() => runValidationTasks("layer_url", layer_url)}
-        errorMessage={errors.layer_url?.errorMessage}
-        hasError={errors.layer_url?.hasError}
-        {...getOverrideProps(overrides, "layer_url")}
-      ></TextField>
-      <SelectField
-        label="Output Format"
-        placeholder="Please select an option"
-        isDisabled={false}
-        value={format}
-        onChange={(e) => {
-          let { value } = e.target;
-          if (onChange) {
-            const modelFields = {
-              job_name,
-              access_key_id,
-              secret_key,
-              destination,
-              frequency,
-              column_mapping,
-              start_at,
-              layer_url,
-              format: value,
-            };
-            const result = onChange(modelFields);
-            value = result?.format ?? value;
-          }
-          if (errors.format?.hasError) {
-            runValidationTasks("format", value);
-          }
-          setFormat(value);
-        }}
-        onBlur={() => runValidationTasks("format", format)}
-        errorMessage={errors.format?.errorMessage}
-        hasError={errors.format?.hasError}
-        {...getOverrideProps(overrides, "format")}
-      >
-        <option
-          children="PMTILES"
-          value="PMTILES"
-          {...getOverrideProps(overrides, "formatoption0")}
-        ></option>
-        <option
-          children="GPKG"
-          value="GPKG"
-          {...getOverrideProps(overrides, "formatoption1")}
-        ></option>
-        <option
-          children="GEOJSON"
-          value="GEOJSON"
-          {...getOverrideProps(overrides, "formatoption2")}
-        ></option>
-        <option
-          children="SHP"
-          value="SHP"
-          {...getOverrideProps(overrides, "formatoption3")}
-        ></option>
-      </SelectField>
       <Flex
         justifyContent="space-between"
         {...getOverrideProps(overrides, "CTAFlex")}

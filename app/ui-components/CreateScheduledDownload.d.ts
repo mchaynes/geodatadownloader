@@ -14,38 +14,38 @@ export declare type ValidationResponse = {
 export declare type ValidationFunction<T> = (value: T, validationResponse: ValidationResponse) => ValidationResponse | Promise<ValidationResponse>;
 export declare type CreateScheduledDownloadInputValues = {
     job_name?: string;
+    layer_url?: string;
+    format?: string;
     access_key_id?: string;
     secret_key?: string;
     destination?: string;
     frequency?: string;
     column_mapping?: string;
     start_at?: string;
-    layer_url?: string;
-    format?: string;
 };
 export declare type CreateScheduledDownloadValidationValues = {
     job_name?: ValidationFunction<string>;
+    layer_url?: ValidationFunction<string>;
+    format?: ValidationFunction<string>;
     access_key_id?: ValidationFunction<string>;
     secret_key?: ValidationFunction<string>;
     destination?: ValidationFunction<string>;
     frequency?: ValidationFunction<string>;
     column_mapping?: ValidationFunction<string>;
     start_at?: ValidationFunction<string>;
-    layer_url?: ValidationFunction<string>;
-    format?: ValidationFunction<string>;
 };
 export declare type PrimitiveOverrideProps<T> = Partial<T> & React.DOMAttributes<HTMLDivElement>;
 export declare type CreateScheduledDownloadOverridesProps = {
     CreateScheduledDownloadGrid?: PrimitiveOverrideProps<GridProps>;
     job_name?: PrimitiveOverrideProps<TextFieldProps>;
+    layer_url?: PrimitiveOverrideProps<TextFieldProps>;
+    format?: PrimitiveOverrideProps<SelectFieldProps>;
     access_key_id?: PrimitiveOverrideProps<PasswordFieldProps>;
     secret_key?: PrimitiveOverrideProps<PasswordFieldProps>;
     destination?: PrimitiveOverrideProps<TextFieldProps>;
     frequency?: PrimitiveOverrideProps<SelectFieldProps>;
     column_mapping?: PrimitiveOverrideProps<TextAreaFieldProps>;
     start_at?: PrimitiveOverrideProps<TextFieldProps>;
-    layer_url?: PrimitiveOverrideProps<TextFieldProps>;
-    format?: PrimitiveOverrideProps<SelectFieldProps>;
 } & EscapeHatchProps;
 export declare type CreateScheduledDownloadProps = React.PropsWithChildren<{
     overrides?: CreateScheduledDownloadOverridesProps | undefined | null;

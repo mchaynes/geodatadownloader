@@ -11,11 +11,12 @@ import '@aws-amplify/ui-react/styles.css';
 import CreateDownloadSchedule from "./routes/schedule/new";
 import Login from "./routes/login";
 import awsExports from './aws-exports'
-import { Amplify } from "aws-amplify";
+import { Amplify, DataStore, Hub } from "aws-amplify";
 import { RequireAuth } from "./RequireAuth";
 import { Authenticator } from "@aws-amplify/ui-react";
-import ScheduleTable, { loader as scheduleLoader } from "./routes/schedule";
-import UpdateDownloadSchedule, { loader as updateScheduleLoader } from "./routes/schedule/edit";
+import ScheduleTable from "./routes/schedule";
+import UpdateDownloadSchedule from "./routes/schedule/edit";
+import ViewScheduledDownload from "./routes/schedule/view";
 
 
 const rootEl = document.getElementById("root");
@@ -25,6 +26,12 @@ if (!rootEl) {
 }
 const root = ReactDomClient.createRoot(rootEl);
 Amplify.configure(awsExports)
+// clear the data store when signing out. We don't want to cross contaminate data between accounts
+Hub.listen('auth', async (data) => {
+  if (data.payload.event === "signOut") {
+    await DataStore.clear()
+  }
+})
 
 const router = createBrowserRouter([
   {
@@ -38,7 +45,6 @@ const router = createBrowserRouter([
       },
       {
         path: "/schedule/",
-        loader: scheduleLoader,
         element: (
           <RequireAuth>
             <ScheduleTable />
@@ -54,8 +60,15 @@ const router = createBrowserRouter([
         )
       },
       {
+        path: "/schedule/:id/",
+        element: (
+          <RequireAuth>
+            <ViewScheduledDownload />
+          </RequireAuth>
+        )
+      },
+      {
         path: "/schedule/:id/edit",
-        loader: updateScheduleLoader,
         element: (
           <RequireAuth>
             <UpdateDownloadSchedule />

@@ -3,3 +3,5 @@ dist
 node_modules/
 
 app/models
+
+amplify-codegen-temp/models

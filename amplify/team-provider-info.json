@@ -19,6 +19,9 @@
         "schedule": {
           "f": "f"
         }
+      },
+      "api": {
+        "geodatadownloader": {}
       }
     }
   }

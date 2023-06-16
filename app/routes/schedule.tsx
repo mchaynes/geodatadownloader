@@ -1,37 +1,42 @@
-import { graphqlOperation, GraphQLQuery } from "@aws-amplify/api";
-import { Button, Typography } from "@mui/material";
+import Edit from "@mui/icons-material/Edit";
+import { Button, IconButton, Typography } from "@mui/material";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
-import { DataGrid, GridRenderCellParams } from "@mui/x-data-grid";
+import { DataGrid } from "@mui/x-data-grid";
 import { GridColDef } from "@mui/x-data-grid/models/colDef";
-import { API } from "aws-amplify";
+import { DataStore } from "aws-amplify";
+import { useEffect, useState } from "react";
 import { useLoaderData, useNavigate } from "react-router";
 import { Link } from "react-router-dom";
-import { ListDownloadSchedulesQuery } from "../API";
-import { listDownloadSchedules } from "../graphql/queries";
+import { DownloadSchedule } from "../models";
 
-
-export async function loader() {
-  const result = await API.graphql<GraphQLQuery<ListDownloadSchedulesQuery>>(graphqlOperation(listDownloadSchedules))
-  return result.data?.listDownloadSchedules?.items
-}
 
 export default function ScheduleTable() {
 
-  const scheduledDownloads = useLoaderData() as Awaited<ReturnType<typeof loader>>
+  const [scheduledDownloads, setScheduled] = useState<DownloadSchedule[]>([])
+
+  useEffect(() => {
+    const subscription = DataStore.observeQuery(DownloadSchedule).subscribe((data) => {
+      setScheduled(data.items)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+
+
   const navigate = useNavigate()
 
   const headers = Object.entries({
     "job_name": {
       name: "Job Name",
       width: 200,
+      flex: 2,
     },
-    "layer_url": { name: "Layer URL", width: 200 },
-    "format": { name: "Format", width: 75 },
-    "destination": { name: "Destination", width: 75 },
+    "layer_url": { name: "Layer URL", width: 100, flex: 1 },
+    "format": { name: "Format", width: 75, flex: 1 },
+    "destination": { name: "Destination", width: 75, flex: 1 },
     "frequency": { name: "Frequency", width: 75 },
-    "start_at": { name: "Start At", width: 75 },
-    "column_mapping": { name: "Column Mapping", width: 75 },
+    "column_mapping": { name: "Column Mapping", width: 75, flex: 2 },
   })
   const gridColDefs: GridColDef[] = []
   for (const [id, c] of headers) {
@@ -40,13 +45,29 @@ export default function ScheduleTable() {
       renderCell: (f) => {
         if (id === "job_name") {
           // If we're rendering the job name, render a Link to the details of the job so we can update it
-          return (<Link to={`${f.row["id"]}/edit`}>{f.value}</Link>)
+          return (
+            <div style={{ width: "100%", display: "flex", flexDirection: "row", justifyContent: "space-between", alignContent: "center" }}>
+              <Link style={{ flexGrow: 1 }} to={`${f.row["id"]}`}>{f.value}</Link>
+              <IconButton
+                size="small"
+                sx={{ justifySelf: "flex-end" }}
+                onClick={() => navigate(`${f.row["id"]}/edit`)}
+              >
+                <Edit sx={{ height: "1rem", }} />
 
+              </IconButton>
+            </div>
+          )
+
+        }
+        if (typeof f.value === "object") {
+          return JSON.stringify(f.value)
         }
         return f.value
       },
       headerName: c.name,
       width: c.width,
+      flex: c.flex,
     })
   }
 
