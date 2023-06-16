@@ -1,0 +1,25 @@
+{
+  "staging": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-amplify19d87c1af60f4-staging-182318-authRole",
+      "UnauthRoleArn": "arn:aws:iam::932110816578:role/amplify-amplify19d87c1af60f4-staging-182318-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::932110816578:role/amplify-amplify19d87c1af60f4-staging-182318-authRole",
+      "Region": "us-west-2",
+      "DeploymentBucketName": "amplify-amplify19d87c1af60f4-staging-182318-deployment",
+      "UnauthRoleName": "amplify-amplify19d87c1af60f4-staging-182318-unauthRole",
+      "StackName": "amplify-amplify19d87c1af60f4-staging-182318",
+      "StackId": "arn:aws:cloudformation:us-west-2:932110816578:stack/amplify-amplify19d87c1af60f4-staging-182318/b3fd8920-0ba9-11ee-a5be-029b03f59b5d",
+      "AmplifyAppId": "d1p51g31om3wld"
+    },
+    "categories": {
+      "auth": {
+        "geodatadownloader": {}
+      },
+      "function": {
+        "schedule": {
+          "f": "f"
+        }
+      }
+    }
+  }
+}

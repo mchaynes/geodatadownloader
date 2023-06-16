@@ -2,17 +2,12 @@ import { ThemeProvider } from "@emotion/react";
 import Container from "@mui/material/Container";
 import Divider from "@mui/material/Divider";
 import {
-  createTheme,
-  CssBaseline,
-  responsiveFontSizes,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import Link from "@mui/material/Link";
-import { green, cyan } from "@mui/material/colors";
-import logo from "/IMG_1039.png";
 import { WelcomeMessage } from "./WelcomeMessage";
 
 import "@fontsource/roboto/300.css";
@@ -29,9 +24,6 @@ import { Where } from "./Where";
 import { AttributeTablePreview } from "./AttributeTablePreview";
 import { ExtentPicker } from "./ExtentPicker";
 import { DownloaderForm } from "./Downloader";
-import ShareUrlButton from "./ShareUrlButton";
-import React from "react";
-import { ColorModeContext } from "./context";
 
 type SupportedExportType = string;
 
@@ -44,7 +36,7 @@ function isSupportedExportType(
   );
 }
 
-function App() {
+export default function App() {
   const theme = useTheme();
   const isLg = useMediaQuery(theme.breakpoints.up("lg"));
 
@@ -81,27 +73,10 @@ function App() {
       sx={{
         display: "flex",
         flexDirection: "column",
-        borderLeft: "20rem",
-        borderRight: "10rem",
         paddingTop: "1rem",
         paddingBottom: "2rem",
       }}
     >
-      <CssBaseline />
-      <div style={{ display: "flex", flexDirection: "row" }}>
-        <img src={logo as string} width="48px" height="48px" alt="Pine" />
-        <Typography sx={{ ml: 3 }} variant="h1" color="inherit" noWrap={true}>
-          geodatadownloader
-        </Typography>
-        <ShareUrlButton
-          params={{
-            where: where,
-            boundary: filterExtent ? JSON.stringify(filterExtent.toJSON()) : "",
-            layer_url: layer ? `${layer.url}/${layer.layerId}` : layerUrl,
-            format: exportType,
-          }}
-        />
-      </div>
       <PickLayer defaultLayerUrl={layerUrl} onLayerLoad={setLayer} />
       <div style={{ display: "flex", flexDirection: "column" }}>
         <div
@@ -212,168 +187,5 @@ function Footer() {
         />
       </a>
     </Box>
-  );
-}
-
-export default function WithStyles() {
-  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
-  const [mode, setMode] = React.useState<"light" | "dark">("light");
-
-  const colorMode = useMemo(
-    () => ({
-      mode: mode,
-      setColorMode: (colorMode: typeof mode) => {
-        setMode(colorMode);
-      },
-    }),
-    [mode]
-  );
-  useEffect(() => {
-    colorMode.setColorMode(prefersDarkMode ? "dark" : "light");
-  }, [prefersDarkMode, mode]);
-
-  const theme = React.useMemo(() => {
-    return responsiveFontSizes(
-      createTheme({
-        palette: {
-          mode: mode,
-          ...(mode === "light"
-            ? {
-                primary: {
-                  main: cyan.A700,
-                },
-                success: {
-                  light: green.A700,
-                  main: green.A700,
-                  dark: green[900],
-                },
-              }
-            : {
-                primary: {
-                  main: cyan.A400,
-                },
-                success: {
-                  light: green.A700,
-                  main: green.A700,
-                  dark: green[900],
-                },
-              }),
-        },
-        typography: {
-          fontFamily: [
-            "Roboto",
-            "-apple-system",
-            "BlinkMacSystemFont",
-            '"Segoe UI"',
-            '"Helvetica Neue"',
-            "Arial",
-            "sans-serif",
-            '"Apple Color Emoji"',
-            '"Segoe UI Emoji"',
-            '"Segoe UI Symbol"',
-          ].join(" "),
-          fontWeightRegular: 300,
-          fontWeightLight: 200,
-          fontWeightMedium: 350,
-          fontWeightBold: 400,
-          fontSize: 14,
-          h1: {
-            fontSize: "1.9rem",
-            flexGrow: 1,
-          },
-          h2: {
-            alignSelf: "flex-start",
-            fontSize: "2rem",
-            fontWeight: 400,
-            marginBottom: "1rem",
-          },
-          h3: {
-            fontSize: "1.25rem",
-            marginBottom: "0.75rem",
-          },
-          body1: {
-            fontSize: "1.0rem",
-          },
-          body2: {
-            fontSize: "0.9rem",
-          },
-          caption: {
-            fontSize: "0.7rem",
-            paddingTop: "0.5rem",
-            paddingBottom: "0.5rem",
-            paddingRight: "1rem",
-            display: "flex",
-            justifyContent: "flex-end",
-          },
-        },
-        components: {
-          MuiButton: {
-            styleOverrides: {
-              root: {
-                fontWeight: 900,
-              },
-            },
-          },
-          MuiOutlinedInput: {
-            styleOverrides: {
-              sizeSmall: {
-                fontSize: "0.8rem",
-              },
-            },
-          },
-          MuiPaper: {
-            styleOverrides: {
-              outlined: {
-                display: "flex",
-                flexDirection: "column",
-                gap: "1rem 1rem",
-                alignItems: "stretch",
-                paddingTop: "1rem",
-                paddingLeft: "3rem",
-                paddingRight: "3rem",
-                paddingBottom: "1rem",
-              },
-            },
-          },
-          MuiAlert: {
-            styleOverrides: {
-              standardSuccess: {
-                justifySelf: "flex-end",
-                fontWeight: 600,
-              },
-              standardInfo: {
-                justifySelf: "flex-end",
-                fontWeight: 600,
-              },
-            },
-          },
-          MuiDivider: {
-            styleOverrides: {
-              root: {
-                paddingTop: "2rem",
-                paddingBottom: "1rem",
-              },
-            },
-          },
-          MuiContainer: {
-            styleOverrides: {
-              root: {
-                display: "flex",
-                flexDirection: "row",
-                gap: ".5rem .5rem",
-              },
-            },
-          },
-        },
-      })
-    );
-  }, [mode]);
-
-  return (
-    <ThemeProvider theme={theme}>
-      <ColorModeContext.Provider value={colorMode}>
-        <App />
-      </ColorModeContext.Provider>
-    </ThemeProvider>
   );
 }
