@@ -5,7 +5,8 @@ import { schema } from './schema';
 const Frequency = {
   "DAILY": "DAILY",
   "WEEKLY": "WEEKLY",
-  "MONTHLY": "MONTHLY"
+  "MONTHLY": "MONTHLY",
+  "HOURLY": "HOURLY"
 };
 
 const DownloadStatus = {
@@ -22,9 +23,10 @@ const Formats = {
   "SHP": "SHP"
 };
 
-const { Downloads, DownloadSchedule } = initSchema(schema);
+const { Layer, Downloads, DownloadSchedule } = initSchema(schema);
 
 export {
+  Layer,
   Downloads,
   DownloadSchedule,
   Frequency,

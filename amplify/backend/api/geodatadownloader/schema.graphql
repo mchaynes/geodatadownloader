@@ -1,7 +1,12 @@
+type Layer @model @auth(rules: [{allow: private}]) {
+  id: ID!
+}
+
 enum Frequency {
   DAILY
   WEEKLY
   MONTHLY
+  HOURLY
 }
 
 enum DownloadStatus {

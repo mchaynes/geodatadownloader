@@ -463,6 +463,11 @@ export default function CreateScheduledDownload(props) {
           value="MONTHLY"
           {...getOverrideProps(overrides, "frequencyoption2")}
         ></option>
+        <option
+          children="Hourly"
+          value="HOURLY"
+          {...getOverrideProps(overrides, "frequencyoption3")}
+        ></option>
       </SelectField>
       <TextAreaField
         label="Column mapping"

@@ -13,9 +13,8 @@ import { ColorModeContext } from "../context";
 
 import logo from "/IMG_1039.png";
 import Avatar from "@mui/material/Avatar";
-import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
-import { Authenticator, useAuthenticator } from "@aws-amplify/ui-react";
+import { useAuthenticator } from "@aws-amplify/ui-react";
 
 function Root() {
   const navigate = useNavigate()
@@ -38,35 +37,33 @@ function Root() {
     >
       <CssBaseline />
       <div style={{ display: "flex", flexDirection: "row" }}>
-        <img
-          src={logo as string}
-          width="48px"
-          height="48px"
-          alt="Geodatadownloader Logo"
-          onClick={() => navigate("/")}
-        />
+        <IconButton disableRipple={true}>
+          <img
+            src={logo as string}
+            width="48px"
+            height="48px"
+            alt="Geodatadownloader Logo"
+            onClick={() => navigate("/")}
+          />
+        </IconButton>
+
         <Typography sx={{ ml: 3 }} variant="h1" color="inherit" noWrap={true}>
           geodatadownloader
         </Typography>
         {user === undefined ?
           <IconButton onClick={() => navigate("/login")} >
-            <Chip
-              label="Sign in"
-              avatar={<Avatar sx={{ bgcolor: cyan.A700, color: "white" }} />}
-            />
+            <Avatar sx={{ bgcolor: cyan.A700, color: "white" }} />
           </IconButton>
           :
-          <IconButton onClick={signoutAndRedirect} >
-            <Chip
-              label="Sign out"
-              avatar={
-                <Avatar
-                  sx={{ bgcolor: cyan.A700, color: "white" }}
-                >
-                  <strong>{user.attributes?.email.substr(0, 2).toUpperCase()}</strong>
-                </Avatar>}
-            />
-          </IconButton>
+          <>
+            <IconButton onClick={signoutAndRedirect} >
+              <Avatar
+                sx={{ bgcolor: cyan.A700, color: "white" }}
+              >
+                <strong>{user.attributes?.email.substr(0, 2).toUpperCase()}</strong>
+              </Avatar>
+            </IconButton>
+          </>
 
         }
 

@@ -1,4 +1,10 @@
 {
+  "analytics": {
+    "geodatadownloader": {
+      "providerPlugin": "awscloudformation",
+      "service": "Pinpoint"
+    }
+  },
   "api": {
     "geodatadownloader": {
       "dependsOn": [
@@ -60,6 +66,24 @@
       },
       "providerPlugin": "awscloudformation",
       "service": "Cognito"
+    }
+  },
+  "geo": {
+    "layers": {
+      "accessType": "AuthorizedAndGuestUsers",
+      "dependsOn": [
+        {
+          "attributes": [
+            "UserPoolId"
+          ],
+          "category": "auth",
+          "resourceName": "geodatadownloader"
+        }
+      ],
+      "isDefault": true,
+      "mapStyle": "VectorHereExplore",
+      "providerPlugin": "awscloudformation",
+      "service": "Map"
     }
   },
   "parameters": {

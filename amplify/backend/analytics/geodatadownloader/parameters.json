@@ -1,0 +1,21 @@
+{
+    "appName": "geodatadownloader",
+    "roleName": "pinpointLambdaRole1225115f",
+    "cloudformationPolicyName": "cloudformationPolicy1225115f",
+    "cloudWatchPolicyName": "cloudWatchPolicy1225115f",
+    "pinpointPolicyName": "pinpointPolicy1225115f",
+    "authPolicyName": "pinpoint_amplify_1225115f",
+    "unauthPolicyName": "pinpoint_amplify_1225115f",
+    "authRoleName": {
+        "Ref": "AuthRoleName"
+    },
+    "unauthRoleName": {
+        "Ref": "UnauthRoleName"
+    },
+    "authRoleArn": {
+        "Fn::GetAtt": [
+            "AuthRole",
+            "Arn"
+        ]
+    }
+}

@@ -715,6 +715,11 @@ export default function DownloadScheduleUpdateForm(props) {
           value="MONTHLY"
           {...getOverrideProps(overrides, "frequencyoption2")}
         ></option>
+        <option
+          children="Hourly"
+          value="HOURLY"
+          {...getOverrideProps(overrides, "frequencyoption3")}
+        ></option>
       </SelectField>
       <ArrayField
         onChange={async (items) => {

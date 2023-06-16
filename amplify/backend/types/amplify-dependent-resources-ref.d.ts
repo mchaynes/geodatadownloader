@@ -1,4 +1,11 @@
 export type AmplifyDependentResourcesAttributes = {
+  "analytics": {
+    "geodatadownloader": {
+      "Id": "string",
+      "Region": "string",
+      "appName": "string"
+    }
+  },
   "api": {
     "geodatadownloader": {
       "GraphQLAPIEndpointOutput": "string",
@@ -14,6 +21,14 @@ export type AmplifyDependentResourcesAttributes = {
       "UserPoolArn": "string",
       "UserPoolId": "string",
       "UserPoolName": "string"
+    }
+  },
+  "geo": {
+    "layers": {
+      "Arn": "string",
+      "Name": "string",
+      "Region": "string",
+      "Style": "string"
     }
   }
 }

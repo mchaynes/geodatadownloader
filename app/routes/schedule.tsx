@@ -1,5 +1,4 @@
-import Edit from "@mui/icons-material/Edit";
-import { Button, IconButton, Typography } from "@mui/material";
+import { Button, Link, Typography } from "@mui/material";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import { DataGrid } from "@mui/x-data-grid";
@@ -7,7 +6,6 @@ import { GridColDef } from "@mui/x-data-grid/models/colDef";
 import { DataStore } from "aws-amplify";
 import { useEffect, useState } from "react";
 import { useLoaderData, useNavigate } from "react-router";
-import { Link } from "react-router-dom";
 import { DownloadSchedule } from "../models";
 
 
@@ -21,8 +19,6 @@ export default function ScheduleTable() {
     })
     return () => subscription.unsubscribe()
   }, [])
-
-
 
   const navigate = useNavigate()
 
@@ -46,24 +42,17 @@ export default function ScheduleTable() {
         if (id === "job_name") {
           // If we're rendering the job name, render a Link to the details of the job so we can update it
           return (
-            <div style={{ width: "100%", display: "flex", flexDirection: "row", justifyContent: "space-between", alignContent: "center" }}>
-              <Link style={{ flexGrow: 1 }} to={`${f.row["id"]}`}>{f.value}</Link>
-              <IconButton
-                size="small"
-                sx={{ justifySelf: "flex-end" }}
-                onClick={() => navigate(`${f.row["id"]}/edit`)}
-              >
-                <Edit sx={{ height: "1rem", }} />
-
-              </IconButton>
-            </div>
+            <Link href={`${f.row["id"]}`} onClick={() => navigate(`${f.row["id"]}`)}>
+              {f.value}
+            </Link>
           )
 
         }
+        let val = f.value
         if (typeof f.value === "object") {
-          return JSON.stringify(f.value)
+          val = JSON.stringify(f.value)
         }
-        return f.value
+        return <Typography>{val}</Typography>
       },
       headerName: c.name,
       width: c.width,

@@ -22,6 +22,12 @@
       },
       "api": {
         "geodatadownloader": {}
+      },
+      "geo": {
+        "layers": {}
+      },
+      "analytics": {
+        "geodatadownloader": {}
       }
     }
   }

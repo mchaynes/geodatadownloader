@@ -5,7 +5,8 @@ import { LazyLoading, LazyLoadingDisabled, AsyncCollection } from "@aws-amplify/
 export enum Frequency {
   DAILY = "DAILY",
   WEEKLY = "WEEKLY",
-  MONTHLY = "MONTHLY"
+  MONTHLY = "MONTHLY",
+  HOURLY = "HOURLY"
 }
 
 export enum DownloadStatus {
@@ -23,6 +24,32 @@ export enum Formats {
 }
 
 
+
+type EagerLayer = {
+  readonly [__modelMeta__]: {
+    identifier: ManagedIdentifier<Layer, 'id'>;
+    readOnlyFields: 'createdAt' | 'updatedAt';
+  };
+  readonly id: string;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+type LazyLayer = {
+  readonly [__modelMeta__]: {
+    identifier: ManagedIdentifier<Layer, 'id'>;
+    readOnlyFields: 'createdAt' | 'updatedAt';
+  };
+  readonly id: string;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+export declare type Layer = LazyLoading extends LazyLoadingDisabled ? EagerLayer : LazyLayer
+
+export declare const Layer: (new (init: ModelInit<Layer>) => Layer) & {
+  copyOf(source: Layer, mutator: (draft: MutableModel<Layer>) => MutableModel<Layer> | void): Layer;
+}
 
 type EagerDownloads = {
   readonly [__modelMeta__]: {
