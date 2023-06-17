@@ -16,6 +16,7 @@ import {
   Icon,
   ScrollView,
   SelectField,
+  SwitchField,
   Text,
   TextAreaField,
   TextField,
@@ -209,6 +210,12 @@ export default function DownloadScheduleUpdateForm(props) {
     Downloads: [],
     start_at: "",
     column_mapping: "",
+    where: "",
+    boundary: "",
+    active: false,
+    days_of_the_week: [],
+    day_of_the_month: "",
+    time_of_day: "",
   };
   const [job_name, setJob_name] = React.useState(initialValues.job_name);
   const [layer_url, setLayer_url] = React.useState(initialValues.layer_url);
@@ -225,6 +232,18 @@ export default function DownloadScheduleUpdateForm(props) {
   const [start_at, setStart_at] = React.useState(initialValues.start_at);
   const [column_mapping, setColumn_mapping] = React.useState(
     initialValues.column_mapping
+  );
+  const [where, setWhere] = React.useState(initialValues.where);
+  const [boundary, setBoundary] = React.useState(initialValues.boundary);
+  const [active, setActive] = React.useState(initialValues.active);
+  const [days_of_the_week, setDays_of_the_week] = React.useState(
+    initialValues.days_of_the_week
+  );
+  const [day_of_the_month, setDay_of_the_month] = React.useState(
+    initialValues.day_of_the_month
+  );
+  const [time_of_day, setTime_of_day] = React.useState(
+    initialValues.time_of_day
   );
   const [errors, setErrors] = React.useState({});
   const resetStateValues = () => {
@@ -251,6 +270,13 @@ export default function DownloadScheduleUpdateForm(props) {
         ? cleanValues.column_mapping
         : JSON.stringify(cleanValues.column_mapping)
     );
+    setWhere(cleanValues.where);
+    setBoundary(cleanValues.boundary);
+    setActive(cleanValues.active);
+    setDays_of_the_week(cleanValues.days_of_the_week ?? []);
+    setCurrentDays_of_the_weekValue("");
+    setDay_of_the_month(cleanValues.day_of_the_month);
+    setTime_of_day(cleanValues.time_of_day);
     setErrors({});
   };
   const [downloadScheduleRecord, setDownloadScheduleRecord] = React.useState(
@@ -275,6 +301,9 @@ export default function DownloadScheduleUpdateForm(props) {
   const [currentDownloadsValue, setCurrentDownloadsValue] =
     React.useState(undefined);
   const DownloadsRef = React.createRef();
+  const [currentDays_of_the_weekValue, setCurrentDays_of_the_weekValue] =
+    React.useState("");
+  const days_of_the_weekRef = React.createRef();
   const getIDValue = {
     Downloads: (r) => JSON.stringify({ id: r?.id }),
   };
@@ -289,18 +318,36 @@ export default function DownloadScheduleUpdateForm(props) {
   }).items;
   const getDisplayValue = {
     Downloads: (r) => `${r?.status ? r?.status + " - " : ""}${r?.id}`,
+    days_of_the_week: (r) => {
+      const enumDisplayValueMap = {
+        SUNDAY: "Sunday",
+        MONDAY: "Monday",
+        TUESDAY: "Tuesday",
+        WEDNESDAY: "Wednesday",
+        THURSDAY: "Thursday",
+        FRIDAY: "Friday",
+        SATURDAY: "Saturday",
+      };
+      return enumDisplayValueMap[r];
+    },
   };
   const validations = {
     job_name: [{ type: "Required" }],
-    layer_url: [],
-    format: [],
-    access_key_id: [],
-    secret_key: [],
+    layer_url: [{ type: "Required" }],
+    format: [{ type: "Required" }],
+    access_key_id: [{ type: "Required" }],
+    secret_key: [{ type: "Required" }],
     destination: [],
-    frequency: [],
+    frequency: [{ type: "Required" }],
     Downloads: [],
     start_at: [],
     column_mapping: [{ type: "JSON" }],
+    where: [],
+    boundary: [],
+    active: [],
+    days_of_the_week: [],
+    day_of_the_month: [],
+    time_of_day: [],
   };
   const runValidationTasks = async (
     fieldName,
@@ -338,6 +385,12 @@ export default function DownloadScheduleUpdateForm(props) {
           Downloads,
           start_at,
           column_mapping,
+          where,
+          boundary,
+          active,
+          days_of_the_week,
+          day_of_the_month,
+          time_of_day,
         };
         const validationResponses = await Promise.all(
           Object.keys(validations).reduce((promises, fieldName) => {
@@ -425,8 +478,13 @@ export default function DownloadScheduleUpdateForm(props) {
             secret_key: modelFields.secret_key,
             destination: modelFields.destination,
             frequency: modelFields.frequency,
-            start_at: modelFields.start_at,
             column_mapping: modelFields.column_mapping,
+            where: modelFields.where,
+            boundary: modelFields.boundary,
+            active: modelFields.active,
+            days_of_the_week: modelFields.days_of_the_week,
+            day_of_the_month: modelFields.day_of_the_month,
+            time_of_day: modelFields.time_of_day,
           };
           promises.push(
             DataStore.save(
@@ -467,6 +525,12 @@ export default function DownloadScheduleUpdateForm(props) {
               Downloads,
               start_at,
               column_mapping,
+              where,
+              boundary,
+              active,
+              days_of_the_week,
+              day_of_the_month,
+              time_of_day,
             };
             const result = onChange(modelFields);
             value = result?.job_name ?? value;
@@ -483,7 +547,7 @@ export default function DownloadScheduleUpdateForm(props) {
       ></TextField>
       <TextField
         label="Layer url"
-        isRequired={false}
+        isRequired={true}
         isReadOnly={false}
         value={layer_url}
         onChange={(e) => {
@@ -500,6 +564,12 @@ export default function DownloadScheduleUpdateForm(props) {
               Downloads,
               start_at,
               column_mapping,
+              where,
+              boundary,
+              active,
+              days_of_the_week,
+              day_of_the_month,
+              time_of_day,
             };
             const result = onChange(modelFields);
             value = result?.layer_url ?? value;
@@ -533,6 +603,12 @@ export default function DownloadScheduleUpdateForm(props) {
               Downloads,
               start_at,
               column_mapping,
+              where,
+              boundary,
+              active,
+              days_of_the_week,
+              day_of_the_month,
+              time_of_day,
             };
             const result = onChange(modelFields);
             value = result?.format ?? value;
@@ -570,7 +646,7 @@ export default function DownloadScheduleUpdateForm(props) {
       </SelectField>
       <TextField
         label="Access key id"
-        isRequired={false}
+        isRequired={true}
         isReadOnly={false}
         value={access_key_id}
         onChange={(e) => {
@@ -587,6 +663,12 @@ export default function DownloadScheduleUpdateForm(props) {
               Downloads,
               start_at,
               column_mapping,
+              where,
+              boundary,
+              active,
+              days_of_the_week,
+              day_of_the_month,
+              time_of_day,
             };
             const result = onChange(modelFields);
             value = result?.access_key_id ?? value;
@@ -603,7 +685,7 @@ export default function DownloadScheduleUpdateForm(props) {
       ></TextField>
       <TextField
         label="Secret key"
-        isRequired={false}
+        isRequired={true}
         isReadOnly={false}
         value={secret_key}
         onChange={(e) => {
@@ -620,6 +702,12 @@ export default function DownloadScheduleUpdateForm(props) {
               Downloads,
               start_at,
               column_mapping,
+              where,
+              boundary,
+              active,
+              days_of_the_week,
+              day_of_the_month,
+              time_of_day,
             };
             const result = onChange(modelFields);
             value = result?.secret_key ?? value;
@@ -653,6 +741,12 @@ export default function DownloadScheduleUpdateForm(props) {
               Downloads,
               start_at,
               column_mapping,
+              where,
+              boundary,
+              active,
+              days_of_the_week,
+              day_of_the_month,
+              time_of_day,
             };
             const result = onChange(modelFields);
             value = result?.destination ?? value;
@@ -686,6 +780,12 @@ export default function DownloadScheduleUpdateForm(props) {
               Downloads,
               start_at,
               column_mapping,
+              where,
+              boundary,
+              active,
+              days_of_the_week,
+              day_of_the_month,
+              time_of_day,
             };
             const result = onChange(modelFields);
             value = result?.frequency ?? value;
@@ -736,6 +836,12 @@ export default function DownloadScheduleUpdateForm(props) {
               Downloads: values,
               start_at,
               column_mapping,
+              where,
+              boundary,
+              active,
+              days_of_the_week,
+              day_of_the_month,
+              time_of_day,
             };
             const result = onChange(modelFields);
             values = result?.Downloads ?? values;
@@ -804,9 +910,7 @@ export default function DownloadScheduleUpdateForm(props) {
         ></Autocomplete>
       </ArrayField>
       <TextField
-        label="Start at"
-        isRequired={false}
-        isReadOnly={false}
+        label="Label"
         value={start_at}
         onChange={(e) => {
           let { value } = e.target;
@@ -822,6 +926,12 @@ export default function DownloadScheduleUpdateForm(props) {
               Downloads,
               start_at: value,
               column_mapping,
+              where,
+              boundary,
+              active,
+              days_of_the_week,
+              day_of_the_month,
+              time_of_day,
             };
             const result = onChange(modelFields);
             value = result?.start_at ?? value;
@@ -855,6 +965,12 @@ export default function DownloadScheduleUpdateForm(props) {
               Downloads,
               start_at,
               column_mapping: value,
+              where,
+              boundary,
+              active,
+              days_of_the_week,
+              day_of_the_month,
+              time_of_day,
             };
             const result = onChange(modelFields);
             value = result?.column_mapping ?? value;
@@ -869,6 +985,302 @@ export default function DownloadScheduleUpdateForm(props) {
         hasError={errors.column_mapping?.hasError}
         {...getOverrideProps(overrides, "column_mapping")}
       ></TextAreaField>
+      <TextField
+        label="Where"
+        isRequired={false}
+        isReadOnly={false}
+        value={where}
+        onChange={(e) => {
+          let { value } = e.target;
+          if (onChange) {
+            const modelFields = {
+              job_name,
+              layer_url,
+              format,
+              access_key_id,
+              secret_key,
+              destination,
+              frequency,
+              Downloads,
+              start_at,
+              column_mapping,
+              where: value,
+              boundary,
+              active,
+              days_of_the_week,
+              day_of_the_month,
+              time_of_day,
+            };
+            const result = onChange(modelFields);
+            value = result?.where ?? value;
+          }
+          if (errors.where?.hasError) {
+            runValidationTasks("where", value);
+          }
+          setWhere(value);
+        }}
+        onBlur={() => runValidationTasks("where", where)}
+        errorMessage={errors.where?.errorMessage}
+        hasError={errors.where?.hasError}
+        {...getOverrideProps(overrides, "where")}
+      ></TextField>
+      <TextField
+        label="Boundary"
+        isRequired={false}
+        isReadOnly={false}
+        value={boundary}
+        onChange={(e) => {
+          let { value } = e.target;
+          if (onChange) {
+            const modelFields = {
+              job_name,
+              layer_url,
+              format,
+              access_key_id,
+              secret_key,
+              destination,
+              frequency,
+              Downloads,
+              start_at,
+              column_mapping,
+              where,
+              boundary: value,
+              active,
+              days_of_the_week,
+              day_of_the_month,
+              time_of_day,
+            };
+            const result = onChange(modelFields);
+            value = result?.boundary ?? value;
+          }
+          if (errors.boundary?.hasError) {
+            runValidationTasks("boundary", value);
+          }
+          setBoundary(value);
+        }}
+        onBlur={() => runValidationTasks("boundary", boundary)}
+        errorMessage={errors.boundary?.errorMessage}
+        hasError={errors.boundary?.hasError}
+        {...getOverrideProps(overrides, "boundary")}
+      ></TextField>
+      <SwitchField
+        label="Active"
+        defaultChecked={false}
+        isDisabled={false}
+        isChecked={active}
+        onChange={(e) => {
+          let value = e.target.checked;
+          if (onChange) {
+            const modelFields = {
+              job_name,
+              layer_url,
+              format,
+              access_key_id,
+              secret_key,
+              destination,
+              frequency,
+              Downloads,
+              start_at,
+              column_mapping,
+              where,
+              boundary,
+              active: value,
+              days_of_the_week,
+              day_of_the_month,
+              time_of_day,
+            };
+            const result = onChange(modelFields);
+            value = result?.active ?? value;
+          }
+          if (errors.active?.hasError) {
+            runValidationTasks("active", value);
+          }
+          setActive(value);
+        }}
+        onBlur={() => runValidationTasks("active", active)}
+        errorMessage={errors.active?.errorMessage}
+        hasError={errors.active?.hasError}
+        {...getOverrideProps(overrides, "active")}
+      ></SwitchField>
+      <ArrayField
+        onChange={async (items) => {
+          let values = items;
+          if (onChange) {
+            const modelFields = {
+              job_name,
+              layer_url,
+              format,
+              access_key_id,
+              secret_key,
+              destination,
+              frequency,
+              Downloads,
+              start_at,
+              column_mapping,
+              where,
+              boundary,
+              active,
+              days_of_the_week: values,
+              day_of_the_month,
+              time_of_day,
+            };
+            const result = onChange(modelFields);
+            values = result?.days_of_the_week ?? values;
+          }
+          setDays_of_the_week(values);
+          setCurrentDays_of_the_weekValue("");
+        }}
+        currentFieldValue={currentDays_of_the_weekValue}
+        label={"Days of the week"}
+        items={days_of_the_week}
+        hasError={errors?.days_of_the_week?.hasError}
+        errorMessage={errors?.days_of_the_week?.errorMessage}
+        getBadgeText={getDisplayValue.days_of_the_week}
+        setFieldValue={setCurrentDays_of_the_weekValue}
+        inputFieldRef={days_of_the_weekRef}
+        defaultFieldValue={""}
+      >
+        <SelectField
+          label="Days of the week"
+          placeholder="Please select an option"
+          isDisabled={false}
+          value={currentDays_of_the_weekValue}
+          onChange={(e) => {
+            let { value } = e.target;
+            if (errors.days_of_the_week?.hasError) {
+              runValidationTasks("days_of_the_week", value);
+            }
+            setCurrentDays_of_the_weekValue(value);
+          }}
+          onBlur={() =>
+            runValidationTasks("days_of_the_week", currentDays_of_the_weekValue)
+          }
+          errorMessage={errors.days_of_the_week?.errorMessage}
+          hasError={errors.days_of_the_week?.hasError}
+          ref={days_of_the_weekRef}
+          labelHidden={true}
+          {...getOverrideProps(overrides, "days_of_the_week")}
+        >
+          <option
+            children="Sunday"
+            value="SUNDAY"
+            {...getOverrideProps(overrides, "days_of_the_weekoption0")}
+          ></option>
+          <option
+            children="Monday"
+            value="MONDAY"
+            {...getOverrideProps(overrides, "days_of_the_weekoption1")}
+          ></option>
+          <option
+            children="Tuesday"
+            value="TUESDAY"
+            {...getOverrideProps(overrides, "days_of_the_weekoption2")}
+          ></option>
+          <option
+            children="Wednesday"
+            value="WEDNESDAY"
+            {...getOverrideProps(overrides, "days_of_the_weekoption3")}
+          ></option>
+          <option
+            children="Thursday"
+            value="THURSDAY"
+            {...getOverrideProps(overrides, "days_of_the_weekoption4")}
+          ></option>
+          <option
+            children="Friday"
+            value="FRIDAY"
+            {...getOverrideProps(overrides, "days_of_the_weekoption5")}
+          ></option>
+          <option
+            children="Saturday"
+            value="SATURDAY"
+            {...getOverrideProps(overrides, "days_of_the_weekoption6")}
+          ></option>
+        </SelectField>
+      </ArrayField>
+      <TextField
+        label="Day of the month"
+        isRequired={false}
+        isReadOnly={false}
+        type="number"
+        step="any"
+        value={day_of_the_month}
+        onChange={(e) => {
+          let value = isNaN(parseInt(e.target.value))
+            ? e.target.value
+            : parseInt(e.target.value);
+          if (onChange) {
+            const modelFields = {
+              job_name,
+              layer_url,
+              format,
+              access_key_id,
+              secret_key,
+              destination,
+              frequency,
+              Downloads,
+              start_at,
+              column_mapping,
+              where,
+              boundary,
+              active,
+              days_of_the_week,
+              day_of_the_month: value,
+              time_of_day,
+            };
+            const result = onChange(modelFields);
+            value = result?.day_of_the_month ?? value;
+          }
+          if (errors.day_of_the_month?.hasError) {
+            runValidationTasks("day_of_the_month", value);
+          }
+          setDay_of_the_month(value);
+        }}
+        onBlur={() => runValidationTasks("day_of_the_month", day_of_the_month)}
+        errorMessage={errors.day_of_the_month?.errorMessage}
+        hasError={errors.day_of_the_month?.hasError}
+        {...getOverrideProps(overrides, "day_of_the_month")}
+      ></TextField>
+      <TextField
+        label="Time of day"
+        isRequired={false}
+        isReadOnly={false}
+        type="time"
+        value={time_of_day}
+        onChange={(e) => {
+          let { value } = e.target;
+          if (onChange) {
+            const modelFields = {
+              job_name,
+              layer_url,
+              format,
+              access_key_id,
+              secret_key,
+              destination,
+              frequency,
+              Downloads,
+              start_at,
+              column_mapping,
+              where,
+              boundary,
+              active,
+              days_of_the_week,
+              day_of_the_month,
+              time_of_day: value,
+            };
+            const result = onChange(modelFields);
+            value = result?.time_of_day ?? value;
+          }
+          if (errors.time_of_day?.hasError) {
+            runValidationTasks("time_of_day", value);
+          }
+          setTime_of_day(value);
+        }}
+        onBlur={() => runValidationTasks("time_of_day", time_of_day)}
+        errorMessage={errors.time_of_day?.errorMessage}
+        hasError={errors.time_of_day?.hasError}
+        {...getOverrideProps(overrides, "time_of_day")}
+      ></TextField>
       <Flex
         justifyContent="space-between"
         {...getOverrideProps(overrides, "CTAFlex")}

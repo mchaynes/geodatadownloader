@@ -168,7 +168,7 @@ export const schema = {
                     "name": "layer_url",
                     "isArray": false,
                     "type": "String",
-                    "isRequired": false,
+                    "isRequired": true,
                     "attributes": []
                 },
                 "format": {
@@ -177,21 +177,21 @@ export const schema = {
                     "type": {
                         "enum": "Formats"
                     },
-                    "isRequired": false,
+                    "isRequired": true,
                     "attributes": []
                 },
                 "access_key_id": {
                     "name": "access_key_id",
                     "isArray": false,
                     "type": "String",
-                    "isRequired": false,
+                    "isRequired": true,
                     "attributes": []
                 },
                 "secret_key": {
                     "name": "secret_key",
                     "isArray": false,
                     "type": "String",
-                    "isRequired": false,
+                    "isRequired": true,
                     "attributes": []
                 },
                 "destination": {
@@ -207,7 +207,7 @@ export const schema = {
                     "type": {
                         "enum": "Frequency"
                     },
-                    "isRequired": false,
+                    "isRequired": true,
                     "attributes": []
                 },
                 "Downloads": {
@@ -226,13 +226,6 @@ export const schema = {
                         ]
                     }
                 },
-                "start_at": {
-                    "name": "start_at",
-                    "isArray": false,
-                    "type": "String",
-                    "isRequired": false,
-                    "attributes": []
-                },
                 "column_mapping": {
                     "name": "column_mapping",
                     "isArray": false,
@@ -244,6 +237,51 @@ export const schema = {
                     "name": "job_name",
                     "isArray": false,
                     "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "where": {
+                    "name": "where",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "boundary": {
+                    "name": "boundary",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "active": {
+                    "name": "active",
+                    "isArray": false,
+                    "type": "Boolean",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "days_of_the_week": {
+                    "name": "days_of_the_week",
+                    "isArray": true,
+                    "type": {
+                        "enum": "Days"
+                    },
+                    "isRequired": false,
+                    "attributes": [],
+                    "isArrayNullable": false
+                },
+                "day_of_the_month": {
+                    "name": "day_of_the_month",
+                    "isArray": false,
+                    "type": "Int",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "time_of_day": {
+                    "name": "time_of_day",
+                    "isArray": false,
+                    "type": "AWSTime",
                     "isRequired": false,
                     "attributes": []
                 },
@@ -294,6 +332,18 @@ export const schema = {
         }
     },
     "enums": {
+        "Days": {
+            "name": "Days",
+            "values": [
+                "SUNDAY",
+                "MONDAY",
+                "TUESDAY",
+                "WEDNESDAY",
+                "THURSDAY",
+                "FRIDAY",
+                "SATURDAY"
+            ]
+        },
         "Frequency": {
             "name": "Frequency",
             "values": [
@@ -324,5 +374,5 @@ export const schema = {
     },
     "nonModels": {},
     "codegenVersion": "3.4.4",
-    "version": "64c774be2a319ff9d071fb1db60a9e21"
+    "version": "e37bbcab5858bdaae17852ba62d592ad"
 };

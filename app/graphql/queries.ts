@@ -2,6 +2,69 @@
 /* eslint-disable */
 // this is an auto generated file. This will be overwritten
 
+export const getLayer = /* GraphQL */ `
+  query GetLayer($id: ID!) {
+    getLayer(id: $id) {
+      id
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const listLayers = /* GraphQL */ `
+  query ListLayers(
+    $filter: ModelLayerFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    listLayers(filter: $filter, limit: $limit, nextToken: $nextToken) {
+      items {
+        id
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const syncLayers = /* GraphQL */ `
+  query SyncLayers(
+    $filter: ModelLayerFilterInput
+    $limit: Int
+    $nextToken: String
+    $lastSync: AWSTimestamp
+  ) {
+    syncLayers(
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+      lastSync: $lastSync
+    ) {
+      items {
+        id
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
 export const getDownloads = /* GraphQL */ `
   query GetDownloads($id: ID!) {
     getDownloads(id: $id) {
@@ -149,9 +212,14 @@ export const getDownloadSchedule = /* GraphQL */ `
         startedAt
         __typename
       }
-      start_at
       column_mapping
       job_name
+      where
+      boundary
+      active
+      days_of_the_week
+      day_of_the_month
+      time_of_day
       createdAt
       updatedAt
       _version
@@ -186,9 +254,14 @@ export const listDownloadSchedules = /* GraphQL */ `
           startedAt
           __typename
         }
-        start_at
         column_mapping
         job_name
+        where
+        boundary
+        active
+        days_of_the_week
+        day_of_the_month
+        time_of_day
         createdAt
         updatedAt
         _version
@@ -229,9 +302,14 @@ export const syncDownloadSchedules = /* GraphQL */ `
           startedAt
           __typename
         }
-        start_at
         column_mapping
         job_name
+        where
+        boundary
+        active
+        days_of_the_week
+        day_of_the_month
+        time_of_day
         createdAt
         updatedAt
         _version

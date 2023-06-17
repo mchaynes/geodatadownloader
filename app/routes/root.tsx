@@ -37,13 +37,12 @@ function Root() {
     >
       <CssBaseline />
       <div style={{ display: "flex", flexDirection: "row" }}>
-        <IconButton disableRipple={true}>
+        <IconButton disableRipple={true} onClick={() => navigate("/")} >
           <img
             src={logo as string}
             width="48px"
             height="48px"
             alt="Geodatadownloader Logo"
-            onClick={() => navigate("/")}
           />
         </IconButton>
 

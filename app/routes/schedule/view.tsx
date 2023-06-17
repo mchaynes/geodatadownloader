@@ -1,26 +1,11 @@
-import { Autocomplete, Button, Dialog, DialogActions, DialogTitle, TextField, Typography } from "@mui/material";
+import { Autocomplete, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField, Typography } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { DataStore } from "aws-amplify";
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { LoaderFunction, useLoaderData, useNavigate, useParams } from "react-router-dom";
+import DownloadScheduleForm from "../../DownloadScheduleForm";
 import { Downloads, DownloadSchedule, Formats, Frequency } from "../../models";
 
-const passwordAttrs = [
-  "access_key_id",
-  "secret_key"
-]
-
-const ignoredFields = [
-  "createdAt",
-  "updatedAt",
-  "owner",
-  "id"
-]
-
-const selectorFields = {
-  "frequency": Frequency,
-  "format": Formats,
-}
 
 function deepEqual(x, y) {
   if (x === y) {
@@ -60,7 +45,12 @@ function Footer({ onSave, onDelete, disabled }: FooterProps) {
         open={showDialog}
         onClose={() => setShowDialog(false)}
       >
-        <DialogTitle>Confirm Deletion of job</DialogTitle>
+        <DialogTitle>Delete Scheduled Download?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Deletion will permanently erase any configuration, and all download history.
+          </DialogContentText>
+        </DialogContent>
         <DialogActions>
           <Button variant="outlined" onClick={() => setShowDialog(false)}>
             Dismiss
@@ -85,10 +75,22 @@ function Footer({ onSave, onDelete, disabled }: FooterProps) {
   )
 }
 
+export const loader: LoaderFunction = async ({ params }) => {
+  if (!params.id) {
+    throw new Error("something is messed up with view")
+  }
+  return await DataStore.query(DownloadSchedule, params.id)
+}
+
+
+
 export default function ViewScheduledDownload() {
-  const [downloadSchedule, setDownloadSchedule] = useState<DownloadSchedule>(new DownloadSchedule({}))
-  const [edited, setEdited] = useState<DownloadSchedule>(new DownloadSchedule({}))
+  const schedule = useLoaderData() as DownloadSchedule
+  const [downloadSchedule, setDownloadSchedule] = useState<DownloadSchedule>(schedule)
+  const [edited, setEdited] = useState<DownloadSchedule>(() => DownloadSchedule.copyOf(schedule, () => { }))
   const [downloads, setDownloads] = useState<Downloads[]>([])
+  const [showDialog, setShowDialog] = useState(false)
+  const [disabled, setDisabled] = useState(true)
   const params = useParams()
   const navigate = useNavigate()
   useEffect(() => {
@@ -96,11 +98,6 @@ export default function ViewScheduledDownload() {
     if (!id) {
       throw new Error(`id is not set`)
     }
-    DataStore.query(DownloadSchedule, id).then(val => {
-      if (val) {
-        setDownloadSchedule(val)
-      }
-    })
     const downloadSub = DataStore.observeQuery(Downloads, (c) => c.downloadscheduleID.eq(id)).subscribe((data) => {
       setDownloads(data.items)
     })
@@ -108,6 +105,10 @@ export default function ViewScheduledDownload() {
       downloadSub.unsubscribe()
     }
   }, [params])
+
+  useEffect(() => {
+    setDisabled(deepEqual(downloadSchedule, edited))
+  }, [downloadSchedule, edited])
 
   useEffect(() => {
     setEdited(downloadSchedule)
@@ -130,79 +131,41 @@ export default function ViewScheduledDownload() {
           Scheduled Download
         </Typography>
       </div>
-      <DataGrid
-        components={{
-          Footer: Footer,
-        }}
-        componentsProps={{
-          footer: {
-            onSave: saveEdits,
-            onDelete: () => DataStore.delete(edited),
-            disabled: deepEqual(downloadSchedule, edited)
-          }
-        }}
-        columns={[
-          {
-            field: 'attribute',
-            headerName: "Attribute",
-            flex: 1,
-          },
-          {
-            field: 'value',
-            headerName: 'Value (double click to edit)',
-            flex: 3,
-            editable: true,
-            sortable: false,
-            renderCell: (row) => {
-              const rowId = row.id.toString()
-              if (passwordAttrs.includes(rowId)) {
-                return "*".repeat(20)
-              }
-              return edited[rowId]
-            },
-            renderEditCell: row => {
-              const rowId = row.id.toString()
-              let val = edited[rowId]
-              if (passwordAttrs.includes(rowId)) {
-                val = ""
-              }
-              // add selector for frequency
-              if (rowId in selectorFields) {
-                return <Autocomplete
-                  value={val}
-                  options={Object.values(selectorFields[rowId])}
-                  sx={{ width: "100%" }}
-                  renderInput={(params) => <TextField {...params} label={rowId} />}
-                  onChange={(_, newVal) => {
-                    setEdited(DownloadSchedule.copyOf(edited, draft => {
-                      draft[rowId] = newVal
-                    }))
-                  }}
-                />
-              }
-              return <TextField
-                value={val}
-                sx={{ width: "100%" }}
-                onChange={(evt) => {
-                  setEdited(DownloadSchedule.copyOf(edited, draft => {
-                    draft[rowId] = evt.target.value
-                  }))
-                }}
-              />
-            }
-          }
-        ]}
-        rows={Object.entries(edited ?? {})
-          .filter(([attr]) => !attr.startsWith("_"))
-          .filter(([attr]) => !ignoredFields.includes(attr))
-          .map(([attr, val]) => ({
-            id: `${attr}`,
-            attribute: attr,
-            value: val,
-          }))}
-        autoHeight={true}
-        sortModel={undefined}
-      />
+      <DownloadScheduleForm schedule={edited} setSchedule={setEdited} />
+      <div style={{ padding: "1rem", width: "100%", display: "flex", flexDirection: "row", gap: "1rem" }}>
+        <div style={{ flexGrow: 1 }} />
+        <Dialog
+          open={showDialog}
+          onClose={() => setShowDialog(false)}
+        >
+          <DialogTitle>Delete Scheduled Download?</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Deletion will permanently erase any configuration, and all download history.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button variant="outlined" onClick={() => setShowDialog(false)}>
+              Dismiss
+            </Button>
+            <Button variant="contained" onClick={deleteScheduledDownload}>
+              Confirm
+            </Button>
+          </DialogActions>
+        </Dialog>
+        <Button onClick={() => setShowDialog(true)}>
+          Delete
+        </Button>
+        <Button
+          disabled={disabled}
+          sx={{ justifySelf: "flex-end" }}
+          variant="contained"
+          onClick={saveEdits}
+        >
+          Save
+        </Button>
+      </div>
+
       <div style={{ display: "flex", flexDirection: "row", marginTop: "1rem", marginBottom: "1rem" }}>
         <Typography sx={{ flexGrow: 1 }} variant="h2">Download Jobs</Typography>
         <Button
@@ -216,36 +179,38 @@ export default function ViewScheduledDownload() {
           Start New Job
         </Button>
       </div>
-      <DataGrid columns={[
-        {
-          field: "id",
-          headerName: "Download ID",
-          flex: 1,
-        },
-        {
-          field: "status",
-          headerName: "Status",
-          flex: 1,
-        },
-        {
-          field: "started_at",
-          headerName: "Started At",
-          flex: 1,
-        },
-        {
-          field: "finished_at",
-          headerName: "Finished At",
-          flex: 1,
-        },
-        {
-          field: "messages",
-          headerName: "Messages",
-          flex: 1,
-        },
-      ]}
-        rows={downloads}
-        autoHeight={true}
-      />
+      <div style={{ height: "30rem" }}>
+        <DataGrid
+          columns={[
+            {
+              field: "id",
+              headerName: "Download ID",
+              flex: 1,
+            },
+            {
+              field: "status",
+              headerName: "Status",
+              flex: 1,
+            },
+            {
+              field: "started_at",
+              headerName: "Started At",
+              flex: 1,
+            },
+            {
+              field: "finished_at",
+              headerName: "Finished At",
+              flex: 1,
+            },
+            {
+              field: "messages",
+              headerName: "Messages",
+              flex: 1,
+            },
+          ]}
+          rows={downloads}
+        />
+      </div>
     </div>
   )
 }

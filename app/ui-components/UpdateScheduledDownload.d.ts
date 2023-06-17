@@ -5,7 +5,7 @@
  **************************************************************************/
 
 import * as React from "react";
-import { GridProps, PasswordFieldProps, SelectFieldProps, TextAreaFieldProps, TextFieldProps } from "@aws-amplify/ui-react";
+import { GridProps, PasswordFieldProps, SelectFieldProps, SwitchFieldProps, TextAreaFieldProps, TextFieldProps } from "@aws-amplify/ui-react";
 import { EscapeHatchProps } from "@aws-amplify/ui-react/internal";
 import { DownloadSchedule } from "../models";
 export declare type ValidationResponse = {
@@ -23,6 +23,12 @@ export declare type UpdateScheduledDownloadInputValues = {
     start_at?: string;
     column_mapping?: string;
     job_name?: string;
+    where?: string;
+    boundary?: string;
+    active?: boolean;
+    days_of_the_week?: string[];
+    day_of_the_month?: number;
+    time_of_day?: string;
 };
 export declare type UpdateScheduledDownloadValidationValues = {
     layer_url?: ValidationFunction<string>;
@@ -34,6 +40,12 @@ export declare type UpdateScheduledDownloadValidationValues = {
     start_at?: ValidationFunction<string>;
     column_mapping?: ValidationFunction<string>;
     job_name?: ValidationFunction<string>;
+    where?: ValidationFunction<string>;
+    boundary?: ValidationFunction<string>;
+    active?: ValidationFunction<boolean>;
+    days_of_the_week?: ValidationFunction<string>;
+    day_of_the_month?: ValidationFunction<number>;
+    time_of_day?: ValidationFunction<string>;
 };
 export declare type PrimitiveOverrideProps<T> = Partial<T> & React.DOMAttributes<HTMLDivElement>;
 export declare type UpdateScheduledDownloadOverridesProps = {
@@ -47,6 +59,12 @@ export declare type UpdateScheduledDownloadOverridesProps = {
     start_at?: PrimitiveOverrideProps<TextFieldProps>;
     column_mapping?: PrimitiveOverrideProps<TextAreaFieldProps>;
     job_name?: PrimitiveOverrideProps<TextFieldProps>;
+    where?: PrimitiveOverrideProps<TextFieldProps>;
+    boundary?: PrimitiveOverrideProps<TextFieldProps>;
+    active?: PrimitiveOverrideProps<SwitchFieldProps>;
+    days_of_the_week?: PrimitiveOverrideProps<SelectFieldProps>;
+    day_of_the_month?: PrimitiveOverrideProps<TextFieldProps>;
+    time_of_day?: PrimitiveOverrideProps<TextFieldProps>;
 } & EscapeHatchProps;
 export declare type UpdateScheduledDownloadProps = React.PropsWithChildren<{
     overrides?: UpdateScheduledDownloadOverridesProps | undefined | null;

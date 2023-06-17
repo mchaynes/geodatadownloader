@@ -2,6 +2,45 @@
 /* eslint-disable */
 // this is an auto generated file. This will be overwritten
 
+export const onCreateLayer = /* GraphQL */ `
+  subscription OnCreateLayer($filter: ModelSubscriptionLayerFilterInput) {
+    onCreateLayer(filter: $filter) {
+      id
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const onUpdateLayer = /* GraphQL */ `
+  subscription OnUpdateLayer($filter: ModelSubscriptionLayerFilterInput) {
+    onUpdateLayer(filter: $filter) {
+      id
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const onDeleteLayer = /* GraphQL */ `
+  subscription OnDeleteLayer($filter: ModelSubscriptionLayerFilterInput) {
+    onDeleteLayer(filter: $filter) {
+      id
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
 export const onCreateDownloads = /* GraphQL */ `
   subscription OnCreateDownloads(
     $filter: ModelSubscriptionDownloadsFilterInput
@@ -101,9 +140,14 @@ export const onCreateDownloadSchedule = /* GraphQL */ `
         startedAt
         __typename
       }
-      start_at
       column_mapping
       job_name
+      where
+      boundary
+      active
+      days_of_the_week
+      day_of_the_month
+      time_of_day
       createdAt
       updatedAt
       _version
@@ -147,9 +191,14 @@ export const onUpdateDownloadSchedule = /* GraphQL */ `
         startedAt
         __typename
       }
-      start_at
       column_mapping
       job_name
+      where
+      boundary
+      active
+      days_of_the_week
+      day_of_the_month
+      time_of_day
       createdAt
       updatedAt
       _version
@@ -193,9 +242,14 @@ export const onDeleteDownloadSchedule = /* GraphQL */ `
         startedAt
         __typename
       }
-      start_at
       column_mapping
       job_name
+      where
+      boundary
+      active
+      days_of_the_week
+      day_of_the_month
+      time_of_day
       createdAt
       updatedAt
       _version

@@ -15,7 +15,7 @@ import { Amplify, DataStore, Hub } from "aws-amplify";
 import { RequireAuth } from "./RequireAuth";
 import { Authenticator } from "@aws-amplify/ui-react";
 import ScheduleTable from "./routes/schedule";
-import ViewScheduledDownload from "./routes/schedule/view";
+import ViewScheduledDownload, { loader as viewLoader } from "./routes/schedule/view";
 
 
 const rootEl = document.getElementById("root");
@@ -60,6 +60,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/schedule/:id/",
+        loader: viewLoader,
         element: (
           <RequireAuth>
             <ViewScheduledDownload />

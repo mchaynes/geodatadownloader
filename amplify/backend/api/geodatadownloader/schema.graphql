@@ -1,3 +1,13 @@
+enum Days {
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+}
+
 type Layer @model @auth(rules: [{allow: private}]) {
   id: ID!
 }
@@ -34,15 +44,20 @@ enum Formats {
 
 type DownloadSchedule @model @auth(rules: [{allow: owner}]) {
   id: ID!
-  layer_url: String
-  format: Formats
-  access_key_id: String
-  secret_key: String
+  layer_url: String!
+  format: Formats!
+  access_key_id: String!
+  secret_key: String!
   destination: String
-  frequency: Frequency
+  frequency: Frequency!
   Downloads: [Downloads] @hasMany(indexName: "byDownloadSchedule", fields: ["id"])
-  start_at: String
   column_mapping: AWSJSON
   job_name: String
+  where: String
+  boundary: String
+  active: Boolean
+  days_of_the_week: [Days]!
+  day_of_the_month: Int
+  time_of_day: AWSTime
 }
  

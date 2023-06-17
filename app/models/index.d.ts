@@ -2,6 +2,16 @@ import { ModelInit, MutableModel, __modelMeta__, ManagedIdentifier } from "@aws-
 // @ts-ignore
 import { LazyLoading, LazyLoadingDisabled, AsyncCollection } from "@aws-amplify/datastore";
 
+export enum Days {
+  SUNDAY = "SUNDAY",
+  MONDAY = "MONDAY",
+  TUESDAY = "TUESDAY",
+  WEDNESDAY = "WEDNESDAY",
+  THURSDAY = "THURSDAY",
+  FRIDAY = "FRIDAY",
+  SATURDAY = "SATURDAY"
+}
+
 export enum Frequency {
   DAILY = "DAILY",
   WEEKLY = "WEEKLY",
@@ -93,16 +103,21 @@ type EagerDownloadSchedule = {
     readOnlyFields: 'createdAt' | 'updatedAt';
   };
   readonly id: string;
-  readonly layer_url?: string | null;
-  readonly format?: Formats | keyof typeof Formats | null;
-  readonly access_key_id?: string | null;
-  readonly secret_key?: string | null;
+  readonly layer_url: string;
+  readonly format: Formats | keyof typeof Formats;
+  readonly access_key_id: string;
+  readonly secret_key: string;
   readonly destination?: string | null;
-  readonly frequency?: Frequency | keyof typeof Frequency | null;
+  readonly frequency: Frequency | keyof typeof Frequency;
   readonly Downloads?: (Downloads | null)[] | null;
-  readonly start_at?: string | null;
   readonly column_mapping?: string | null;
   readonly job_name?: string | null;
+  readonly where?: string | null;
+  readonly boundary?: string | null;
+  readonly active?: boolean | null;
+  readonly days_of_the_week: (Days | null)[] | keyof typeof Days;
+  readonly day_of_the_month?: number | null;
+  readonly time_of_day?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -113,16 +128,21 @@ type LazyDownloadSchedule = {
     readOnlyFields: 'createdAt' | 'updatedAt';
   };
   readonly id: string;
-  readonly layer_url?: string | null;
-  readonly format?: Formats | keyof typeof Formats | null;
-  readonly access_key_id?: string | null;
-  readonly secret_key?: string | null;
+  readonly layer_url: string;
+  readonly format: Formats | keyof typeof Formats;
+  readonly access_key_id: string;
+  readonly secret_key: string;
   readonly destination?: string | null;
-  readonly frequency?: Frequency | keyof typeof Frequency | null;
+  readonly frequency: Frequency | keyof typeof Frequency;
   readonly Downloads: AsyncCollection<Downloads>;
-  readonly start_at?: string | null;
   readonly column_mapping?: string | null;
   readonly job_name?: string | null;
+  readonly where?: string | null;
+  readonly boundary?: string | null;
+  readonly active?: boolean | null;
+  readonly days_of_the_week: (Days | null)[] | keyof typeof Days;
+  readonly day_of_the_month?: number | null;
+  readonly time_of_day?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
