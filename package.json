@@ -13,6 +13,7 @@
     "@mui/material": "^5.11.3",
     "@mui/x-data-grid": "^5.17.17",
     "@mui/x-date-pickers": "^6.8.0",
+    "@supabase/supabase-js": "^2.25.0",
     "@terraformer/arcgis": "^2.1.2",
     "aws-amplify": "^5.2.6",
     "csv-writer-browser": "^1.0.0",

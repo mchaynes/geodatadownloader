@@ -12,7 +12,7 @@ import CreateDownloadSchedule from "./routes/schedule/new";
 import Login from "./routes/login";
 import awsExports from './aws-exports'
 import { Amplify, DataStore, Hub } from "aws-amplify";
-import { RequireAuth } from "./RequireAuth";
+import { ProvideAuth, RequireAuth } from "./RequireAuth";
 import { Authenticator } from "@aws-amplify/ui-react";
 import ScheduleTable from "./routes/schedule";
 import ViewScheduledDownload, { loader as viewLoader } from "./routes/schedule/view";
@@ -78,7 +78,9 @@ const router = createBrowserRouter([
 root.render(
   <StrictMode>
     <Authenticator.Provider>
-      <RouterProvider router={router} />
+      <ProvideAuth>
+        <RouterProvider router={router} />
+      </ProvideAuth>
     </Authenticator.Provider>
   </StrictMode>
 );

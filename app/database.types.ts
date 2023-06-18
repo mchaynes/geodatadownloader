@@ -34,6 +34,35 @@ export interface Database {
   }
   public: {
     Tables: {
+      downloads: {
+        Row: {
+          created_at: string
+          download_schedule_id: string | null
+          id: string
+          messages: string[]
+          owner: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          download_schedule_id?: string | null
+          id?: string
+          messages?: string[]
+          owner?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          download_schedule_id?: string | null
+          id?: string
+          messages?: string[]
+          owner?: string | null
+          status?: string
+          updated_at?: string
+        }
+      }
       layers: {
         Row: {
           created_at: string | null
@@ -44,7 +73,7 @@ export interface Database {
           id: string
           name: string
           owner: string | null
-          query_formats: string[] | null
+          query_formats: string[]
           spatial_ref: string
           url: string
         }
@@ -57,7 +86,7 @@ export interface Database {
           id?: string
           name: string
           owner?: string | null
-          query_formats?: string[] | null
+          query_formats?: string[]
           spatial_ref: string
           url: string
         }
@@ -70,9 +99,68 @@ export interface Database {
           id?: string
           name?: string
           owner?: string | null
-          query_formats?: string[] | null
+          query_formats?: string[]
           spatial_ref?: string
           url?: string
+        }
+      }
+      scheduled_downloads: {
+        Row: {
+          access_key_id: string
+          active: boolean
+          column_mapping: Json
+          created_at: string
+          day_of_month: number
+          days_of_week: Database["public"]["Enums"]["day"][]
+          destination: string
+          format: Database["public"]["Enums"]["format"]
+          frequency: Database["public"]["Enums"]["frequency"]
+          id: string
+          layer_url: string
+          name: string
+          owner: string | null
+          secret_key: string
+          time_of_day: string
+          updated_at: string
+          where_clause: string
+        }
+        Insert: {
+          access_key_id: string
+          active: boolean
+          column_mapping?: Json
+          created_at?: string
+          day_of_month?: number
+          days_of_week?: Database["public"]["Enums"]["day"][]
+          destination: string
+          format?: Database["public"]["Enums"]["format"]
+          frequency?: Database["public"]["Enums"]["frequency"]
+          id?: string
+          layer_url: string
+          name?: string
+          owner?: string | null
+          secret_key: string
+          time_of_day?: string
+          updated_at?: string
+          where_clause?: string
+        }
+        Update: {
+          access_key_id?: string
+          active?: boolean
+          column_mapping?: Json
+          created_at?: string
+          day_of_month?: number
+          days_of_week?: Database["public"]["Enums"]["day"][]
+          destination?: string
+          format?: Database["public"]["Enums"]["format"]
+          frequency?: Database["public"]["Enums"]["frequency"]
+          id?: string
+          layer_url?: string
+          name?: string
+          owner?: string | null
+          secret_key?: string
+          time_of_day?: string
+          updated_at?: string
+          where_clause?: string
         }
       }
       spatial_ref_sys: {
@@ -3176,7 +3264,17 @@ export interface Database {
       }
     }
     Enums: {
-      [_ in never]: never
+      day:
+        | "sunday"
+        | "monday"
+        | "tuesday"
+        | "wednesday"
+        | "thursday"
+        | "friday"
+        | "saturday"
+      format: "pmtiles" | "gpkg" | "geojson" | "shp" | "csv"
+      frequency: "daily" | "weekly" | "monthly" | "hourly"
+      status: "pending" | "started" | "successful" | "failed"
     }
     CompositeTypes: {
       geometry_dump: {

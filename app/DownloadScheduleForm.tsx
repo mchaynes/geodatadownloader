@@ -1,12 +1,10 @@
-import { DataStore } from "@aws-amplify/datastore";
-import { isAWSTime } from "@aws-amplify/datastore/lib-esm/util";
-import { Autocomplete, Button, Checkbox, FormControlLabel, FormGroup, Switch, TextField, Typography } from "@mui/material";
+import { Autocomplete, Checkbox, FormControlLabel, FormGroup, Switch, TextField, Typography } from "@mui/material";
 import { LocalizationProvider, TimeField } from "@mui/x-date-pickers";
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { Dayjs } from "dayjs";
-import { ChangeEvent, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { Days, DownloadSchedule, Formats, Frequency } from "./models";
+import { ChangeEvent, SetStateAction, useEffect, useState } from "react";
+import { DownloadSchedule } from "./models";
+import { Day, Days, Format, Formats, Frequencies, Frequency, ScheduledDownload, ScheduledDownloadUpdate } from "./types";
 
 
 function convertToTitleCase(str: string): string {
@@ -16,31 +14,33 @@ function convertToTitleCase(str: string): string {
 }
 
 export type DownloadScheduleFormProps = {
-  schedule: DownloadSchedule
-  setSchedule: (_: DownloadSchedule) => void
+  schedule: ScheduledDownloadUpdate
+  setSchedule: SetStateAction<ScheduledDownloadUpdate>
 }
 
 export default function DownloadScheduleForm({ schedule, setSchedule }: DownloadScheduleFormProps) {
-  const [daysOfWeek, setDaysOfWeek] = useState<Days[]>(() => {
-    if (Array.isArray(schedule?.days_of_the_week)) {
-      return schedule?.days_of_the_week.filter((d) => d !== null)
+  const [daysOfWeek, setDaysOfWeek] = useState<Day[]>(() => {
+    if (Array.isArray(schedule?.days_of_week)) {
+      return schedule?.days_of_week.filter((d) => d !== null)
         .map(s => s as Exclude<typeof s, null>)
     }
     return []
   })
 
   useEffect(() => {
-    setSchedule(DownloadSchedule.copyOf(schedule, draft => {
-      draft.days_of_the_week = daysOfWeek
-    }))
+    setSchedule({
+      ...schedule,
+      days_of_week: daysOfWeek
+    })
   }, [daysOfWeek, schedule])
 
   const bindField = (field: keyof DownloadSchedule) => ({
     value: schedule[field] ?? "",
     onChange: (val: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setSchedule(DownloadSchedule.copyOf(schedule, draft => {
-        draft[field.toString()] = val.currentTarget.value
-      }))
+      setSchedule({
+        ...schedule,
+        [field]: val,
+      })
     }
   })
   return (
@@ -60,9 +60,10 @@ export default function DownloadScheduleForm({ schedule, setSchedule }: Download
               <Switch
                 value={schedule.active ?? true}
                 onChange={(_, checked) => setSchedule(
-                  DownloadSchedule.copyOf(schedule, draft => {
-                    draft.active = checked
-                  })
+                  {
+                    ...schedule,
+                    active: checked,
+                  }
                 )}
                 defaultChecked
               />
@@ -78,13 +79,14 @@ export default function DownloadScheduleForm({ schedule, setSchedule }: Download
         {...bindField("layer_url")}
       />
       <Autocomplete
-        value={schedule.format}
-        options={Object.keys(Formats)}
+        value={schedule.format ?? "gpkg"}
+        options={Formats}
         renderInput={(params) => <TextField {...params} />}
-        onChange={(_, newVal: Formats) => {
-          setSchedule(DownloadSchedule.copyOf(schedule, draft => {
-            draft.format = newVal
-          }))
+        onChange={(_, newVal: Format) => {
+          setSchedule({
+            ...schedule,
+            format: newVal,
+          })
         }}
       />
       <TextField
@@ -117,19 +119,20 @@ export default function DownloadScheduleForm({ schedule, setSchedule }: Download
         {...bindField("secret_key")}
       />
       <Autocomplete
-        value={schedule.frequency}
-        options={Object.keys(Frequency)}
+        value={schedule.frequency ?? "weekly"}
+        options={Frequencies}
         renderInput={(params) => <TextField {...params} />}
         onChange={(_, newVal: Frequency) => {
-          setSchedule(DownloadSchedule.copyOf(schedule, draft => {
-            draft.frequency = newVal
-          }))
+          setSchedule({
+            ...schedule,
+            frequency: newVal,
+          })
         }}
       />
-      {schedule.frequency === Frequency.WEEKLY && (
+      {schedule.frequency === "weekly" && (
         <FormGroup>
           <div style={{ display: "flex", flexDirection: "row" }}>
-            {Object.values(Days).map((day: Days) =>
+            {Days.map((day: Day) =>
               <FormControlLabel key={day} control={<Checkbox onChange={(evt) => {
                 const { target: { checked } } = evt
                 if (checked && !daysOfWeek.includes(day)) {
@@ -143,21 +146,18 @@ export default function DownloadScheduleForm({ schedule, setSchedule }: Download
           </div>
         </FormGroup>
       )}
-      {(Frequency.DAILY === schedule.frequency || Frequency.MONTHLY == schedule.frequency || Frequency.WEEKLY === schedule.frequency) && (
+      {("daily" === schedule.frequency || "monthly" == schedule.frequency || "weekly" === schedule.frequency) && (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <TimeField
             format="HH:mm"
             onChange={(evt: Dayjs) => {
-              const formattedTime = evt.format("HH:mm:ss.123")
-              if (isAWSTime(formattedTime)) {
-                setSchedule(DownloadSchedule.copyOf(schedule, draft => {
-                  draft.time_of_day = formattedTime
-                }))
-              }
-            }}
-
-            label="Pick Time To Run Job" />
-
+              const formattedTime = evt.format("HH:mm")
+              setSchedule({
+                ...schedule,
+                time_of_day: formattedTime,
+              })
+            }
+            } />
         </LocalizationProvider>
       )}
     </div>
