@@ -8,8 +8,8 @@ export default function Login() {
 
   const handleLogin = async () => {
     const { error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password,
+      email,
+      password
     })
     if (error) {
       alert(error)
@@ -38,7 +38,6 @@ export default function Login() {
             onChange={e => setEmail(e.currentTarget.value)}
           />
           <TextField
-
             fullWidth={true}
             label={"Password"}
             type={"password"}

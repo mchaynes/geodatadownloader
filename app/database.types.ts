@@ -108,6 +108,7 @@ export interface Database {
         Row: {
           access_key_id: string
           active: boolean
+          boundary: Json
           column_mapping: Json
           created_at: string
           day_of_month: number
@@ -127,6 +128,7 @@ export interface Database {
         Insert: {
           access_key_id: string
           active: boolean
+          boundary?: Json
           column_mapping?: Json
           created_at?: string
           day_of_month?: number
@@ -146,6 +148,7 @@ export interface Database {
         Update: {
           access_key_id?: string
           active?: boolean
+          boundary?: Json
           column_mapping?: Json
           created_at?: string
           day_of_month?: number

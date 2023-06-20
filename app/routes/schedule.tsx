@@ -3,27 +3,27 @@ import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import { DataGrid } from "@mui/x-data-grid";
 import { GridColDef } from "@mui/x-data-grid/models/colDef";
-import { DataStore } from "aws-amplify";
-import { useEffect, useState } from "react";
-import { useLoaderData, useNavigate } from "react-router";
-import { DownloadSchedule } from "../models";
+import { LoaderFunction, useLoaderData, useNavigate } from "react-router";
+import { supabase } from "../supabase";
+import { ScheduledDownload } from "../types";
 
+
+export const loader: LoaderFunction = async () => {
+  const { data, error } = await supabase.from("scheduled_downloads").select()
+  if (error) {
+    throw new Error(JSON.stringify(error))
+  }
+  return data
+}
 
 export default function ScheduleTable() {
 
-  const [scheduledDownloads, setScheduled] = useState<DownloadSchedule[]>([])
-
-  useEffect(() => {
-    const subscription = DataStore.observeQuery(DownloadSchedule).subscribe((data) => {
-      setScheduled(data.items)
-    })
-    return () => subscription.unsubscribe()
-  }, [])
+  const scheduled = useLoaderData() as ScheduledDownload[]
 
   const navigate = useNavigate()
 
   const headers = Object.entries({
-    "job_name": {
+    "name": {
       name: "Job Name",
       width: 200,
       flex: 2,
@@ -39,7 +39,7 @@ export default function ScheduleTable() {
     gridColDefs.push({
       field: id,
       renderCell: (f) => {
-        if (id === "job_name") {
+        if (id === "name") {
           // If we're rendering the job name, render a Link to the details of the job so we can update it
           return (
             <Link href={`${f.row["id"]}`} onClick={() => navigate(`${f.row["id"]}`)}>
@@ -74,7 +74,7 @@ export default function ScheduleTable() {
       </div>
       <Box sx={{ height: "40rem", width: "100%" }}>
         <DataGrid
-          rows={scheduledDownloads ? scheduledDownloads : []}
+          rows={scheduled ? scheduled : []}
           columns={gridColDefs}
         />
       </Box>

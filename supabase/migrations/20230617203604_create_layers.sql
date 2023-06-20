@@ -40,6 +40,7 @@ create table public.scheduled_downloads (
   destination text not null,
   frequency frequency not null default 'weekly',
   column_mapping jsonb not null default '{}',
+  boundary jsonb not null default '{}',
   where_clause text not null default '',
   active boolean not null,
   day_of_month int not null default 1,

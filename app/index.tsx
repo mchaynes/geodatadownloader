@@ -8,14 +8,14 @@ import ErrorPage from "./ErrorPage";
 import Root from "./routes/root";
 
 import '@aws-amplify/ui-react/styles.css';
-import CreateDownloadSchedule from "./routes/schedule/new";
+import CreateDownloadSchedule, { action as createDownloadScheduleAction } from "./routes/schedule/new";
 import Login from "./routes/login";
 import awsExports from './aws-exports'
 import { Amplify, DataStore, Hub } from "aws-amplify";
-import { ProvideAuth, RequireAuth } from "./RequireAuth";
+import { RequireAuth } from "./RequireAuth";
 import { Authenticator } from "@aws-amplify/ui-react";
-import ScheduleTable from "./routes/schedule";
-import ViewScheduledDownload, { loader as viewLoader } from "./routes/schedule/view";
+import ScheduleTable, { loader as scheduleLoader } from "./routes/schedule";
+import ViewScheduledDownload, { loader as viewLoader, action as viewAction } from "./routes/schedule/view";
 
 
 const rootEl = document.getElementById("root");
@@ -44,6 +44,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/schedule/",
+        loader: scheduleLoader,
         element: (
           <RequireAuth>
             <ScheduleTable />
@@ -52,6 +53,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/schedule/new/",
+        action: createDownloadScheduleAction,
         element: (
           <RequireAuth>
             <CreateDownloadSchedule />
@@ -61,6 +63,7 @@ const router = createBrowserRouter([
       {
         path: "/schedule/:id/",
         loader: viewLoader,
+        action: viewAction,
         element: (
           <RequireAuth>
             <ViewScheduledDownload />
@@ -78,9 +81,7 @@ const router = createBrowserRouter([
 root.render(
   <StrictMode>
     <Authenticator.Provider>
-      <ProvideAuth>
-        <RouterProvider router={router} />
-      </ProvideAuth>
+      <RouterProvider router={router} />
     </Authenticator.Provider>
   </StrictMode>
 );
