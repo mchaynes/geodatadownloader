@@ -50,26 +50,29 @@ const router = createBrowserRouter([
             <ScheduleTable />
           </RequireAuth>
         ),
+        children: [
+          {
+            path: "/schedule/new/",
+            action: createDownloadScheduleAction,
+            element: (
+              <RequireAuth>
+                <CreateDownloadSchedule />
+              </RequireAuth>
+            )
+          },
+          {
+            path: "/schedule/:id/",
+            loader: viewLoader,
+            action: viewAction,
+            element: (
+              <RequireAuth>
+                <ViewScheduledDownload />
+              </RequireAuth>
+            )
+          },
+        ]
       },
-      {
-        path: "/schedule/new/",
-        action: createDownloadScheduleAction,
-        element: (
-          <RequireAuth>
-            <CreateDownloadSchedule />
-          </RequireAuth>
-        )
-      },
-      {
-        path: "/schedule/:id/",
-        loader: viewLoader,
-        action: viewAction,
-        element: (
-          <RequireAuth>
-            <ViewScheduledDownload />
-          </RequireAuth>
-        )
-      },
+
       {
         path: "/login",
         element: <Login />

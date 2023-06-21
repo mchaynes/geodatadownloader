@@ -1,6 +1,5 @@
 import { Button, Typography } from "@mui/material";
-import { useState } from "react";
-import { ActionFunction, Form, Link, } from "react-router-dom";
+import { ActionFunction, Form, useActionData } from "react-router-dom";
 import { scheduledDownloadFromForm } from "../../database";
 import DownloadScheduleForm from "../../DownloadScheduleForm";
 import { supabase } from '../../supabase'
@@ -17,10 +16,11 @@ export const action: ActionFunction = async ({ request }) => {
 }
 
 export default function CreateDownloadSchedule() {
-
+  const actionData = useActionData();
+  console.log(actionData)
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginBottom: "10rem" }}>
-      <Typography variant="h2">
+      <Typography variant="h6">
         Create Scheduled Download
       </Typography>
       <Form method="post">

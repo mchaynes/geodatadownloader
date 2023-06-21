@@ -1,7 +1,8 @@
 import { Autocomplete, Checkbox, FormControl, FormControlLabel, FormGroup, InputLabel, MenuItem, Select, Switch, TextField, Typography } from "@mui/material";
 import { LocalizationProvider, TimeField } from "@mui/x-date-pickers";
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { useState } from "react";
+import dayjs from "dayjs";
+import { useEffect, useState } from "react";
 import { Day, Days, Formats, Frequencies, Frequency, ScheduledDownload, ScheduledDownloadInsert } from "./types";
 
 
@@ -17,10 +18,28 @@ export type DownloadScheduleFormProps = {
 
 export default function DownloadScheduleForm({ schedule }: DownloadScheduleFormProps) {
   const [frequency, setFrequency] = useState<Frequency>(schedule?.frequency ?? "weekly")
+  const [days, setDays] = useState<Day[]>(schedule?.days_of_week ?? [])
   const bindField = (field: keyof ScheduledDownload) => ({
-    defaultValue: schedule ? schedule[field] ?? "" : "",
+    defaultValue: schedule ? schedule[field] : undefined,
     name: field,
+    key: `${schedule?.id}-${field}`,
+    fullWidth: true,
   })
+
+  const handleDayChecked = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.currentTarget.checked) {
+      setDays([...new Set([e.target.name as Day, ...days])])
+    } else {
+      setDays(days.filter(d => d !== e.target.name))
+    }
+  }
+
+
+  useEffect(() => {
+    if (schedule) {
+      setFrequency(schedule.frequency ?? "monthly")
+    }
+  }, [schedule])
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
       <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", width: "100%", gap: "2rem" }}>
@@ -36,8 +55,8 @@ export default function DownloadScheduleForm({ schedule }: DownloadScheduleFormP
             sx={{ justifySelf: "flex-end", flexGrow: 1 }}
             control={
               <Switch
-                value={schedule?.active ?? true}
-                {...bindField("active")}
+                name="active"
+                {...(schedule?.active ? { defaultChecked: true } : undefined)}
               />
             }
             label="Active"
@@ -51,11 +70,19 @@ export default function DownloadScheduleForm({ schedule }: DownloadScheduleFormP
         required={true}
         {...bindField("layer_url")}
       />
-      <Autocomplete
-        value={schedule?.format ?? "gpkg"}
-        options={Formats}
-        renderInput={(params) => <TextField name="format" {...params} />}
-      />
+      <FormControl>
+        <InputLabel>Output Format</InputLabel>
+        <Select
+          required={true}
+          label="Output Format"
+          {...bindField("format")}
+        >
+          {Formats.map(f =>
+            <MenuItem key={f} value={f}>{f}</MenuItem>
+          )}
+        </Select>
+      </FormControl>
+
       <TextField
         label={"Where"}
         type="text"
@@ -64,10 +91,10 @@ export default function DownloadScheduleForm({ schedule }: DownloadScheduleFormP
       />
       <TextField
         label={"Boundary"}
-        name={"boundary"}
         type="text"
         placeholder={"Paste in JSON boundary"}
-        value={typeof schedule?.boundary === "object" ? JSON.stringify(schedule.boundary) : schedule?.boundary ?? ""}
+        {...bindField("boundary")}
+        defaultValue={typeof schedule?.boundary === "object" ? JSON.stringify(schedule.boundary) : schedule?.boundary ?? ""}
       />
       <TextField
         label={"Destination (R2 or S3 endpoint)"}
@@ -91,11 +118,12 @@ export default function DownloadScheduleForm({ schedule }: DownloadScheduleFormP
       <FormControl>
         <InputLabel>Download Frequency</InputLabel>
         <Select
+          label={"Download Frequency"}
+          value={frequency}
           onChange={(e) => setFrequency(e.target.value as Frequency)}
-          {...bindField("frequency")}
         >
           {Frequencies.map(f =>
-            <MenuItem value={f}>{f}</MenuItem>
+            <MenuItem key={f} value={f}>{f}</MenuItem>
           )}
         </Select>
       </FormControl>
@@ -103,7 +131,17 @@ export default function DownloadScheduleForm({ schedule }: DownloadScheduleFormP
         <FormGroup>
           <div style={{ display: "flex", flexDirection: "row" }}>
             {Days.map((day: Day) =>
-              <FormControlLabel key={day} control={<Checkbox name={day} />} label={convertToTitleCase(day)} />
+              <FormControlLabel
+                key={day}
+                control={
+                  <Checkbox
+                    name={day}
+                    checked={days.includes(day)}
+                    onChange={handleDayChecked}
+                  />
+                }
+                label={convertToTitleCase(day)}
+              />
             )}
           </div>
         </FormGroup>
@@ -121,8 +159,9 @@ export default function DownloadScheduleForm({ schedule }: DownloadScheduleFormP
             required={true}
             format="HH:mm"
             label="Time of Day"
-            {...bindField("time_of_day")}
-            defaultValue={schedule?.time_of_day ?? "00:00"}
+            name="time_of_day"
+            key={`${schedule?.id}-time_of_day`}
+            defaultValue={dayjs(`2023-06-21T${schedule?.time_of_day ?? "00:00"}`)}
           />
         </LocalizationProvider>
       )}

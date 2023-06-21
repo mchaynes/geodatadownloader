@@ -1,9 +1,7 @@
-import { Button, Link, Typography } from "@mui/material";
-import Box from "@mui/material/Box";
+import { Breadcrumbs, Button, Divider, Link, List, ListItemButton, ListItemText, Typography } from "@mui/material";
 import Container from "@mui/material/Container";
-import { DataGrid } from "@mui/x-data-grid";
 import { GridColDef } from "@mui/x-data-grid/models/colDef";
-import { LoaderFunction, useLoaderData, useNavigate } from "react-router";
+import { LoaderFunction, Outlet, useLoaderData, useLocation, useNavigate } from "react-router";
 import { supabase } from "../supabase";
 import { ScheduledDownload } from "../types";
 
@@ -21,6 +19,7 @@ export default function ScheduleTable() {
   const scheduled = useLoaderData() as ScheduledDownload[]
 
   const navigate = useNavigate()
+  const location = useLocation()
 
   const headers = Object.entries({
     "name": {
@@ -61,9 +60,15 @@ export default function ScheduleTable() {
   }
 
   return (
-    <Container sx={{ marginTop: "1rem", display: "flex", flexDirection: "column" }}>
-      <div style={{ display: "flex", flexDirection: "row" }}>
-        <Typography variant="h2" sx={{ flexGrow: 1 }}>Scheduled Downloads</Typography>
+    <Container maxWidth="xl" sx={{ flexDirection: "column" }}>
+      <Container maxWidth="xl" style={{ flexDirection: "row" }}>
+        <Breadcrumbs sx={{ flexGrow: 1 }}>
+          <Typography variant="h6" sx={{ flexGrow: 1 }}>Scheduled Downloads</Typography>
+          {function() {
+            const split = location.pathname.split("/")
+            return <>{split[2]}</>
+          }()}
+        </Breadcrumbs>
         <Button
           onClick={() => navigate("new")}
           variant="contained"
@@ -71,13 +76,27 @@ export default function ScheduleTable() {
         >
           New
         </Button>
+      </Container>
+      <div style={{ display: "flex", marginTop: "1rem", flexDirection: "row", gap: "1rem" }}>
+        <List>
+          {scheduled && scheduled.length > 0 ?
+            scheduled.map((s) =>
+              <ListItemButton
+                key={s.id}
+                onClick={() => navigate(s.id)}
+                selected={location.pathname.includes(s.id)}
+              >
+                <ListItemText primary={s.name} />
+              </ListItemButton>
+            )
+            : <ListItemText primary="No scheduled downloads have been created" />
+          }
+        </List>
+        <Divider orientation="vertical" flexItem={true} />
+        <Container>
+          <Outlet />
+        </Container>
       </div>
-      <Box sx={{ height: "40rem", width: "100%" }}>
-        <DataGrid
-          rows={scheduled ? scheduled : []}
-          columns={gridColDefs}
-        />
-      </Box>
     </Container>
   )
 }
