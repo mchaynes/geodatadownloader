@@ -10,8 +10,6 @@ import Root from "./routes/root";
 import '@aws-amplify/ui-react/styles.css';
 import CreateDownloadSchedule, { action as createDownloadScheduleAction } from "./routes/schedule/new";
 import Login from "./routes/login";
-import awsExports from './aws-exports'
-import { Amplify, DataStore, Hub } from "aws-amplify";
 import { RequireAuth } from "./RequireAuth";
 import { Authenticator } from "@aws-amplify/ui-react";
 import ScheduleTable, { loader as scheduleLoader } from "./routes/schedule";
@@ -24,13 +22,6 @@ if (!rootEl) {
   throw new Error("yo something's messed up");
 }
 const root = ReactDomClient.createRoot(rootEl);
-Amplify.configure(awsExports)
-// clear the data store when signing out. We don't want to cross contaminate data between accounts
-Hub.listen('auth', async (data) => {
-  if (data.payload.event === "signOut") {
-    await DataStore.clear()
-  }
-})
 
 const router = createBrowserRouter([
   {

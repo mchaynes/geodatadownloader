@@ -29,7 +29,7 @@ create type format as enum ('pmtiles', 'gpkg', 'geojson', 'shp', 'csv');
 
 create table public.scheduled_downloads (
   id uuid primary key default uuid_generate_v4(),
-  owner uuid references auth.users,
+  owner uuid references auth.users on delete cascade,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   name text not null default '',
@@ -58,7 +58,8 @@ create policy "users can access their scheduled_downloads"
 create table public.downloads (
   id uuid primary key default uuid_generate_v4(),
   owner uuid references auth.users,
-  download_schedule_id uuid references scheduled_downloads(id),
+  download_schedule_id uuid references scheduled_downloads(id)
+                              on delete cascade,
   status text not null default 'pending',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),

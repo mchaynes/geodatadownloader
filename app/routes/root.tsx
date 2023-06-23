@@ -6,33 +6,48 @@ import responsiveFontSizes from "@mui/material/styles/responsiveFontSizes";
 import { ThemeProvider } from "@emotion/react";
 import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useEffect } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { ColorModeContext } from "../context";
 
 import logo from "/IMG_1039.png";
 import Avatar from "@mui/material/Avatar";
 import IconButton from "@mui/material/IconButton";
-import { useAuthenticator } from "@aws-amplify/ui-react";
+import { supabase } from "../supabase";
+import { User } from "@supabase/supabase-js";
+import PopupState, { bindPopover, bindTrigger } from "material-ui-popup-state";
+import Button from "@mui/material/Button";
+import { List, ListItemButton, ListItemIcon, ListItemText, Popover } from "@mui/material";
+import { AccountCircle } from "@mui/icons-material";
 
 function Root() {
   const navigate = useNavigate()
-  const { user, signOut } = useAuthenticator(ctx => [ctx.user])
-  const signoutAndRedirect = () => {
-    signOut()
+  const location = useLocation()
+  const [user1, setUser] = useState<User>()
+  const signoutAndRedirect = async () => {
+    await supabase.auth.signOut()
     navigate("/login")
   }
+
+  useEffect(() => {
+    async function f() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setUser(user)
+      }
+    }
+    void f()
+  }, [location])
   return (
     <Container
       maxWidth={false}
       sx={{
         display: "flex",
         flexDirection: "column",
-        borderLeft: "20rem",
+        borderLeft: "10rem",
         borderRight: "10rem",
         paddingTop: "1rem",
-        paddingBottom: "2rem",
       }}
     >
       <CssBaseline />
@@ -49,23 +64,55 @@ function Root() {
         <Typography sx={{ ml: 3 }} variant="h1" color="inherit" noWrap={true}>
           geodatadownloader
         </Typography>
-        {user === undefined ?
-          <IconButton onClick={() => navigate("/login")} >
-            <Avatar sx={{ bgcolor: cyan.A700, color: "white" }} />
-          </IconButton>
-          :
-          <>
-            <IconButton onClick={signoutAndRedirect} >
-              <Avatar
-                sx={{ bgcolor: cyan.A700, color: "white" }}
+        <PopupState variant="popover">
+          {(popupState) => (
+            <>
+              <IconButton {...bindTrigger(popupState)} >
+                {user1 === undefined ?
+                  <Avatar sx={{ bgcolor: cyan.A700, color: "white" }} />
+                  :
+                  <Avatar
+                    sx={{ bgcolor: cyan.A700, color: "white" }}
+                  >
+                    <strong>{user1.email?.substr(0, 2) ?? "na"}</strong>
+                  </Avatar>
+                }
+              </IconButton>
+              <Popover
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'right',
+                }}
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                {...bindPopover(popupState)}
               >
-                <strong>{user.attributes?.email.substr(0, 2).toUpperCase()}</strong>
-              </Avatar>
-            </IconButton>
-          </>
+                {
+                  <List>
+                    {user1 === undefined ?
+                      <ListItemButton onClick={() => navigate("/login")}>
+                        <ListItemIcon>
+                          <AccountCircle />
+                        </ListItemIcon>
+                        <ListItemText primary="Login" />
+                      </ListItemButton>
+                      :
+                      <ListItemButton onClick={signoutAndRedirect}>
+                        <ListItemIcon>
+                          <AccountCircle />
+                        </ListItemIcon>
+                        <ListItemText primary="Logout" />
+                      </ListItemButton>
+                    }
+                  </List>
+                }
+              </Popover>
+            </>
+          )}
 
-        }
-
+        </PopupState>
       </div>
       <Outlet />
     </Container>
@@ -221,6 +268,13 @@ export default function WithStyles() {
               },
             },
           },
+          MuiListItemText: {
+            styleOverrides: {
+              secondary: {
+                fontWeight: 200,
+              }
+            }
+          }
         },
       })
     );

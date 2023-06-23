@@ -23,6 +23,7 @@
     "gdal3.js": "^2.4.0",
     "jszip": "^3.10.1",
     "leaflet": "^1.9.3",
+    "material-ui-popup-state": "^5.0.9",
     "nth-check": "2.1.1",
     "postcss": "8.4.20",
     "react": "^18.2.0",
