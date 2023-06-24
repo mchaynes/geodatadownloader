@@ -1,5 +1,4 @@
-import { Breadcrumbs, Button, Divider, Link, List, ListItemButton, ListItemText, Typography } from "@mui/material";
-import Container from "@mui/material/Container";
+import { Breadcrumbs, Button, Divider, List, ListItemButton, ListItemText, Typography } from "@mui/material";
 import { Outlet, useLoaderData, useLocation, useNavigate } from "react-router";
 import { supabase } from "../supabase";
 
@@ -20,9 +19,9 @@ export default function ScheduleTable() {
   const location = useLocation()
 
   return (
-    <Container maxWidth="xl" sx={{ flexDirection: "column", maxHeight: "100vh" }}>
-      <Container maxWidth="xl" style={{ flexDirection: "row" }}>
-        <Breadcrumbs sx={{ flexGrow: 1 }}>
+    <div style={{ flexDirection: "column", maxHeight: "100vh" }}>
+      <div style={{ display: "flex", flexDirection: "row" }}>
+        <Breadcrumbs sx={{ ml: 3, flexGrow: 1 }}>
           {function() {
             const split = location.pathname.split("/")
             return [
@@ -31,34 +30,36 @@ export default function ScheduleTable() {
             ]
           }()}
         </Breadcrumbs>
-        <Button
-          onClick={() => navigate("new")}
-          variant="contained"
-          sx={{ justifySelf: "flex-end", height: "75%", fontWeight: "600" }}
-        >
-          New
-        </Button>
-      </Container>
-      <div style={{ display: "flex", marginTop: "1rem", flexDirection: "row", gap: "1rem" }}>
-        <List sx={{ overflowY: "auto", height: "80vh" }}>
-          {scheduled && scheduled.length > 0 ?
-            scheduled.map((s) =>
-              <ListItemButton
-                key={s.id}
-                onClick={() => navigate(s.id)}
-                selected={location.pathname.includes(s.id)}
-              >
-                <ListItemText primary={s.name} secondary={<>{s.frequency} &#x2022; {s.format}</>} />
-              </ListItemButton>
-            )
-            : <ListItemText primary="No scheduled downloads have been created" />
-          }
-        </List>
-        <Divider orientation="vertical" flexItem={true} />
-        <Container sx={{ maxHeight: "80vh", overflow: "auto" }}>
-          <Outlet />
-        </Container>
       </div>
-    </Container>
+      <div style={{ display: "flex", marginTop: "1rem", flexDirection: "row", gap: "1rem" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <div style={{ display: "flex", flexDirection: "row", justifyItems: "flex-end" }}>
+            <div style={{ flexGrow: 1 }} />
+            <Button variant="outlined">
+              Create
+            </Button>
+          </div>
+          <List sx={{ overflowY: "auto", height: "80vh" }}>
+            {scheduled && scheduled.length > 0 ?
+              scheduled.map((s) =>
+                <ListItemButton
+                  key={s.id}
+                  onClick={() => navigate(s.id)}
+                  selected={location.pathname.includes(s.id)}
+                >
+                  <ListItemText primary={s.name} secondary={<>{s.frequency} &#x2022; {s.format}</>} />
+                </ListItemButton>
+              )
+              : <ListItemText primary="No scheduled downloads have been created" />
+            }
+          </List>
+        </div>
+
+        <Divider orientation="vertical" flexItem={true} />
+        <div style={{ maxHeight: "80vh", width: "100%", overflow: "auto" }}>
+          <Outlet />
+        </div>
+      </div>
+    </div>
   )
 }

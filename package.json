@@ -4,8 +4,6 @@
   "private": true,
   "dependencies": {
     "@arcgis/core": "^4.26.1",
-    "@aws-amplify/datastore": "^4.5.1",
-    "@aws-amplify/ui-react": "^4.6.4",
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
     "@fontsource/roboto": "^4.5.8",
@@ -15,7 +13,6 @@
     "@mui/x-date-pickers": "^6.8.0",
     "@supabase/supabase-js": "^2.25.0",
     "@terraformer/arcgis": "^2.1.2",
-    "aws-amplify": "^5.2.6",
     "csv-writer-browser": "^1.0.0",
     "dayjs": "^1.11.8",
     "fastq": "^1.15.0",

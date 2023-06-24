@@ -8,7 +8,7 @@ import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import React, { useMemo, useState } from "react";
 import { useEffect } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { ColorModeContext } from "../context";
 
 import logo from "/IMG_1039.png";
@@ -18,11 +18,12 @@ import { supabase } from "../supabase";
 import { User } from "@supabase/supabase-js";
 import PopupState, { bindPopover, bindTrigger } from "material-ui-popup-state";
 import Button from "@mui/material/Button";
-import { List, ListItemButton, ListItemIcon, ListItemText, Popover } from "@mui/material";
-import { AccountCircle } from "@mui/icons-material";
+import { Divider, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Popover, Tooltip, useTheme } from "@mui/material";
+import { AccountCircle, Download, EventRepeat } from "@mui/icons-material";
 
 function Root() {
   const navigate = useNavigate()
+  const theme = useTheme()
   const location = useLocation()
   const [user1, setUser] = useState<User>()
   const signoutAndRedirect = async () => {
@@ -40,82 +41,110 @@ function Root() {
     void f()
   }, [location])
   return (
-    <Container
-      maxWidth={false}
-      sx={{
+    <div
+      style={{
         display: "flex",
         flexDirection: "column",
-        borderLeft: "10rem",
-        borderRight: "10rem",
-        paddingTop: "1rem",
+        padding: "1rem",
       }}
     >
       <CssBaseline />
-      <div style={{ display: "flex", flexDirection: "row" }}>
-        <IconButton disableRipple={true} onClick={() => navigate("/")} >
-          <img
-            src={logo as string}
-            width="48px"
-            height="48px"
-            alt="Geodatadownloader Logo"
-          />
-        </IconButton>
-
-        <Typography sx={{ ml: 3 }} variant="h1" color="inherit" noWrap={true}>
-          geodatadownloader
-        </Typography>
-        <PopupState variant="popover">
-          {(popupState) => (
-            <>
-              <IconButton {...bindTrigger(popupState)} >
-                {user1 === undefined ?
-                  <Avatar sx={{ bgcolor: cyan.A700, color: "white" }} />
-                  :
-                  <Avatar
-                    sx={{ bgcolor: cyan.A700, color: "white" }}
-                  >
-                    <strong>{user1.email?.substr(0, 2) ?? "na"}</strong>
-                  </Avatar>
-                }
-              </IconButton>
-              <Popover
-                anchorOrigin={{
-                  vertical: 'bottom',
-                  horizontal: 'right',
-                }}
-                transformOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
-                }}
-                {...bindPopover(popupState)}
-              >
-                {
-                  <List>
+      <div style={{ display: "flex", flexDirection: "row", width: "100%", gap: "1rem" }}>
+        <div style={{
+          display: "flex",
+          flexDirection: "column",
+          borderRight: "1px",
+          alignItems: "center",
+          borderRightWidth: "1px",
+          borderRightStyle: "solid",
+          paddingRight: "1rem",
+          borderRightColor: theme.palette.divider,
+        }}>
+          <Link to="/">
+            <img
+              src={logo as string}
+              width="36px"
+              height="36px"
+              alt="Geodatadownloader Logo"
+            />
+          </Link>
+          <Divider flexItem={true} />
+          <Tooltip title="Download Data" placement="right-end" >
+            <IconButton>
+              <Link to="/">
+                <Download color="action" />
+              </Link>
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Scheduled Downloads" placement="right-end">
+            <IconButton>
+              <Link to="/schedule/new">
+                <EventRepeat color="action" />
+              </Link>
+            </IconButton>
+          </Tooltip>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+          <div style={{ display: "flex", flexDirection: "row", alignContent: "flex-start" }}>
+            <Typography variant="h1" color="inherit" noWrap={true}>
+              geodatadownloader
+            </Typography>
+            <PopupState variant="popover">
+              {(popupState) => (
+                <>
+                  <IconButton {...bindTrigger(popupState)} >
                     {user1 === undefined ?
-                      <ListItemButton onClick={() => navigate("/login")}>
-                        <ListItemIcon>
-                          <AccountCircle />
-                        </ListItemIcon>
-                        <ListItemText primary="Login" />
-                      </ListItemButton>
+                      <Avatar sx={{ bgcolor: cyan.A700, color: "white" }} />
                       :
-                      <ListItemButton onClick={signoutAndRedirect}>
-                        <ListItemIcon>
-                          <AccountCircle />
-                        </ListItemIcon>
-                        <ListItemText primary="Logout" />
-                      </ListItemButton>
+                      <Avatar
+                        sx={{ bgcolor: cyan.A700, color: "white" }}
+                      >
+                        <strong>{user1.email?.substr(0, 2) ?? "na"}</strong>
+                      </Avatar>
                     }
-                  </List>
-                }
-              </Popover>
-            </>
-          )}
+                  </IconButton>
+                  <Popover
+                    anchorOrigin={{
+                      vertical: 'bottom',
+                      horizontal: 'right',
+                    }}
+                    transformOrigin={{
+                      vertical: 'top',
+                      horizontal: 'right',
+                    }}
+                    {...bindPopover(popupState)}
+                  >
+                    {
+                      <List>
+                        {user1 === undefined ?
+                          <ListItemButton onClick={() => navigate("/login")}>
+                            <ListItemIcon>
+                              <AccountCircle />
+                            </ListItemIcon>
+                            <ListItemText primary="Login" />
+                          </ListItemButton>
+                          :
+                          <ListItemButton onClick={signoutAndRedirect}>
+                            <ListItemIcon>
+                              <AccountCircle />
+                            </ListItemIcon>
+                            <ListItemText primary="Logout" />
+                          </ListItemButton>
+                        }
+                      </List>
+                    }
+                  </Popover>
+                </>
+              )}
 
-        </PopupState>
+            </PopupState>
+          </div>
+          <div style={{ width: "100%", alignSelf: "flex-start" }}>
+            <Outlet />
+          </div>
+        </div>
       </div>
-      <Outlet />
-    </Container>
+    </div>
   )
 
 }

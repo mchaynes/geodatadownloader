@@ -7,11 +7,9 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import ErrorPage from "./ErrorPage";
 import Root from "./routes/root";
 
-import '@aws-amplify/ui-react/styles.css';
 import CreateDownloadSchedule, { action as createDownloadScheduleAction } from "./routes/schedule/new";
 import Login from "./routes/login";
 import { RequireAuth } from "./RequireAuth";
-import { Authenticator } from "@aws-amplify/ui-react";
 import ScheduleTable, { loader as scheduleLoader } from "./routes/schedule";
 import ViewScheduledDownload, { loader as viewLoader, action as viewAction } from "./routes/schedule/view";
 
@@ -74,9 +72,7 @@ const router = createBrowserRouter([
 
 root.render(
   <StrictMode>
-    <Authenticator.Provider>
-      <RouterProvider router={router} />
-    </Authenticator.Provider>
+    <RouterProvider router={router} />
   </StrictMode>
 );
 
