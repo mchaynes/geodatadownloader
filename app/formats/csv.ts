@@ -30,6 +30,11 @@ export class CsvDownloader {
       const features = await results.getPage(pageNum, outFields, where);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const json = features.toJSON();
+      // strip features that contain no geometry
+      json["features"] = json["features"].filter(f => {
+        const rings: Array<number[]> = f["geometry"]["rings"]
+        return rings.every(r => r.length > 1)
+      })
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       const geojson = arcgisToGeoJSON(json) as unknown as FeatureCollection;
       const csvStringifier = createObjectCsvStringifier({

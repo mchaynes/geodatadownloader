@@ -74,6 +74,11 @@ export class ShpDownloader {
     const fetchResults = async (pageNum: number): Promise<void> => {
       const features = await results.getPage(pageNum, outFields, where);
       const json = features.toJSON();
+      // strip features that contain no geometry
+      json["features"] = json["features"].filter(f => {
+        const rings: Array<number[]> = f["geometry"]["rings"]
+        return rings.every(r => r.length > 1)
+      })
       const geojson = arcgisToGeoJSON(json) as unknown as FeatureCollection;
       let stringified = geojson.features
         .map((f) => JSON.stringify(f))
