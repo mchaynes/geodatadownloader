@@ -7,4 +7,7 @@ module.exports = {
   extends: ["eslint:recommended"],
   plugins: ["@typescript-eslint", "react-hooks"],
   root: true,
+  rules: {
+    "no-undef": "off"
+  }
 };

@@ -8,10 +8,10 @@ export function RequireAuth({ children }) {
     const checkSignIn = async () => {
       const session = await supabase.auth.getSession()
       if (!session?.data?.session) {
-        navigate("/login")
+        navigate("/signin")
       }
     }
-    checkSignIn
+    checkSignIn()
   }, [])
   return (
     <>{children}</>

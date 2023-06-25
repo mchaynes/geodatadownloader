@@ -11,6 +11,8 @@
     "@mui/material": "^5.11.3",
     "@mui/x-data-grid": "^5.17.17",
     "@mui/x-date-pickers": "^6.8.0",
+    "@supabase/auth-ui-react": "^0.4.2",
+    "@supabase/auth-ui-shared": "^0.1.6",
     "@supabase/supabase-js": "^2.25.0",
     "@terraformer/arcgis": "^2.1.2",
     "csv-writer-browser": "^1.0.0",
