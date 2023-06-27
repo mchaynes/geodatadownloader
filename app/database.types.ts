@@ -38,6 +38,7 @@ export interface Database {
         Row: {
           created_at: string
           download_schedule_id: string | null
+          finished_at: string | null
           id: string
           messages: string[]
           owner: string | null
@@ -47,6 +48,7 @@ export interface Database {
         Insert: {
           created_at?: string
           download_schedule_id?: string | null
+          finished_at?: string | null
           id?: string
           messages?: string[]
           owner?: string | null
@@ -56,6 +58,7 @@ export interface Database {
         Update: {
           created_at?: string
           download_schedule_id?: string | null
+          finished_at?: string | null
           id?: string
           messages?: string[]
           owner?: string | null

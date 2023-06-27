@@ -1,5 +1,12 @@
 create extension postgis;
 
+
+create type day as enum ('sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday');
+create type frequency as enum ('manual', 'daily', 'weekly', 'monthly', 'hourly');
+create type status as enum ('pending', 'started', 'successful', 'failed');
+create type format as enum ('pmtiles', 'gpkg', 'geojson', 'shp', 'csv');
+
+
 create table public.layers (
   id uuid primary key default uuid_generate_v4(),
   owner uuid references auth.users,
@@ -21,10 +28,31 @@ create policy "users can access their layers"
   on layers for all
   using ( auth.uid() = owner);
 
-create type day as enum ('sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday');
-create type frequency as enum ('daily', 'weekly', 'monthly', 'hourly');
-create type status as enum ('pending', 'started', 'successful', 'failed');
-create type format as enum ('pmtiles', 'gpkg', 'geojson', 'shp', 'csv');
+
+create table public.map(
+  id uuid primary key default uuid_generate_v4() on delete cascade,
+  owner uuid references auth.users default auth.uid(),
+  public boolean default true,
+  name text not null,
+  description text,
+);
+
+create table public.map_dl_config(
+  id uuid primary key default uuid_generate_v4(),
+  owner uuid references auth.users default auth.uid() on delete cascade,
+  name text not null,
+  boundary jsonb,
+  format format not null default 'gpkg',
+  access_key_id text,
+  secret_key text,
+  destination text
+);
+
+create table public.layer_download_config(
+  id uuid primary key default uuid_generate_v4(),
+  layer_id uuid references layers(id),
+  column_mapping jsonb,
+);
 
 
 create table public.scheduled_downloads (
@@ -63,6 +91,7 @@ create table public.downloads (
   status text not null default 'pending',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
+  finished_at timestamptz,
   messages text[] not null default array[]::text[]
 );
 
