@@ -18,6 +18,7 @@ import { ExtentPicker } from "../../../ExtentPicker";
 import { ActionFunctionArgs, Form, Link, Outlet, useActionData } from "react-router-dom";
 import { Formats } from "../../../types";
 import AddLayerToMap from "./layers/add";
+import { CustomFlowbiteTheme, Dropdown } from "flowbite-react";
 
 type SupportedExportType = string;
 
@@ -111,39 +112,43 @@ export default function MapCreator() {
           <div className="flex items-center justify-between mb-4">
             <h5 className="text-xl font-bold leading-none text-gray-900 dark:text-white">Layers</h5>
           </div>
-          <label htmlFor="default-search" className="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
-
           <div className="flow-root">
             <ul role="list" className="divide-y divide-gray-200 dark:divide-gray-700">
               {layers.map(({ url, sourceJSON }) =>
-                <li key={url} className="flex flex-row items-center rounded-lg  p-2 bg-white dark:bg-gray-800">
+                <li key={url} className="flex flex-row items-center p-2 bg-white dark:bg-gray-800">
                   <div className="flex-1 min-w-0 max-w-xs">
                     <p className="text-sm font-medium text-gray-900 truncate dark:text-white">
-                      {sourceJSON["name"]}
+                      <Link to={url}>
+                        {sourceJSON["name"]}
+                      </Link>
                     </p>
                     <p className="text-sm text-gray-500 truncate dark:text-gray-400">
                       {sourceJSON["description"]}
                     </p>
                   </div>
-                  <button id="dropdownComment4Button" data-dropdown-toggle="dropdownComment4" className="inline-flex items-center p-2 text-sm font-medium text-center text-gray-500 bg-white rounded-lg hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-gray-300 dark:focus:ring-gray-600" type="button">
-                    <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"></path>
-                    </svg>
-                    <span className="sr-only">Comment settings</span>
-                  </button>
-                  <div id="dropdownComment4" className="z-10 bg-white divide-y divide-gray-100 rounded shadow w-36 dark:bg-gray-700 dark:divide-gray-600 block" style={{ position: "absolute", inset: "0px auto auto 0px;", margin: "0px;", transform: "translate(702px, 1682px)" }} data-popper-placement="bottom">
-                    <ul className="py-1 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownMenuIconHorizontalButton">
-                      <li>
-                        <a href="#" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Edit</a>
-                      </li>
-                      <li>
-                        <a href="#" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Remove</a>
-                      </li>
-                      <li>
-                        <a href="#" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Report</a>
-                      </li>
-                    </ul>
-                  </div>
+                  <Dropdown
+                    className="dark:text-white"
+                    inline
+                    label=""
+                  >
+                    <Dropdown.Item
+                      icon={() =>
+                        <svg className="w-5 h-5 pr-2 text-gray-800 dark:text-white" aria-hidden fill="currentColor" viewBox="0 0 20 14">
+                          <path d="M18 0H2a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2ZM2 6h7v6H2V6Zm9 6V6h7v6h-7Z" />
+                        </svg>}
+                    >
+                      Configure
+                    </Dropdown.Item>
+                    <Dropdown.Divider />
+                    <Dropdown.Item
+                      className="text-red-500 dark:text-red-50"
+                      icon={() =>
+                        <svg className="w-5 h-5 pr-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 20">
+                          <path d="M17 4h-4V2a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v2H1a1 1 0 0 0 0 2h1v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6h1a1 1 0 1 0 0-2ZM7 2h4v2H7V2Zm1 14a1 1 0 1 1-2 0V8a1 1 0 0 1 2 0v8Zm4 0a1 1 0 0 1-2 0V8a1 1 0 0 1 2 0v8Z" />
+                        </svg>}>
+                      Delete
+                    </Dropdown.Item>
+                  </Dropdown>
                 </li>
               )}
             </ul>
@@ -155,8 +160,8 @@ export default function MapCreator() {
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                 <svg aria-hidden="true" className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
               </div>
-              <input type="search" name="layer-url" id="default-search" className="block w-full p-4 pl-10 text-xs text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Paste URL or Search" required />
-              <button type="submit" name="intent" value="load-layer" className="text-white text-xs absolute right-2.5 bottom-2.5 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+              <input type="search" name="layer-url" id="default-search" className="block w-full p-4 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Paste URL or Search" required />
+              <button type="submit" name="intent" value="load-layer" className="text-white text-sm absolute right-2.5 bottom-2.5 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                 Submit
               </button>
             </div>
@@ -194,6 +199,7 @@ export default function MapCreator() {
     </div>
   );
 }
+
 
 type AddLayerModalProps = {
   showModal: boolean

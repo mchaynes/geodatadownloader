@@ -7,7 +7,8 @@ import { supabase } from "../supabase";
 import { Session } from "@supabase/supabase-js";
 import 'flowbite'
 
-import { Avatar, DarkThemeToggle, Dropdown, Navbar } from "flowbite-react";
+import { Avatar, Badge, DarkThemeToggle, Dropdown, Navbar, Sidebar } from "flowbite-react";
+import { HiArrowSmRight, HiChartPie, HiInbox, HiShoppingBag, HiTable, HiUser, HiViewBoards } from 'react-icons/hi'
 import GitHubButton from "react-github-btn";
 
 export default function Root() {
@@ -24,10 +25,10 @@ export default function Root() {
     void f()
   }, [location])
   return (
-    <div className="h-[100vh]">
+    <div>
       <Navbar
         fluid
-        className="fixed z-30 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700"
+        className="sticky z-30 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700"
       >
         <Navbar.Brand className="pl-2">
           <Link to="/" className="flex flex-row">
@@ -69,7 +70,7 @@ export default function Root() {
         </div>
 
       </Navbar>
-      <div className="flex pt-16 overflow-hidden bg-gray-50 dark:bg-gray-900">
+      <div className="flex overflow-hidden bg-gray-50 dark:bg-gray-900">
         <aside id="sidebar" className="fixed top-0 left-0 z-20 flex-col flex-shrink-0 w-48 h-full pt-16 font-normal duration-75 lg:flex transition-width" aria-label="Sidebar">
           <div className="relative flex flex-col flex-1 min-h-0 pt-0 bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700">
             <div className="flex flex-col flex-1 pt-5 pb-4 overflow-y-auto">
@@ -120,7 +121,7 @@ export default function Root() {
         <div id="main-content" className="relative w-full h-full overflow-y-auto bg-gray-50 lg:ml-48 dark:bg-gray-900">
           <Outlet />
         </div>
-      </div >
+      </div>
     </div>
   )
 }

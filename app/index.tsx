@@ -18,6 +18,7 @@ import Forgot, { sendResetEmailAction } from "./routes/forgot";
 import SignOut from "./routes/signout";
 import UpdateMapDlConfig, { updateMapDlConfigAction, updateMapDlConfigLoader } from "./routes/maps/dl/config/update";
 import AddLayerToMap from "./routes/maps/create/layers/add";
+import { Flowbite } from "flowbite-react";
 
 
 const rootEl = document.getElementById("root");
@@ -116,10 +117,12 @@ export default function WithStyles() {
   }, [prefersDarkMode, mode]);
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-800">
-      <ColorModeContext.Provider value={colorMode}>
-        <RouterProvider router={router} />
-      </ColorModeContext.Provider>
+    <div>
+      <Flowbite>
+        <ColorModeContext.Provider value={colorMode}>
+          <RouterProvider router={router} />
+        </ColorModeContext.Provider>
+      </Flowbite>
     </div>
   );
 }
