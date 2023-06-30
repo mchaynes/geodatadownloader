@@ -33,24 +33,14 @@ import ShareUrlButton from "./ShareUrlButton";
 import React from "react";
 import { ColorModeContext } from "./context";
 
-type SupportedExportType = string;
-
-function isSupportedExportType(
-  value: string | null
-): value is SupportedExportType {
-  return (
-    typeof value === "string" &&
-    ["gpkg", "geojson", "csv", "shp"].includes(value)
-  );
-}
 
 function App() {
   const theme = useTheme();
   const isLg = useMediaQuery(theme.breakpoints.up("lg"));
 
   const queryParam = useMemo(() => getQueryParameter("format"), []);
-  const [exportType, setExportType] = useState<SupportedExportType>(
-    isSupportedExportType(queryParam) ? queryParam : "gpkg"
+  const [exportType, setExportType] = useState(
+    queryParam ?? "GPKG"
   );
   const layerUrl = getQueryParameter("layer_url") ?? "";
   const [layer, setLayer] = useState<FeatureLayer | undefined>();
@@ -239,25 +229,25 @@ export default function WithStyles() {
           mode: mode,
           ...(mode === "light"
             ? {
-                primary: {
-                  main: cyan.A700,
-                },
-                success: {
-                  light: green.A700,
-                  main: green.A700,
-                  dark: green[900],
-                },
-              }
+              primary: {
+                main: cyan.A700,
+              },
+              success: {
+                light: green.A700,
+                main: green.A700,
+                dark: green[900],
+              },
+            }
             : {
-                primary: {
-                  main: cyan.A400,
-                },
-                success: {
-                  light: green.A700,
-                  main: green.A700,
-                  dark: green[900],
-                },
-              }),
+              primary: {
+                main: cyan.A400,
+              },
+              success: {
+                light: green.A700,
+                main: green.A700,
+                dark: green[900],
+              },
+            }),
         },
         typography: {
           fontFamily: [

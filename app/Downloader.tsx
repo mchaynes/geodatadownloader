@@ -29,8 +29,8 @@ import CheckBox from "@mui/icons-material/CheckBox";
 import { CircularProgress, Divider, ListItemText } from "@mui/material";
 import { Writer } from "./formats/writer";
 import { GpkgDownloader } from "./formats/gpkg";
+import { Drivers, GdalDownloader } from "./formats/gdal";
 
-type SupportedExportTypes = "gpkg" | "geojson" | "csv" | "shp";
 
 const Input = styled(MuiInput)`
   width: 42px;
@@ -93,32 +93,9 @@ export function DownloaderForm({
     if (!queryResults) {
       return;
     }
-    let downloader: Downloader;
-    let extension = exportType;
-    switch (exportType) {
-      case "geojson": {
-        downloader = new GeojsonDownloader(setFeaturesWritten);
-        break;
-      }
-      case "csv": {
-        downloader = new CsvDownloader(setFeaturesWritten);
-        break;
-      }
-      case "shp": {
-        downloader = new ShpDownloader(setFeaturesWritten);
-        extension = "zip";
-        break;
-      }
-      case "gpkg": {
-        downloader = new GpkgDownloader(setFeaturesWritten);
-        break;
-      }
-      default:
-        throw new Error(`invalid export type: "${exportType}"`);
-    }
-    const writer = new Writer(
-      `${queryResults.getLayer()?.title ?? "Layer"}.${extension}`
-    );
+
+    const downloader = new GdalDownloader(setFeaturesWritten)
+    const writer = new Writer();
     try {
       setDownloading(true);
       // set the total again here in case it was still loading as we hit download
@@ -128,10 +105,11 @@ export function DownloaderForm({
         writer,
         outFields,
         concRequests,
-        where
+        where,
+        exportType
       );
       setAlertProps(
-        `Successfully downloaded ${totalFeatures} features to "${writer.key}"`,
+        `Successfully downloaded ${totalFeatures} features`,
         "success"
       );
     } catch (e) {
@@ -181,17 +159,12 @@ export function DownloaderForm({
               value={exportType}
               label="Export File Type"
               onChange={(e) => {
-                setExportType(e.target.value as SupportedExportTypes);
+                setExportType(e.target.value);
               }}
             >
-              <Divider>Supported Formats</Divider>
-              <MenuItem value="geojson">GeoJSON</MenuItem>
-              <MenuItem value="csv">CSV</MenuItem>
-              <MenuItem value="shp">Shapefile (SHP)</MenuItem>
-              <MenuItem value="gpkg">Geopackage (GPKG)</MenuItem>
-              <Divider>Not yet supported (click thumbs up to vote)</Divider>
-              <PotentialExportType format="KML" />
-              <PotentialExportType format="Raster formats? (TIFF, etc)" />
+              {Object.keys(Drivers).map(t =>
+                <MenuItem key={t} value={t}>{t}</MenuItem>
+              )}
             </Select>
           </FormControl>
           <Box>
@@ -261,6 +234,7 @@ export function DownloaderForm({
 
 type PotentialExportTypeProps = {
   format: string;
+
 };
 
 function PotentialExportType({ format }: PotentialExportTypeProps) {
