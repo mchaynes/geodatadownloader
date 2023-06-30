@@ -1,33 +1,30 @@
 import { useState } from "react";
 import { useEffect } from "react";
-import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 
 import logo from "/IMG_1039.png";
 import { supabase } from "../supabase";
-import { User } from "@supabase/supabase-js";
+import { Session } from "@supabase/supabase-js";
 import 'flowbite'
 
-import { HiArrowSmRight, HiCalendar, HiChartPie, HiDownload, HiMap, HiTable, HiViewBoards } from 'react-icons/hi';
-import { Avatar, DarkThemeToggle, Dropdown, Navbar, Sidebar } from "flowbite-react";
+import { Avatar, DarkThemeToggle, Dropdown, Navbar } from "flowbite-react";
 import GitHubButton from "react-github-btn";
 
 export default function Root() {
-  const navigate = useNavigate()
   const location = useLocation()
-  const [user, setUser] = useState<User>()
-  const [scheduledExpanded, setScheduledExpanded] = useState(true)
+  const [session, setSession] = useState<Session>()
 
   useEffect(() => {
     async function f() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        setUser(user)
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        setSession(session)
       }
     }
     void f()
   }, [location])
   return (
-    <>
+    <div className="h-[100vh]">
       <Navbar
         fluid
         className="fixed z-30 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700"
@@ -40,7 +37,7 @@ export default function Root() {
               src={logo as string}
             />
             <span className="self-center whitespace-nowrap text-xl font-semibold dark:text-white">
-              Geodatadownloader
+              geodatadownloader
             </span>
           </Link>
         </Navbar.Brand>
@@ -58,7 +55,7 @@ export default function Root() {
             >
               <Dropdown.Header className="block text-sm border-gray-200 dark:bg-gray-800 dark:border-gray-700">
                 <span >
-                  {user?.email}
+                  {session?.user.email}
                 </span>
               </Dropdown.Header>
               <Dropdown.Divider />
@@ -69,12 +66,11 @@ export default function Root() {
               </Dropdown.Item>
             </Dropdown>
           </div>
-
         </div>
 
       </Navbar>
       <div className="flex pt-16 overflow-hidden bg-gray-50 dark:bg-gray-900">
-        <aside id="sidebar" className="fixed top-0 left-0 z-20 flex-col flex-shrink-0 w-64 h-full pt-16 font-normal duration-75 lg:flex transition-width" aria-label="Sidebar">
+        <aside id="sidebar" className="fixed top-0 left-0 z-20 flex-col flex-shrink-0 w-48 h-full pt-16 font-normal duration-75 lg:flex transition-width" aria-label="Sidebar">
           <div className="relative flex flex-col flex-1 min-h-0 pt-0 bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700">
             <div className="flex flex-col flex-1 pt-5 pb-4 overflow-y-auto">
               <div className="flex-1 px-3 space-y-1 bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
@@ -107,11 +103,12 @@ export default function Root() {
                     </Link>
                   </li>
                   <li>
-                    <Link to="/scheduled/" className="flex items-center p-2 text-base text-gray-900 rounded-lg hover:bg-gray-100 group dark:text-gray-200 dark:hover:bg-gray-700">
+                    <Link to="/maps/dl/config/" className="flex items-center p-2 text-base text-gray-900 rounded-lg hover:bg-gray-100 group dark:text-gray-200 dark:hover:bg-gray-700">
                       <svg className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm14-7.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1Zm0 4a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1Zm-5-4a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1Zm0 4a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1Zm-5-4a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1Zm0 4a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1ZM20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4Z" />
+                        <path d="M14.707 7.793a1 1 0 0 0-1.414 0L11 10.086V1.5a1 1 0 0 0-2 0v8.586L6.707 7.793a1 1 0 1 0-1.414 1.414l4 4a1 1 0 0 0 1.416 0l4-4a1 1 0 0 0-.002-1.414Z" />
+                        <path d="M18 12h-2.55l-2.975 2.975a3.5 3.5 0 0 1-4.95 0L4.55 12H2a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2Zm-3 5a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z" />
                       </svg>
-                      <span className="flex-1 ml-3 text-left whitespace-nowrap" sidebar-toggle-item="">Scheduled</span>
+                      <span className="flex-1 ml-3 text-left whitespace-nowrap" sidebar-toggle-item="">Configurations</span>
                     </Link>
                   </li>
                 </ul>
@@ -120,11 +117,11 @@ export default function Root() {
           </div >
         </aside >
         <div className="fixed inset-0 z-10 hidden bg-gray-900/50 dark:bg-gray-900/90" id="sidebarBackdrop"></div>
-        <div id="main-content" className="relative w-full h-full overflow-y-auto bg-gray-50 lg:ml-64 dark:bg-gray-900">
+        <div id="main-content" className="relative w-full h-full overflow-y-auto bg-gray-50 lg:ml-48 dark:bg-gray-900">
           <Outlet />
         </div>
       </div >
-    </>
+    </div>
   )
 }
 

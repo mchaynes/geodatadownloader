@@ -1,12 +1,13 @@
 import dayjs from "dayjs";
 import { supabase } from "./supabase";
-import { Days, ScheduledDownload, ScheduledDownloadUpdate, ScheduledDownloadWithDownloads } from "./types";
+import { Days, MapDlConfig, MapDlConfigUpdate } from "./types";
 
 
 
-export function scheduledDownloadFromForm(form: FormData) {
+export function dlConfigFromForm(form: FormData) {
   const data = Object.fromEntries(form.entries())
-  const sd = data as unknown as ScheduledDownload
+  const sd = data as unknown as MapDlConfig
+  sd.active = form.get("active") === "on"
   for (const k of Days) {
     if (data[k] === "on") {
       sd.days_of_week = sd.days_of_week ?? []
@@ -14,12 +15,16 @@ export function scheduledDownloadFromForm(form: FormData) {
       delete sd[k]
     }
   }
+  const timeOfDay = form.get("time_of_day")
+  if (timeOfDay) {
+    sd.time_of_day = `0${timeOfDay}:00`.slice(-5)
+  }
   delete sd["intent"]
   return sd
 }
 
-export async function getScheduledDownloadsByLastDownloadTime() {
-  const resp = await supabase.from("scheduled_downloads").select("*, downloads(*)")
+export async function getMapDlConfigsByLastDownloadTime() {
+  const resp = await supabase.from("map_dl_config").select("*, downloads(*), map(*)")
   if (resp.error) {
     throw new Error(resp.error.message)
   }
@@ -40,15 +45,15 @@ export async function getScheduledDownloadsByLastDownloadTime() {
   return resp
 }
 
-export async function updateScheduledDownloads(schedule: ScheduledDownloadUpdate) {
-  const s: ScheduledDownloadUpdate = { ...schedule }
+export async function updateScheduledDownloads(dlConfig: MapDlConfigUpdate) {
+  const s: MapDlConfigUpdate = { ...dlConfig }
   if ("owner" in s) {
     delete s.owner
   }
   if ("downloads" in s) {
     delete s.downloads
   }
-  await supabase.from("scheduled_downloads")
+  await supabase.from("map_dl_config")
     .update(s)
-    .eq("id", schedule.id)
+    .eq("id", dlConfig.id)
 }

@@ -300,7 +300,7 @@ export function ExtentPicker({
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: ".5rem .5rem" }}>
-      <div ref={elRef} style={{ height: "25rem", width: "100%" }} />
+      <div ref={elRef} className="w-full h-[68vh]" />
       <TextField
         id="boundary-text-field"
         variant="outlined"

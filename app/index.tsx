@@ -1,30 +1,23 @@
-import 'flowbite';
-import { forwardRef, StrictMode, useEffect, useMemo, useState } from "react";
+import { StrictMode, useEffect, useMemo, useState } from "react";
 import ReactDomClient from "react-dom/client";
 import "./index.css";
-import App from "./App";
+import MapCreator, { mapCreatorAction } from "./routes/maps/create";
 import reportWebVitals from "./reportWebVitals";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
 import ErrorPage from "./ErrorPage";
 import Root from "./routes/root";
 
-import CreateDownloadSchedule, { action as createDownloadScheduleAction } from "./routes/schedule/new";
 import { RequireAuth } from "./RequireAuth";
-import ScheduleTable, { loader as scheduleLoader } from "./routes/schedule";
-import ViewScheduledDownload, { loader as viewLoader, action as viewAction } from "./routes/schedule/view";
-import { responsiveFontSizes, createTheme, ThemeProvider } from "@mui/material/styles";
+import MapDlConfigTable, { dlConfigLoader, dlConfigAction } from "./routes/maps/dl/config";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import cyan from "@mui/material/colors/cyan";
-import green from "@mui/material/colors/green";
 import { ColorModeContext } from "./context";
 
-import { Link as RouterLink, LinkProps as RouterLinkProps } from 'react-router-dom';
-import { LinkProps } from '@mui/material/Link';
 import SignUp, { signUpAction } from "./routes/signup";
 import SignIn, { signInAction } from './routes/signin'
 import Forgot, { sendResetEmailAction } from "./routes/forgot";
 import SignOut from "./routes/signout";
-import { Flowbite } from 'flowbite-react';
+import UpdateMapDlConfig, { updateMapDlConfigAction, updateMapDlConfigLoader } from "./routes/maps/dl/config/update";
+import AddLayerToMap from "./routes/maps/create/layers/add";
 
 
 const rootEl = document.getElementById("root");
@@ -35,15 +28,6 @@ if (!rootEl) {
 const root = ReactDomClient.createRoot(rootEl);
 
 
-const LinkBehavior = forwardRef<
-  HTMLAnchorElement,
-  Omit<RouterLinkProps, 'to'> & { href: RouterLinkProps['to'] }
->((props, ref) => {
-  const { href, ...other } = props;
-  // Map href (Material UI) -> to (react-router)
-  return <RouterLink ref={ref} to={href} {...other} />;
-});
-
 const router = createBrowserRouter([
   {
     path: "/",
@@ -52,34 +36,40 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/",
-        element: <App />,
+        element: <Navigate to="/maps/create" />,
+        action: mapCreatorAction,
+        errorElement: <ErrorPage />,
+
       },
       {
-        path: "/scheduled/",
-        loader: scheduleLoader,
+        path: "/maps/create",
+        element: <MapCreator />,
+        action: mapCreatorAction,
+        errorElement: <ErrorPage />,
+        children: [
+          {
+            path: "/maps/create/layers/add",
+            element: <AddLayerToMap />
+          }
+        ]
+      },
+      {
+        path: "/maps/dl/config",
+        errorElement: <ErrorPage />,
+        loader: dlConfigLoader,
+        action: dlConfigAction,
         element: (
           <RequireAuth>
-            <ScheduleTable />
+            <MapDlConfigTable />
           </RequireAuth>
         ),
         children: [
           {
-            path: "new",
-            action: createDownloadScheduleAction,
+            path: "/maps/dl/config/:id",
+            loader: updateMapDlConfigLoader,
+            action: updateMapDlConfigAction,
             element: (
-              <RequireAuth>
-                <CreateDownloadSchedule />
-              </RequireAuth>
-            )
-          },
-          {
-            path: ":id",
-            loader: viewLoader,
-            action: viewAction,
-            element: (
-              <RequireAuth>
-                <ViewScheduledDownload />
-              </RequireAuth>
+              <UpdateMapDlConfig />
             )
           },
         ]
@@ -127,11 +117,9 @@ export default function WithStyles() {
 
   return (
     <div className="bg-gray-50 dark:bg-gray-800">
-      <Flowbite>
-        <ColorModeContext.Provider value={colorMode}>
-          <RouterProvider router={router} />
-        </ColorModeContext.Provider>
-      </Flowbite>
+      <ColorModeContext.Provider value={colorMode}>
+        <RouterProvider router={router} />
+      </ColorModeContext.Provider>
     </div>
   );
 }

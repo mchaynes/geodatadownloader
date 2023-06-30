@@ -37,9 +37,9 @@ export interface Database {
       downloads: {
         Row: {
           created_at: string
-          download_schedule_id: string | null
           finished_at: string | null
           id: string
+          map_dl_config: string | null
           messages: string[]
           owner: string | null
           status: string
@@ -47,9 +47,9 @@ export interface Database {
         }
         Insert: {
           created_at?: string
-          download_schedule_id?: string | null
           finished_at?: string | null
           id?: string
+          map_dl_config?: string | null
           messages?: string[]
           owner?: string | null
           status?: string
@@ -57,18 +57,18 @@ export interface Database {
         }
         Update: {
           created_at?: string
-          download_schedule_id?: string | null
           finished_at?: string | null
           id?: string
+          map_dl_config?: string | null
           messages?: string[]
           owner?: string | null
           status?: string
           updated_at?: string
         }
       }
-      layers: {
+      layer: {
         Row: {
-          created_at: string | null
+          created_at: string
           description: string
           extent: unknown
           fields: Json
@@ -76,12 +76,15 @@ export interface Database {
           id: string
           name: string
           owner: string | null
+          public: boolean | null
           query_formats: string[]
+          search_col: unknown | null
           spatial_ref: string
+          updated_at: string
           url: string
         }
         Insert: {
-          created_at?: string | null
+          created_at?: string
           description: string
           extent: unknown
           fields: Json
@@ -89,12 +92,15 @@ export interface Database {
           id?: string
           name: string
           owner?: string | null
+          public?: boolean | null
           query_formats?: string[]
+          search_col?: unknown | null
           spatial_ref: string
+          updated_at?: string
           url: string
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
           description?: string
           extent?: unknown
           fields?: Json
@@ -102,17 +108,67 @@ export interface Database {
           id?: string
           name?: string
           owner?: string | null
+          public?: boolean | null
           query_formats?: string[]
+          search_col?: unknown | null
           spatial_ref?: string
+          updated_at?: string
           url?: string
         }
       }
-      scheduled_downloads: {
+      layer_download_config: {
+        Row: {
+          column_mapping: Json | null
+          id: string
+          layer_id: string | null
+        }
+        Insert: {
+          column_mapping?: Json | null
+          id?: string
+          layer_id?: string | null
+        }
+        Update: {
+          column_mapping?: Json | null
+          id?: string
+          layer_id?: string | null
+        }
+      }
+      map: {
+        Row: {
+          boundary: Json
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          owner: string | null
+          public: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          boundary?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          owner?: string | null
+          public?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          boundary?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          owner?: string | null
+          public?: boolean | null
+          updated_at?: string
+        }
+      }
+      map_dl_config: {
         Row: {
           access_key_id: string
           active: boolean
-          boundary: Json
-          column_mapping: Json
           created_at: string
           day_of_month: number
           days_of_week: Database["public"]["Enums"]["day"][]
@@ -120,7 +176,7 @@ export interface Database {
           format: Database["public"]["Enums"]["format"]
           frequency: Database["public"]["Enums"]["frequency"]
           id: string
-          layer_url: string
+          map_id: string | null
           name: string
           owner: string | null
           secret_key: string
@@ -131,8 +187,6 @@ export interface Database {
         Insert: {
           access_key_id: string
           active: boolean
-          boundary?: Json
-          column_mapping?: Json
           created_at?: string
           day_of_month?: number
           days_of_week?: Database["public"]["Enums"]["day"][]
@@ -140,7 +194,7 @@ export interface Database {
           format?: Database["public"]["Enums"]["format"]
           frequency?: Database["public"]["Enums"]["frequency"]
           id?: string
-          layer_url: string
+          map_id?: string | null
           name?: string
           owner?: string | null
           secret_key: string
@@ -151,8 +205,6 @@ export interface Database {
         Update: {
           access_key_id?: string
           active?: boolean
-          boundary?: Json
-          column_mapping?: Json
           created_at?: string
           day_of_month?: number
           days_of_week?: Database["public"]["Enums"]["day"][]
@@ -160,13 +212,27 @@ export interface Database {
           format?: Database["public"]["Enums"]["format"]
           frequency?: Database["public"]["Enums"]["frequency"]
           id?: string
-          layer_url?: string
+          map_id?: string | null
           name?: string
           owner?: string | null
           secret_key?: string
           time_of_day?: string
           updated_at?: string
           where_clause?: string
+        }
+      }
+      map_layer: {
+        Row: {
+          layer_id: string | null
+          map_id: string | null
+        }
+        Insert: {
+          layer_id?: string | null
+          map_id?: string | null
+        }
+        Update: {
+          layer_id?: string | null
+          map_id?: string | null
         }
       }
       spatial_ref_sys: {
@@ -3279,7 +3345,7 @@ export interface Database {
         | "friday"
         | "saturday"
       format: "pmtiles" | "gpkg" | "geojson" | "shp" | "csv"
-      frequency: "daily" | "weekly" | "monthly" | "hourly"
+      frequency: "manual" | "daily" | "weekly" | "monthly" | "hourly"
       status: "pending" | "started" | "successful" | "failed"
     }
     CompositeTypes: {

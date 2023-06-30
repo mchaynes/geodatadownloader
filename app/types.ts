@@ -1,13 +1,16 @@
 import { Database } from './database.types'
-export type ScheduledDownload = Database["public"]["Tables"]["scheduled_downloads"]["Row"]
-export interface ScheduledDownloadWithDownloads extends ScheduledDownload {
+export type MapDlConfig = Database["public"]["Tables"]["map_dl_config"]["Row"]
+export interface MapDlConfigTableResp extends MapDlConfig {
   downloads?: Download[]
+  map: MapInfo
 }
-export type ScheduledDownloadInsert = Database["public"]["Tables"]["scheduled_downloads"]["Insert"]
-export type ScheduledDownloadUpdate = Database["public"]["Tables"]["scheduled_downloads"]["Update"]
+export type MapDlConfigInsert = Database["public"]["Tables"]["map_dl_config"]["Insert"]
+export type MapDlConfigUpdate = Database["public"]["Tables"]["map_dl_config"]["Update"]
 export type Download = Database["public"]["Tables"]["downloads"]["Row"]
 export type DownloadInsert = Database["public"]["Tables"]["downloads"]["Insert"]
 export type DownloadUpdate = Database["public"]["Tables"]["downloads"]["Update"]
+
+export type MapInfo = Database["public"]["Tables"]["map"]["Row"]
 
 
 
