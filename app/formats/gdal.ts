@@ -30,25 +30,81 @@ const footer = `
 }
 `;
 
-export type FeatureCollection = {
-  features: Feature[];
-};
 
-export type Feature = {
+interface SpatialReferenceWkid {
+  wkid?: number | undefined;
+  latestWkid?: number | undefined;
+  vcsWkid?: number | undefined;
+  latestVcsWkid?: number | undefined;
+}
+
+interface SpatialReferenceWkt {
+  wkt?: string | undefined;
+  latestWkt?: string | undefined;
+}
+
+type SpatialReference = SpatialReferenceWkt | SpatialReferenceWkid;
+
+
+type ArcgisFeatureResp = {
+  features: ArcgisFeature[]
+  spatialReference?: SpatialReference | undefined;
+}
+
+type ArcgisFeature = {
+  attributes: {
+    [key: string]: string
+  }
   geometry: {
-    type: string;
-    coordinates: number[][][];
-  };
-  id: number | string;
-  properties: {
-    [key: string]: any;
-  };
-};
+    x?: number
+    y?: number
+    paths?: [
+      [
+        number[]
+      ]
+    ];
+    rings: [
+      [
+        number[]
+      ]
+    ]
+  }
+}
+
+const containsValidGeometry = ({ geometry }: ArcgisFeature): boolean => {
+  if (!geometry) {
+    return false
+  }
+  const { rings, x, y, paths } = geometry
+  if (rings) {
+    return rings.every(ring => ring.length > 1)
+  }
+  if (paths) {
+    return paths.every(p => p.length > 0)
+  }
+  return x !== undefined && y !== undefined
+}
+
 
 export const DEFAULT_CONCURRENT_REQUESTS = 2;
 export const MAX_CONCURRENT_REQUESTS = 20;
 
-export class GpkgDownloader {
+export const Drivers: { [key: string]: string[] } = {
+  "GPKG": ["gpkg"],
+  "GeoJSON": ["geojson"],
+  "ESRI Shapefile": ["shp", "dbf", "prj", "shx"],
+  "KML": ["kml"],
+  "CSV": ["csv"],
+  "GPX": ["gpx"],
+  "PGDUMP": ["sql"],
+  "SVG": ["svg"],
+  "DXF": ["dxf"],
+  "SQLite": ["sqlite"],
+  "XSLX": ["xlsx"],
+}
+
+
+export class GdalDownloader {
   featuresWritten = 0;
   onWrite: (featuresWritten: number) => void;
   zipper: JSZip;
@@ -61,7 +117,8 @@ export class GpkgDownloader {
     writer: Writer,
     outFields: string[],
     numConcurrent: number,
-    where: string
+    where: string,
+    format: string
   ) => {
     const layer = results.getLayer();
     if (!layer) {
@@ -73,13 +130,11 @@ export class GpkgDownloader {
     let firstPage = true;
     const fetchResults = async (pageNum: number): Promise<void> => {
       const features = await results.getPage(pageNum, outFields, where);
-      const json = features.toJSON();
+      const json = features.toJSON() as ArcgisFeatureResp;
       // strip features that contain no geometry
-      json["features"] = json["features"].filter(f => {
-        const rings: Array<number[]> = f["geometry"]["rings"]
-        return rings.every(r => r.length > 1)
-      })
-      const geojson = arcgisToGeoJSON(json) as unknown as FeatureCollection;
+      json.features = json.features.filter(containsValidGeometry)
+
+      const geojson = arcgisToGeoJSON(json) as unknown as GeoJSON.FeatureCollection;
       let stringified = geojson.features
         .map((f) => JSON.stringify(f))
         .join(",");
@@ -92,7 +147,7 @@ export class GpkgDownloader {
       }
       // Join features in chunk together, write to file
       writer.write(stringified);
-      this.featuresWritten += geojson.features.length;
+      this.featuresWritten += json.features.length;
       // Notify listeners that we've written more features
       this.onWrite(this.featuresWritten);
     };
@@ -109,15 +164,24 @@ export class GpkgDownloader {
     const Gdal = await getGdalJs();
     const layerName = results.getLayer().title;
     const srcDataset = await Gdal.open(
-      new File(writer.data, `${layerName}.geojson`)
+      new File(writer.data, `${layerName}.json`)
     );
-    await Gdal.ogr2ogr(srcDataset.datasets[0], ["-f", "GPKG"]);
-    const files = await Gdal.getOutputFiles();
+    console.log(await Gdal.getInfo(srcDataset.datasets[0]))
+    await Gdal.ogr2ogr(srcDataset.datasets[0], ["-f", format, "-skipfailures"]);
+    const files = (await Gdal.getOutputFiles()).filter(f => {
+      for (const ext of Drivers[format]) {
+        if (f.path.includes(`${layerName}.${ext}`)) {
+          return true
+        }
+      }
+      return false
+    });
     const zip = new JSZip();
+
     for (const f of files) {
-      const shp = new Blob([await Gdal.getFileBytes(f.path)]);
+      const blob = new Blob([await Gdal.getFileBytes(f.path)]);
       const fileName = f.path.split("/")[2];
-      zip.file(fileName, shp);
+      zip.file(fileName, blob);
     }
     const zipBytes = await zip.generateAsync({ type: "blob" });
     saveAs(zipBytes, `${layerName}.zip`);
