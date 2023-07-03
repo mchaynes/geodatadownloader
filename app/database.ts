@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import { supabase } from "./supabase";
-import { Days, MapDlConfig, MapDlConfigUpdate } from "./types";
+import { Days, LocalMap, MapDlConfig, MapDlConfigUpdate } from "./types";
 
 
 
@@ -56,4 +56,20 @@ export async function updateScheduledDownloads(dlConfig: MapDlConfigUpdate) {
   await supabase.from("map_dl_config")
     .update(s)
     .eq("id", dlConfig.id)
+}
+
+export function getMapConfigLocal(): LocalMap {
+  const mapJson = localStorage.getItem("map")
+  if (mapJson) {
+    return JSON.parse(mapJson) as LocalMap
+  }
+  saveMapConfigLocal({
+    layers: [],
+    dlConfig: {}
+  })
+  return getMapConfigLocal()
+}
+
+export function saveMapConfigLocal(map: LocalMap) {
+  localStorage.setItem("map", JSON.stringify(map))
 }

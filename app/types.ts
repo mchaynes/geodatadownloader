@@ -12,12 +12,25 @@ export type DownloadUpdate = Database["public"]["Tables"]["downloads"]["Update"]
 
 export type MapInfo = Database["public"]["Tables"]["map"]["Row"]
 
+export type LayerConfig = Database["public"]["Tables"]["layer_download_config"]["Insert"]
+
+export type Layer = Database["public"]["Tables"]["layer"]["Insert"]
+
+
+export interface LayerWithConfig extends Layer, LayerConfig { }
+
 
 
 export type Day = NonNullable<Database["public"]["Enums"]["day"]>
 export type Format = NonNullable<Database["public"]["Enums"]["format"]>
 export type Frequency = NonNullable<Database["public"]["Enums"]["frequency"]>
 export type Status = NonNullable<Database["public"]["Enums"]["status"]>
+
+
+export type LocalMap = {
+  layers: LayerWithConfig[]
+  dlConfig: MapDlConfigUpdate
+}
 
 
 // Used to enforce that our enum arrays include all values

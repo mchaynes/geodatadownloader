@@ -1,7 +1,7 @@
 import { StrictMode, useEffect, useMemo, useState } from "react";
 import ReactDomClient from "react-dom/client";
 import "./index.css";
-import MapCreator, { mapCreatorAction } from "./routes/maps/create";
+import MapCreator, { mapCreatorAction, mapCreatorLoader } from "./routes/maps/create";
 import reportWebVitals from "./reportWebVitals";
 import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
 import ErrorPage from "./ErrorPage";
@@ -9,8 +9,6 @@ import Root from "./routes/root";
 
 import { RequireAuth } from "./RequireAuth";
 import MapDlConfigTable, { dlConfigLoader, dlConfigAction } from "./routes/maps/dl/config";
-import useMediaQuery from "@mui/material/useMediaQuery";
-import { ColorModeContext } from "./context";
 
 import SignUp, { signUpAction } from "./routes/signup";
 import SignIn, { signInAction } from './routes/signin'
@@ -19,6 +17,7 @@ import SignOut from "./routes/signout";
 import UpdateMapDlConfig, { updateMapDlConfigAction, updateMapDlConfigLoader } from "./routes/maps/dl/config/update";
 import AddLayerToMap from "./routes/maps/create/layers/add";
 import { Flowbite } from "flowbite-react";
+import RemoveLayerModal, { removeLayerAction } from "./routes/maps/create/remove-layer";
 
 
 const rootEl = document.getElementById("root");
@@ -46,11 +45,17 @@ const router = createBrowserRouter([
         path: "/maps/create",
         element: <MapCreator />,
         action: mapCreatorAction,
+        loader: mapCreatorLoader,
         errorElement: <ErrorPage />,
         children: [
           {
             path: "/maps/create/layers/add",
             element: <AddLayerToMap />
+          },
+          {
+            path: "/maps/create/remove-layer",
+            action: removeLayerAction,
+            element: <RemoveLayerModal />
           }
         ]
       },
@@ -100,28 +105,11 @@ const router = createBrowserRouter([
 
 
 export default function WithStyles() {
-  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
-  const [mode, setMode] = useState<"light" | "dark">("light");
-
-  const colorMode = useMemo(
-    () => ({
-      mode: mode,
-      setColorMode: (colorMode: typeof mode) => {
-        setMode(colorMode);
-      },
-    }),
-    [mode]
-  );
-  useEffect(() => {
-    colorMode.setColorMode(prefersDarkMode ? "dark" : "light");
-  }, [prefersDarkMode, mode]);
 
   return (
     <div>
       <Flowbite>
-        <ColorModeContext.Provider value={colorMode}>
-          <RouterProvider router={router} />
-        </ColorModeContext.Provider>
+        <RouterProvider router={router} />
       </Flowbite>
     </div>
   );

@@ -44,7 +44,8 @@ create policy "users can update their layers"
 create table public.layer_download_config(
   id uuid primary key default uuid_generate_v4(),
   layer_id uuid references layer(id),
-  column_mapping jsonb
+  column_mapping jsonb,
+  where_clause text
 );
 
 alter table public.layer_download_config

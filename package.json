@@ -4,12 +4,12 @@
   "private": true,
   "dependencies": {
     "@arcgis/core": "^4.26.1",
-    "@emotion/react": "^11.10.5",
-    "@emotion/styled": "^11.10.5",
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
     "@fontsource/roboto": "^4.5.8",
     "@heroicons/react": "^2.0.18",
     "@mui/icons-material": "^5.11.0",
-    "@mui/material": "^5.11.3",
+    "@mui/material": "^5.13.6",
     "@mui/x-data-grid": "^5.17.17",
     "@mui/x-date-pickers": "^6.8.0",
     "@supabase/auth-ui-react": "^0.4.2",
@@ -32,6 +32,7 @@
     "react-github-btn": "^1.4.0",
     "react-icons": "^4.10.1",
     "react-router-dom": "^6.13.0",
+    "usehooks-ts": "^2.9.1",
     "web-vitals": "^3.1.0"
   },
   "scripts": {

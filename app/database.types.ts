@@ -121,16 +121,19 @@ export interface Database {
           column_mapping: Json | null
           id: string
           layer_id: string | null
+          where_clause: string | null
         }
         Insert: {
           column_mapping?: Json | null
           id?: string
           layer_id?: string | null
+          where_clause?: string | null
         }
         Update: {
           column_mapping?: Json | null
           id?: string
           layer_id?: string | null
+          where_clause?: string | null
         }
       }
       map: {

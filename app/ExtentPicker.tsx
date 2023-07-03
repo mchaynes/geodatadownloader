@@ -26,10 +26,10 @@ import { AlertType, StatusAlert } from "./StatusAlert";
 import InputAdornment from "@mui/material/InputAdornment";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
-import { ColorModeContext } from "./context";
 import BasemapToggle from "@arcgis/core/widgets/BasemapToggle";
 import Basemap from "@arcgis/core/Basemap";
 import CopyButton from "./CopyButton";
+import { useMediaQuery } from "usehooks-ts";
 
 const GEOMETRY_LINK =
   "https://developers.arcgis.com/documentation/common-data-types/geometry-objects.htm";
@@ -52,7 +52,7 @@ export function ExtentPicker({
   onFilterGeometryChange,
   defaultBoundaryExtent,
 }: ExtentPickerProps) {
-  const colorMode = useContext(ColorModeContext);
+
   // Form State variables
   const [loading, setLoading] = useState(false);
   const [boundaryErrMsg, setBoundaryErrMsg] = useState("");
@@ -103,6 +103,8 @@ export function ExtentPicker({
         nextBasemap: "dark-gray-vector",
       })
   );
+
+  const prefersDark = useMediaQuery("(prefers-color-scheme: dark)")
 
   // Updates filterGeometry and textBoxValue when sketchLayer is updated
   const onSketchUpdate = useCallback(() => {
@@ -172,14 +174,16 @@ export function ExtentPicker({
   }, [mapView, basemapToggle]);
 
   useEffect(() => {
-    const modeToId: { [k: typeof colorMode.mode]: string } = {
-      dark: "dark-gray-vector",
-      light: "topo-vector",
+    const modeToId = (prefersDark: boolean) => {
+      if (prefersDark) {
+        return "dark-gray-vector"
+      }
+      return "topo-vector"
     };
     // toggle basemap depending on dark vs light mode in the theme
-    if (modeToId[colorMode.mode] !== map.basemap.id) {
+    if (modeToId(prefersDark) !== map.basemap.id) {
       const prevMap = map.basemap.id;
-      map.set("basemap", Basemap.fromId(modeToId[colorMode.mode]));
+      map.set("basemap", Basemap.fromId(modeToId(prefersDark)));
       basemapToggle
         .toggle()
         .then(() => {
@@ -187,7 +191,7 @@ export function ExtentPicker({
         })
         .catch((err) => console.error(err));
     }
-  }, [map, colorMode, basemapToggle]);
+  }, [map, prefersDark, basemapToggle]);
 
   // Grayscale out non-included layers.
   useEffect(() => {
@@ -299,7 +303,7 @@ export function ExtentPicker({
   }
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: ".5rem .5rem" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: ".5rem .5rem" }}>
       <div ref={elRef} className="w-full h-[68vh]" />
       <TextField
         id="boundary-text-field"
@@ -331,6 +335,6 @@ export function ExtentPicker({
         alertType={boundaryAlertType}
         loading={loading}
       />
-    </Box>
+    </div>
   );
 }

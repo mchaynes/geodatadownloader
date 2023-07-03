@@ -26,6 +26,10 @@ type Extent = {
 
 type Geo = Polygon | Extent;
 
+export function getRealUrl({ url, layerId }: FeatureLayer) {
+  return `${url}/${layerId}`
+}
+
 export function parseGeometryFromString(str: string): Geometry {
   const geo = JSON.parse(str) as Geo;
   // allow for type to not be defined

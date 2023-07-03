@@ -60,7 +60,7 @@ export default function MapDlConfigTable() {
 
   return (
     <main>
-      <div className="h-[100vh] p-4 bg-white block sm:flex items-center justify-between border-b border-gray-200 lg:mt-1.5 dark:bg-gray-800 dark:border-gray-700">
+      <div className="p-4 bg-white block sm:flex items-center justify-between border-b border-gray-200 lg:mt-1.5 dark:bg-gray-800 dark:border-gray-700">
         <div className="w-full mb-1">
           <div className="mb-4">
             <nav className="flex mb-5" aria-label="Breadcrumb">

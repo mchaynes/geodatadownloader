@@ -1,21 +1,12 @@
-import { QueryResults } from "../arcgis";
+import { QueryResults } from "./arcgis";
 import { arcgisToGeoJSON } from "@terraformer/arcgis";
 import fastq from "fastq";
 import type { queueAsPromised } from "fastq";
 import { Writer } from "./writer";
 import JSZip from "jszip";
 import saveAs from "file-saver";
-import { getGdalJs } from "../gdal";
+import { getGdalJs } from "./gdal";
 
-export interface Downloader {
-  download(
-    results: QueryResults,
-    writer: Writer,
-    outFields: string[],
-    numConcurrent: number,
-    where: string
-  ): Promise<void>;
-}
 
 // Open geojson FeatureCollection object and "features" array
 const header = `
