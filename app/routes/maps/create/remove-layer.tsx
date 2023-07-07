@@ -1,14 +1,15 @@
 
 import { Button, Modal } from 'flowbite-react';
 import { HiOutlineExclamationCircle } from 'react-icons/hi'
-import { ActionFunctionArgs, Form, Navigate, useActionData, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { ActionFunctionArgs, Form, Navigate, useActionData, useNavigate, useSearchParams } from 'react-router-dom';
 import { getMapConfigLocal, saveMapConfigLocal } from '../../../database';
 
 export const removeLayerAction = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData()
   const url = formData.get("url")
   const mapData = getMapConfigLocal()
-  mapData.layers = mapData.layers.filter(l => l.url !== url)
+  // if url is defined, only remove the url specified. otherwise remove all layers 
+  mapData.layers = url ? mapData.layers.filter(l => l.url !== url) : []
   saveMapConfigLocal(mapData)
   return "removed"
 }

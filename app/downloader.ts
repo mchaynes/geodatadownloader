@@ -104,81 +104,83 @@ export class GdalDownloader {
     this.zipper = new JSZip();
   }
   download = async (
-    results: QueryResults,
-    writer: Writer,
-    outFields: string[],
+    results: QueryResults[],
     numConcurrent: number,
     where: string,
     format: string
   ) => {
-    const layer = results.getLayer();
-    if (!layer) {
-      throw new Error("layer not defined");
-    }
-    const numPages = await results.getNumPages(where);
-    writer.write(header);
-    // Create callable functions that fetch results for each page
-    let firstPage = true;
-    const fetchResults = async (pageNum: number): Promise<void> => {
-      const features = await results.getPage(pageNum, outFields, where);
-      const json = features.toJSON() as ArcgisFeatureResp;
-      // strip features that contain no geometry
-      json.features = json.features.filter(containsValidGeometry)
-
-      const geojson = arcgisToGeoJSON(json) as unknown as GeoJSON.FeatureCollection;
-      let stringified = geojson.features
-        .map((f) => JSON.stringify(f))
-        .join(",");
-      if (firstPage) {
-        // we are the first page, so new pages are no longer first
-        firstPage = false;
-      } else {
-        // add a leading "," if this isn't the first page we fetched
-        stringified = `, ${stringified}`;
-      }
-      // Join features in chunk together, write to file
-      writer.write(stringified);
-      this.featuresWritten += json.features.length;
-      // Notify listeners that we've written more features
-      this.onWrite(this.featuresWritten);
-    };
-    const promises: Promise<void>[] = [];
-    const q: queueAsPromised<number, void> = fastq.promise(
-      fetchResults,
-      numConcurrent
-    );
-    for (let i = 0; i < numPages; i++) {
-      promises.push(q.push(i));
-    }
-    await Promise.all(promises);
-    writer.write(footer);
     const Gdal = await getGdalJs();
-    const layerName = results.getLayer().title;
-    const srcDataset = await Gdal.open(
-      new File(writer.data, `${layerName}.json`)
-    );
-    console.log(await Gdal.getInfo(srcDataset.datasets[0]))
-    await Gdal.ogr2ogr(srcDataset.datasets[0], ["-f", format, "-skipfailures"]);
-    const files = (await Gdal.getOutputFiles()).filter(f => {
-      for (const ext of Drivers[format]) {
-        if (f.path.includes(`${layerName}.${ext}`)) {
-          return true
-        }
+    let outputFiles: FileInfo[] = []
+    for (const result of results) {
+      const writer = new Writer()
+      const layer = result.getLayer();
+      if (!layer) {
+        throw new Error("layer not defined");
       }
-      return false
-    });
-    const zip = new JSZip();
+      const numPages = await result.getNumPages(where);
+      writer.write(header);
+      // Create callable functions that fetch results for each page
+      let firstPage = true;
+      const fetchResults = async (pageNum: number): Promise<void> => {
+        const features = await result.getPage(pageNum, "1=1");
+        const json = features.toJSON() as ArcgisFeatureResp;
+        // strip features that contain no geometry
+        json.features = json.features.filter(containsValidGeometry)
 
-    for (const f of files) {
+        const geojson = arcgisToGeoJSON(json) as unknown as GeoJSON.FeatureCollection;
+        let stringified = geojson.features
+          .map((f) => JSON.stringify(f))
+          .join(",");
+        if (firstPage) {
+          // we are the first page, so new pages are no longer first
+          firstPage = false;
+        } else {
+          // add a leading "," if this isn't the first page we fetched
+          stringified = `, ${stringified}`;
+        }
+        // Join features in chunk together, write to file
+        writer.write(stringified);
+        this.featuresWritten += json.features.length;
+        // Notify listeners that we've written more features
+        this.onWrite(this.featuresWritten);
+      };
+      const promises: Promise<void>[] = [];
+      const q: queueAsPromised<number, void> = fastq.promise(
+        fetchResults,
+        numConcurrent
+      );
+      for (let i = 0; i < numPages; i++) {
+        promises.push(q.push(i));
+      }
+      await Promise.all(promises);
+      writer.write(footer);
+      const layerName = result.getLayer().title;
+      const srcDataset = await Gdal.open(
+        new File(writer.data, `${layerName}.json`)
+      );
+      await Gdal.ogr2ogr(srcDataset.datasets[0], ["-f", format, "-skipfailures"]);
+      const files = (await Gdal.getOutputFiles()).filter(f => {
+        for (const ext of Drivers[format]) {
+          if (f.path.includes(`${layerName}.${ext}`)) {
+            return true
+          }
+        }
+        return false
+      });
+      outputFiles = outputFiles.concat(files)
+      for (const d of srcDataset.datasets) {
+        await Gdal.close(d);
+      }
+    }
+    const zip = new JSZip();
+    for (const f of outputFiles) {
       const blob = new Blob([await Gdal.getFileBytes(f.path)]);
       const fileName = f.path.split("/")[2];
       zip.file(fileName, blob);
     }
     const zipBytes = await zip.generateAsync({ type: "blob" });
-    saveAs(zipBytes, `${layerName}.zip`);
-    for (const d of srcDataset.datasets) {
-      await Gdal.close(d);
-    }
+    saveAs(zipBytes, `geodatadownloader.zip`);
+
     this.featuresWritten = 0;
   };
 }

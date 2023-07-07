@@ -170,55 +170,55 @@ export interface Database {
       }
       map_dl_config: {
         Row: {
-          access_key_id: string
+          access_key_id: string | null
           active: boolean
           created_at: string
           day_of_month: number
           days_of_week: Database["public"]["Enums"]["day"][]
-          destination: string
+          destination: string | null
           format: Database["public"]["Enums"]["format"]
           frequency: Database["public"]["Enums"]["frequency"]
           id: string
           map_id: string | null
           name: string
           owner: string | null
-          secret_key: string
+          secret_key: string | null
           time_of_day: string
           updated_at: string
           where_clause: string
         }
         Insert: {
-          access_key_id: string
-          active: boolean
+          access_key_id?: string | null
+          active?: boolean
           created_at?: string
           day_of_month?: number
           days_of_week?: Database["public"]["Enums"]["day"][]
-          destination: string
+          destination?: string | null
           format?: Database["public"]["Enums"]["format"]
           frequency?: Database["public"]["Enums"]["frequency"]
           id?: string
           map_id?: string | null
           name?: string
           owner?: string | null
-          secret_key: string
+          secret_key?: string | null
           time_of_day?: string
           updated_at?: string
           where_clause?: string
         }
         Update: {
-          access_key_id?: string
+          access_key_id?: string | null
           active?: boolean
           created_at?: string
           day_of_month?: number
           days_of_week?: Database["public"]["Enums"]["day"][]
-          destination?: string
+          destination?: string | null
           format?: Database["public"]["Enums"]["format"]
           frequency?: Database["public"]["Enums"]["frequency"]
           id?: string
           map_id?: string | null
           name?: string
           owner?: string | null
-          secret_key?: string
+          secret_key?: string | null
           time_of_day?: string
           updated_at?: string
           where_clause?: string

@@ -1,8 +1,7 @@
 import { useCallback, useContext } from "react";
-import Box from "@mui/material/Box";
 import { useEffect, useRef, useState } from "react";
 import { setLoadingWhile } from "./loading";
-import { GeometryUpdateListener, parseGeometryFromString } from "./arcgis";
+import { GeometryUpdateListener, getRealUrl, parseGeometryFromString } from "./arcgis";
 
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
@@ -17,7 +16,6 @@ import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
 import Sketch from "@arcgis/core/widgets/Sketch";
 import MapView from "@arcgis/core/views/MapView";
 import EsriMap from "@arcgis/core/Map";
-import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import FeatureEffect from "@arcgis/core/layers/support/FeatureEffect";
 import FeatureFilter from "@arcgis/core/layers/support/FeatureFilter";
 import Graphic from "@arcgis/core/Graphic";
@@ -30,6 +28,9 @@ import BasemapToggle from "@arcgis/core/widgets/BasemapToggle";
 import Basemap from "@arcgis/core/Basemap";
 import CopyButton from "./CopyButton";
 import { useMediaQuery } from "usehooks-ts";
+import { mapCreatorLoader } from "./routes/maps/create";
+import { ActionFunctionArgs, useFetcher, useLoaderData } from "react-router-dom";
+import { getMapConfigLocal, saveMapConfigLocal } from "./database";
 
 const GEOMETRY_LINK =
   "https://developers.arcgis.com/documentation/common-data-types/geometry-objects.htm";
@@ -39,33 +40,35 @@ const esriDocLinkProps = (t: "POLYGON" | "ENVELOPE") => ({
   href: `${GEOMETRY_LINK}#${t}`,
 });
 
-export type ExtentPickerProps = {
-  defaultBoundaryExtent: string;
-  layer?: FeatureLayer;
-  where: string;
-  onFilterGeometryChange: GeometryUpdateListener;
-};
 
-export function ExtentPicker({
-  layer,
-  where,
-  onFilterGeometryChange,
-  defaultBoundaryExtent,
-}: ExtentPickerProps) {
+export const extentPickerAction = async ({ request }: ActionFunctionArgs) => {
+  const formData = await request.formData()
+  const boundary = formData.get("boundary") as string
+  const mapConfig = await getMapConfigLocal()
+  console.log("running action")
+  mapConfig.map.boundary = boundary
+  saveMapConfigLocal(mapConfig)
+  return boundary
+}
 
+
+export function ExtentPicker() {
+
+  const data = useLoaderData() as Awaited<ReturnType<typeof mapCreatorLoader>>
+  const fetcher = useFetcher()
+  const { layers, mapConfig } = data
+  console.log(data)
   // Form State variables
   const [loading, setLoading] = useState(false);
   const [boundaryErrMsg, setBoundaryErrMsg] = useState("");
   const [boundaryAlertType, setBoundaryAlertType] =
     useState<AlertType>(undefined);
   const [textBoxDisabled, setTextBoxDisabled] = useState(false);
-  const [textBoxValue, setTextBoxValue] = useState("");
+  const [textBoxValue, setTextBoxValue] = useState(mapConfig.map?.boundary ?? "");
 
   // ArcGIS Map State  variables
   const elRef = useRef(null);
-  const [filterGeometry, setFilterGeometry] = useState<Geometry | undefined>(
-    undefined
-  );
+  const [filterGeometry, setFilterGeometry] = useState<Geometry | undefined>();
   const [map] = useState(
     () =>
       new EsriMap({
@@ -92,9 +95,6 @@ export function ExtentPicker({
         layout: "vertical",
       })
   );
-  const [featureEffect, setFeatureEffect] = useState<FeatureEffect>(
-    new FeatureEffect()
-  );
 
   const [basemapToggle] = useState<BasemapToggle>(
     () =>
@@ -116,14 +116,25 @@ export function ExtentPicker({
     if (sketchGeometries && sketchGeometries.length > 0) {
       const unionedGeometry = geometryUnion(sketchGeometries.toArray());
       setFilterGeometry(unionedGeometry);
-      setTextBoxValue(JSON.stringify(unionedGeometry.toJSON()));
+      const stringGeometry = JSON.stringify(unionedGeometry.toJSON());
+      setTextBoxValue(stringGeometry);
       setBoundaryErrMsg("");
       setTextBoxDisabled(true);
     } else {
       setFilterGeometry(undefined);
       setTextBoxValue("");
     }
-  }, [sketchLayer]);
+  }, [sketchLayer, fetcher]);
+
+  useEffect(() => {
+    if (filterGeometry && equals(parseGeometryFromString(JSON.stringify(mapConfig.map.boundary)), filterGeometry)) {
+      fetcher.submit(
+        { boundary: JSON.stringify(filterGeometry.toJSON()) },
+        { method: "post", action: "/maps/create/boundary" })
+    }
+  }, [fetcher, filterGeometry])
+
+
 
   // Attaches map to ref
   useEffect(() => {
@@ -132,15 +143,10 @@ export function ExtentPicker({
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
         mapView.container = elRef.current as any;
         await mapView.when();
-        if (layer) {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          const extent = await layer?.queryExtent();
-          await mapView.goTo(extent);
-        }
       }, setLoading);
     }
     void attachView();
-  }, [layer, mapView]);
+  }, [layers, mapView]);
 
   // Add sketch widget to map
   useEffect(() => {
@@ -153,20 +159,24 @@ export function ExtentPicker({
     sketch.on("update", onSketchUpdate);
   }, [sketch, onSketchUpdate]);
 
-  // Add the FeatureLayer that the sketch widget uses to the map
+  // Add the sketch widget to the map
   useEffect(() => {
     map.add(sketchLayer);
   }, [map, sketchLayer]);
 
   useEffect(() => {
-    if (!layer) {
+    if (!layers) {
       return;
     }
-    map.add(layer);
+    for (const layer of layers) {
+      map.add(layer);
+    }
     return () => {
-      map.remove(layer);
+      for (const layer of layers) {
+        map.remove(layer);
+      }
     };
-  }, [map, layer]);
+  }, [map, layers]);
 
   useEffect(() => {
     mapView.ui.add(basemapToggle, "bottom-left");
@@ -195,30 +205,21 @@ export function ExtentPicker({
 
   // Grayscale out non-included layers.
   useEffect(() => {
-    setFeatureEffect(
-      new FeatureEffect({
-        filter: new FeatureFilter({
-          geometry: filterGeometry,
-          spatialRelationship: "intersects",
-          where: where,
-        }),
-        excludedEffect: "grayscale(100%) opacity(30%)",
-      })
-    );
-  }, [filterGeometry, where]);
-
-  // Apply featureEffect to layer on update
-  useEffect(() => {
-    if (!layer) {
-      return;
+    if (layers) {
+      for (const layer of layers) {
+        layer.featureEffect = new FeatureEffect({
+          filter: new FeatureFilter({
+            geometry: filterGeometry,
+            spatialRelationship: "intersects",
+            where: mapConfig.layers.find(l => l.url === getRealUrl(layer))?.where_clause ?? "1=1",
+          }),
+          excludedEffect: "grayscale(100%) opacity(30%)",
+        })
+      }
     }
-    layer.featureEffect = featureEffect;
-  }, [featureEffect, layer]);
 
-  // Notify listener when filterGeometry changes
-  useEffect(() => {
-    onFilterGeometryChange(filterGeometry);
-  }, [onFilterGeometryChange, filterGeometry]);
+  }, [filterGeometry]);
+
 
   // Test if new text in TextField contains filter geometry
   // If so, update filterGeometry and remove any previous geometries on the layer
@@ -267,14 +268,11 @@ export function ExtentPicker({
   );
 
   useEffect(() => {
-    if (defaultBoundaryExtent) {
-      onTextBoxChange(defaultBoundaryExtent).catch((err) => {
-        if (typeof err === "string") {
-          throw new Error(err);
-        }
-      });
+    if (mapConfig.map.boundary) {
+      onTextBoxChange(mapConfig.map.boundary as string)
+      setTextBoxDisabled(true)
     }
-  }, []);
+  }, [mapConfig])
 
   // ExtentAdornment contains an EditToggle and a Copy to Clipboard button
   function BoundaryAdornment({ content }: { content: string }) {
@@ -304,7 +302,7 @@ export function ExtentPicker({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: ".5rem .5rem" }}>
-      <div ref={elRef} className="w-full h-[68vh]" />
+      <div ref={elRef} className="w-full h-[63vh]" />
       <TextField
         id="boundary-text-field"
         variant="outlined"

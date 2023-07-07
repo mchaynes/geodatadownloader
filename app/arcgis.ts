@@ -91,8 +91,8 @@ export class QueryResults {
 
   getPage = async (
     page: number,
-    outFields: string[],
-    where: string
+    where: string,
+    outFields?: string[],
   ): Promise<FeatureSet> => {
     await this.initialize(where);
     if (!this.layer) {

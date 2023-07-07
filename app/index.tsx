@@ -17,7 +17,9 @@ import SignOut from "./routes/signout";
 import UpdateMapDlConfig, { updateMapDlConfigAction, updateMapDlConfigLoader } from "./routes/maps/dl/config/update";
 import AddLayerToMap from "./routes/maps/create/layers/add";
 import { Flowbite } from "flowbite-react";
-import RemoveLayerModal, { removeLayerAction } from "./routes/maps/create/remove-layer";
+import { removeLayerAction } from "./routes/maps/create/remove-layer";
+import { getQueryResultsLoader } from "./routes/maps/create/layers/results";
+import { ExtentPicker, extentPickerAction } from "./ExtentPicker";
 
 
 const rootEl = document.getElementById("root");
@@ -49,13 +51,26 @@ const router = createBrowserRouter([
         errorElement: <ErrorPage />,
         children: [
           {
+            path: "/maps/create",
+            loader: mapCreatorLoader,
+            action: mapCreatorAction,
+            element: <ExtentPicker />
+          },
+          {
+            path: "/maps/create/boundary",
+            action: extentPickerAction,
+          },
+          {
             path: "/maps/create/layers/add",
             element: <AddLayerToMap />
           },
           {
             path: "/maps/create/remove-layer",
             action: removeLayerAction,
-            element: <RemoveLayerModal />
+          },
+          {
+            path: "/maps/create/layers/results",
+            loader: getQueryResultsLoader,
           }
         ]
       },

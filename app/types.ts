@@ -11,6 +11,7 @@ export type DownloadInsert = Database["public"]["Tables"]["downloads"]["Insert"]
 export type DownloadUpdate = Database["public"]["Tables"]["downloads"]["Update"]
 
 export type MapInfo = Database["public"]["Tables"]["map"]["Row"]
+export type MapInfoInsert = Database["public"]["Tables"]["map"]["Insert"]
 
 export type LayerConfig = Database["public"]["Tables"]["layer_download_config"]["Insert"]
 
@@ -18,7 +19,6 @@ export type Layer = Database["public"]["Tables"]["layer"]["Insert"]
 
 
 export interface LayerWithConfig extends Layer, LayerConfig { }
-
 
 
 export type Day = NonNullable<Database["public"]["Enums"]["day"]>
@@ -29,6 +29,7 @@ export type Status = NonNullable<Database["public"]["Enums"]["status"]>
 
 export type LocalMap = {
   layers: LayerWithConfig[]
+  map: MapInfoInsert
   dlConfig: MapDlConfigUpdate
 }
 
@@ -58,6 +59,7 @@ export const Formats = arrayOfAll<Database["public"]["Enums"]["format"]>()([
   "geojson",
 ])
 export const Frequencies = arrayOfAll<Database["public"]["Enums"]["frequency"]>()([
+  "manual",
   "daily",
   "hourly",
   "weekly",
@@ -71,7 +73,9 @@ export const Statuses = arrayOfAll<Database["public"]["Enums"]["status"]>()([
 ])
 
 
-
+export const raise = (msg: string): never => {
+  throw new Error(msg)
+}
 
 
 
