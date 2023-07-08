@@ -4,7 +4,7 @@ import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 import { getQueryParameter } from "../../../url";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { getRealUrl, QueryResults } from "../../../arcgis";
 import Geometry from "@arcgis/core/geometry/Geometry";
 import { ExtentPicker } from "../../../ExtentPicker";
@@ -12,9 +12,10 @@ import { ActionFunctionArgs, Form, Link, Outlet, useActionData, useFetcher, useL
 import { Button, Checkbox, Dropdown, Label, Modal, Table, TextInput } from "flowbite-react";
 import { Drivers, GdalDownloader } from "../../../downloader";
 import ConfigureLayerModal from "../../../ConfigureLayerModal";
-import { getMapConfigLocal, saveMapConfigLocal } from "../../../database";
+import { getMapConfigLocal, saveMap, saveMapConfigLocal } from "../../../database";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
 import FeatureSet from "@arcgis/core/rest/support/FeatureSet";
+import { LayerWithConfig } from "../../../types";
 
 type SupportedExportType = string;
 
@@ -58,7 +59,10 @@ export const mapCreatorAction = async ({ request }: ActionFunctionArgs) => {
     }
   }
   if (formData.get("intent") === "save-map") {
-
+    await saveMap(mapConfig)
+  }
+  if (formData.get("intent") === "modify-where") {
+    console.log(formData.entries())
   }
   const layers: Array<FeatureLayer> = []
   const promises: Promise<void>[] = []
@@ -116,24 +120,16 @@ export default function MapCreator() {
   );
 
   const actionData = useLoaderData() as Awaited<ReturnType<typeof mapCreatorLoader>>
-  const fetcher = useFetcher()
   let layers: FeatureLayer[] = []
   if (actionData) {
     layers = actionData.layers
   }
 
-  const [layer, setLayer] = useState<FeatureLayer | undefined>();
   const [filterExtent, setFilterExtent] = useState<Geometry | undefined>(
     undefined
   );
-  const boundaryExtent = getQueryParameter("boundary") ?? "";
-  const [format, setFormat] = useState("GeoPackage")
+  const [format, setFormat] = useState<keyof typeof Drivers>("GPKG")
 
-  useEffect(() => {
-    if (layers.length > 0) {
-      setLayer(layers[0])
-    }
-  }, [layers])
 
   const [showRemoveModal, setShowRemoveModal] = useState(false)
 
@@ -191,8 +187,6 @@ export default function MapCreator() {
         </div>
         <div className="w-2/12 max-w-sm p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-6 md:p-8 dark:bg-gray-800 dark:border-gray-700">
           <Form className="space-y-6" method="post">
-            <h5 className="text-xl font-medium text-gray-900 dark:text-white">Export</h5>
-
             <label htmlFor="format" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Format</label>
             <select id="format" name="format" defaultValue={exportType} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
               onSelect={e => setFormat(e.currentTarget.value)}
@@ -204,15 +198,23 @@ export default function MapCreator() {
 
             <label htmlFor="steps-range" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Concurrent Requests</label>
             <input id="steps-range" type="range" min="1" max="5" defaultValue="1" step="1" className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700" />
-            <button className="w-full text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
+            <button
+              type="submit"
+              name="intent"
+              value="save-map"
+              className="w-full text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
             >
               Save Map
+            </button>
+            <button className="w-full text-white bg-orange-700 hover:bg-orange-800 focus:ring-4 focus:outline-none focus:ring-orange-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-orange-600 dark:hover:bg-orange-700 dark:focus:ring-orange-800"
+            >
+              Schedule
             </button>
             <button className="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
               onClick={() => {
                 const results = layers.map(l => new QueryResults(l, filterExtent))
                 const downloader = new GdalDownloader((f) => console.log(f))
-                downloader.download(results, 1, "1=1", "GPKG")
+                downloader.download(results, 1, "1=1", format as string)
               }}
             >
               Download
@@ -234,6 +236,7 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
   const realUrl = getRealUrl(layer)
   const [showRemoveModal, setShowRemoveModal] = useState(false)
   const [showConfigureModal, setShowConfigureModal] = useState(false)
+  const loaderData = useLoaderData() as Awaited<ReturnType<typeof mapCreatorLoader>>
 
   return <li key={url} className="flex flex-row items-center p-2 bg-white dark:bg-gray-800">
     <div className="flex-1 min-w-0 max-w-xs">
@@ -249,7 +252,12 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
     <Dropdown
       className="dark:text-white"
       inline
-      label=""
+      arrowIcon={false}
+      label={
+        <svg className="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" fill="currentColor" viewBox="0 0 4 15">
+          <path d="M3.5 1.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm0 6.041a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm0 5.959a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
+        </svg>
+      }
     >
       <Dropdown.Item
         icon={() =>
@@ -293,6 +301,7 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
       show={showConfigureModal}
       setShow={setShowConfigureModal}
       layer={layer}
+      layerConfig={loaderData.mapConfig.layers.find(l => l.url === realUrl)}
       boundary={boundary}
     />
   </li>
@@ -344,50 +353,61 @@ function RemoveLayerModal({ url, show, setShow }: RemoveLayerModalProps) {
 
 type ModifyLayerConfigProps = {
   layer: FeatureLayer
+  layerConfig?: LayerWithConfig
   show: boolean
   boundary?: Geometry
   setShow: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-function ModifyLayerConfig({ show, setShow, layer, boundary }: ModifyLayerConfigProps) {
+function ModifyLayerConfig({ show, setShow, layer, boundary, layerConfig }: ModifyLayerConfigProps) {
   const fields = layer.fields
   const [results, setResults] = useState<FeatureSet>()
-  const [where, setWhere] = useState("1=1")
-  useEffect(() => {
-    const timer = setTimeout(async () => {
-      const results = await layer.queryFeatures({
-        where: where,
-        geometry: boundary,
-        num: 20,
-        outFields: ["*"],
-        returnGeometry: true,
-      })
-      setResults(results)
+  const fetcher = useFetcher()
+  const [where, setWhere] = useState(layerConfig?.where_clause ?? "1=1")
 
-    }, 500)
-    return () => clearTimeout(timer)
-  }, [layer, where, boundary])
+  const onUpdateClick = async (where: string) => {
+    setWhere(where)
+    setResults(await layer.queryFeatures({
+      where: where,
+      geometry: boundary,
+      num: 20,
+      outFields: ["*"],
+      returnGeometry: true,
+    }))
+  }
+
+  useEffect(() => {
+    onUpdateClick(where)
+  }, [])
+
   return (
     <Modal show={show} size="3xl" onClose={() => setShow(false)} popup dismissible>
       <Modal.Header className="p-4">
-        Modify Layer Properties
+        Modify Layer Properties: <strong>{layer.sourceJSON["name"]}</strong>
       </Modal.Header>
-      <Modal.Body>
-        <Form method="post">
+      <Modal.Body className="h-96">
+        <fetcher.Form action="/maps/create/layers/configure" method="post">
           <div className="flex flex-col gap-2">
-            <div>
-              <Label htmlFor="where" value="Where" />
-              <TextInput id="where" name="where" value={where} onChange={(e) => setWhere(e.currentTarget.value)} required />
-            </div>
+            <input name="url" value={getRealUrl(layer)} className="hidden" readOnly />
+            <input name="where" value={where} className="hidden" readOnly />
+            <WhereInput defaultWhere={layerConfig?.where_clause ?? "1=1"} onUpdateClick={onUpdateClick} />
             <div>
               <div className="max-h-96 overflow-y-auto">
                 <Table striped hoverable className="border-gray-50 rounded-lg">
                   <Table.Head>
                     {fields.map(field =>
                       <Table.HeadCell key={field.name} >
-                        <div className="flex flex-row gap-2 items-center">
-                          <Checkbox defaultChecked name={`${field.name}-enabled`} />
-                          <TextInput sizing="sm" id={field.name} name={`${field.name}-new`} defaultValue={field.name} required />
+                        <div className="flex flex-col items-center gap-1">
+                          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 place-self-start">{field.name}</p>
+                          <div className="flex flex-row gap-2 items-center">
+                            <Checkbox defaultChecked={layerConfig?.column_mapping ? layerConfig?.column_mapping[field.name] : true} name={`${field.name}-enabled`} />
+                            <TextInput sizing="sm"
+                              id={field.name}
+                              name={`${field.name}-new`}
+                              defaultValue={layerConfig?.column_mapping ? layerConfig?.column_mapping[field.name] ?? field.name : field.name}
+                              required
+                            />
+                          </div>
                         </div>
                       </Table.HeadCell>
                     )}
@@ -417,8 +437,37 @@ function ModifyLayerConfig({ show, setShow, layer, boundary }: ModifyLayerConfig
               >Save</Button>
             </div>
           </div>
-        </Form>
+        </fetcher.Form>
       </Modal.Body>
     </Modal>
+  )
+}
+
+type WhereInputProps = {
+  onUpdateClick: (_: string) => void
+  defaultWhere?: string
+}
+function WhereInput({ defaultWhere, onUpdateClick }: WhereInputProps) {
+  const [where, setWhere] = useState(defaultWhere ? defaultWhere : "1=1")
+  return (
+    <div>
+      <div className="relative">
+        <label htmlFor="where" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Where Clause</label>
+        <input type="search" name="where" id="where" className="block w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required
+          value={where}
+          onChange={(e) => {
+            e.preventDefault()
+            setWhere(e.currentTarget.value)
+          }}
+        />
+        <button type="button" name="intent" value="modify-where"
+          className="p-2 text-white text-sm absolute right-2 bottom-1.5 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+          onClick={() => onUpdateClick(where)}
+        >
+          Refresh
+        </button>
+      </div>
+      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Use original column names in query</p>
+    </div>
   )
 }

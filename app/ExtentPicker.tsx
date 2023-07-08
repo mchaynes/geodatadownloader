@@ -29,7 +29,7 @@ import Basemap from "@arcgis/core/Basemap";
 import CopyButton from "./CopyButton";
 import { useMediaQuery } from "usehooks-ts";
 import { mapCreatorLoader } from "./routes/maps/create";
-import { ActionFunctionArgs, useFetcher, useLoaderData } from "react-router-dom";
+import { ActionFunctionArgs, useFetcher, useLoaderData, useParams, useSearchParams } from "react-router-dom";
 import { getMapConfigLocal, saveMapConfigLocal } from "./database";
 
 const GEOMETRY_LINK =
@@ -45,7 +45,6 @@ export const extentPickerAction = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData()
   const boundary = formData.get("boundary") as string
   const mapConfig = await getMapConfigLocal()
-  console.log("running action")
   mapConfig.map.boundary = boundary
   saveMapConfigLocal(mapConfig)
   return boundary
@@ -54,17 +53,21 @@ export const extentPickerAction = async ({ request }: ActionFunctionArgs) => {
 
 export function ExtentPicker() {
 
+  const params = useSearchParams()
+  const extent = params["extent"]
   const data = useLoaderData() as Awaited<ReturnType<typeof mapCreatorLoader>>
   const fetcher = useFetcher()
   const { layers, mapConfig } = data
-  console.log(data)
   // Form State variables
   const [loading, setLoading] = useState(false);
   const [boundaryErrMsg, setBoundaryErrMsg] = useState("");
   const [boundaryAlertType, setBoundaryAlertType] =
     useState<AlertType>(undefined);
   const [textBoxDisabled, setTextBoxDisabled] = useState(false);
-  const [textBoxValue, setTextBoxValue] = useState(mapConfig.map?.boundary ?? "");
+  const [textBoxValue, setTextBoxValue] = useState<string>(() => {
+    return typeof mapConfig.map.boundary === "string" ?
+      mapConfig.map.boundary : ""
+  });
 
   // ArcGIS Map State  variables
   const elRef = useRef(null);
@@ -127,12 +130,12 @@ export function ExtentPicker() {
   }, [sketchLayer, fetcher]);
 
   useEffect(() => {
-    if (filterGeometry && equals(parseGeometryFromString(JSON.stringify(mapConfig.map.boundary)), filterGeometry)) {
+    if (textBoxValue !== mapConfig.map.boundary && fetcher.state === "idle") {
       fetcher.submit(
-        { boundary: JSON.stringify(filterGeometry.toJSON()) },
+        { boundary: textBoxValue },
         { method: "post", action: "/maps/create/boundary" })
     }
-  }, [fetcher, filterGeometry])
+  }, [fetcher, textBoxValue])
 
 
 
@@ -220,6 +223,12 @@ export function ExtentPicker() {
 
   }, [filterGeometry]);
 
+  useEffect(() => {
+    if (sketch) {
+      mapView.goTo(sketch.layer.fullExtent)
+    }
+  }, [mapView, sketch])
+
 
   // Test if new text in TextField contains filter geometry
   // If so, update filterGeometry and remove any previous geometries on the layer
@@ -248,7 +257,6 @@ export function ExtentPicker() {
             })
           );
           setFilterGeometry(geo);
-          await mapView.goTo(geo);
           // we made it here, so reset the alertType so it doesn't show
           setBoundaryAlertType(undefined);
         } catch (e) {

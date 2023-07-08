@@ -20,6 +20,7 @@ import { Flowbite } from "flowbite-react";
 import { removeLayerAction } from "./routes/maps/create/remove-layer";
 import { getQueryResultsLoader } from "./routes/maps/create/layers/results";
 import { ExtentPicker, extentPickerAction } from "./ExtentPicker";
+import { configureLayerAction } from "./routes/maps/create/layers/configure";
 
 
 const rootEl = document.getElementById("root");
@@ -71,6 +72,10 @@ const router = createBrowserRouter([
           {
             path: "/maps/create/layers/results",
             loader: getQueryResultsLoader,
+          },
+          {
+            path: "/maps/create/layers/configure",
+            action: configureLayerAction,
           }
         ]
       },
