@@ -30,7 +30,7 @@ export default function AddLayerToMap() {
     <div id="add-layer-modal"
       tabIndex={-1}
       key="add-layer-modal"
-      className="fixed bg-gray-600/80 left-0 right-0 z-50 items-center justify-center overflow-x-hidden overflow-y-auto top-4 md:inset-0 h-modal sm:h-full flex"
+      className="fixed bg-gray-600/80 left-0 right-0 z-50 items-center justify-center overflow-y-auto top-4 md:inset-0 h-modal sm:h-full flex"
       role="modal"
     >
       <div className="relative p-4 w-full max-w-5xl h-full md:h-auto">

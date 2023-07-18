@@ -1,3 +1,4 @@
+import FeatureLayer from '@arcgis/core/layers/FeatureLayer'
 import { Database } from './database.types'
 export type MapDlConfig = Database["public"]["Tables"]["map_dl_config"]["Row"]
 export interface MapDlConfigTableResp extends MapDlConfig {
@@ -19,6 +20,11 @@ export type Layer = Database["public"]["Tables"]["layer"]["Insert"]
 
 
 export interface LayerWithConfig extends Layer, LayerConfig { }
+
+export interface EsriLayerWithConfig {
+  esri: FeatureLayer
+  config: LayerWithConfig
+}
 
 
 export type Day = NonNullable<Database["public"]["Enums"]["day"]>

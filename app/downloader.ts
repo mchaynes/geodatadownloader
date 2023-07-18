@@ -1,4 +1,4 @@
-import { QueryResults } from "./arcgis";
+import { QueryResults, QueryResult } from "./arcgis";
 import { arcgisToGeoJSON } from "@terraformer/arcgis";
 import fastq from "fastq";
 import type { queueAsPromised } from "fastq";
@@ -68,10 +68,10 @@ const containsValidGeometry = ({ geometry }: ArcgisFeature): boolean => {
   }
   const { rings, x, y, paths } = geometry
   if (rings) {
-    return rings.every(ring => ring.length > 1)
+    return rings.every(ring => ring?.length > 1)
   }
   if (paths) {
-    return paths.every(p => p.length > 0)
+    return paths.every(p => p?.length > 0)
   }
   return x !== undefined && y !== undefined
 }
@@ -104,25 +104,24 @@ export class GdalDownloader {
     this.zipper = new JSZip();
   }
   download = async (
-    results: QueryResults[],
+    results: QueryResult[],
     numConcurrent: number,
-    where: string,
     format: string
   ) => {
     const Gdal = await getGdalJs();
     let outputFiles: FileInfo[] = []
     for (const result of results) {
       const writer = new Writer()
-      const layer = result.getLayer();
+      const layer = result.layer;
       if (!layer) {
         throw new Error("layer not defined");
       }
-      const numPages = await result.getNumPages(where);
+      const numPages = result.numPages;
       writer.write(header);
       // Create callable functions that fetch results for each page
       let firstPage = true;
       const fetchResults = async (pageNum: number): Promise<void> => {
-        const features = await result.getPage(pageNum, "1=1");
+        const features = await result.getPage(pageNum);
         const json = features.toJSON() as ArcgisFeatureResp;
         // strip features that contain no geometry
         json.features = json.features.filter(containsValidGeometry)
@@ -140,6 +139,9 @@ export class GdalDownloader {
         }
         // Join features in chunk together, write to file
         writer.write(stringified);
+        if (!json.features) {
+          console.log("json features empty")
+        }
         this.featuresWritten += json.features.length;
         // Notify listeners that we've written more features
         this.onWrite(this.featuresWritten);
@@ -154,7 +156,7 @@ export class GdalDownloader {
       }
       await Promise.all(promises);
       writer.write(footer);
-      const layerName = result.getLayer().title;
+      const layerName = result.layer.esri.title;
       const srcDataset = await Gdal.open(
         new File(writer.data, `${layerName}.json`)
       );
@@ -180,7 +182,6 @@ export class GdalDownloader {
     }
     const zipBytes = await zip.generateAsync({ type: "blob" });
     saveAs(zipBytes, `geodatadownloader.zip`);
-
     this.featuresWritten = 0;
   };
 }

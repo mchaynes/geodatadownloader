@@ -23,7 +23,6 @@ import SimpleFillSymbol from "@arcgis/core/symbols/SimpleFillSymbol";
 import { AlertType, StatusAlert } from "./StatusAlert";
 import InputAdornment from "@mui/material/InputAdornment";
 import IconButton from "@mui/material/IconButton";
-import Tooltip from "@mui/material/Tooltip";
 import BasemapToggle from "@arcgis/core/widgets/BasemapToggle";
 import Basemap from "@arcgis/core/Basemap";
 import CopyButton from "./CopyButton";
@@ -31,6 +30,7 @@ import { useMediaQuery } from "usehooks-ts";
 import { mapCreatorLoader } from "./routes/maps/create";
 import { ActionFunctionArgs, useFetcher, useLoaderData, useParams, useSearchParams } from "react-router-dom";
 import { getMapConfigLocal, saveMapConfigLocal } from "./database";
+import { Button, TextInput, Tooltip } from "flowbite-react";
 
 const GEOMETRY_LINK =
   "https://developers.arcgis.com/documentation/common-data-types/geometry-objects.htm";
@@ -64,10 +64,10 @@ export function ExtentPicker() {
   const [boundaryAlertType, setBoundaryAlertType] =
     useState<AlertType>(undefined);
   const [textBoxDisabled, setTextBoxDisabled] = useState(false);
-  const [textBoxValue, setTextBoxValue] = useState<string>(() => {
-    return typeof mapConfig.map.boundary === "string" ?
+  const [textBoxValue, setTextBoxValue] = useState<string>(
+    typeof mapConfig.map.boundary === "string" ?
       mapConfig.map.boundary : ""
-  });
+  );
 
   // ArcGIS Map State  variables
   const elRef = useRef(null);
@@ -172,11 +172,11 @@ export function ExtentPicker() {
       return;
     }
     for (const layer of layers) {
-      map.add(layer);
+      map.add(layer.esri);
     }
     return () => {
       for (const layer of layers) {
-        map.remove(layer);
+        map.remove(layer.esri);
       }
     };
   }, [map, layers]);
@@ -208,26 +208,19 @@ export function ExtentPicker() {
 
   // Grayscale out non-included layers.
   useEffect(() => {
-    if (layers) {
+    if (layers && filterGeometry) {
       for (const layer of layers) {
-        layer.featureEffect = new FeatureEffect({
+        layer.esri.featureEffect = new FeatureEffect({
           filter: new FeatureFilter({
             geometry: filterGeometry,
             spatialRelationship: "intersects",
-            where: mapConfig.layers.find(l => l.url === getRealUrl(layer))?.where_clause ?? "1=1",
+            where: mapConfig.layers.find(l => l.url === getRealUrl(layer.esri))?.where_clause ?? "1=1",
           }),
           excludedEffect: "grayscale(100%) opacity(30%)",
         })
       }
     }
-
-  }, [filterGeometry]);
-
-  useEffect(() => {
-    if (sketch) {
-      mapView.goTo(sketch.layer.fullExtent)
-    }
-  }, [mapView, sketch])
+  }, [layers, filterGeometry, mapConfig]);
 
 
   // Test if new text in TextField contains filter geometry
@@ -280,7 +273,7 @@ export function ExtentPicker() {
       onTextBoxChange(mapConfig.map.boundary as string)
       setTextBoxDisabled(true)
     }
-  }, [mapConfig])
+  }, [])
 
   // ExtentAdornment contains an EditToggle and a Copy to Clipboard button
   function BoundaryAdornment({ content }: { content: string }) {
@@ -288,43 +281,39 @@ export function ExtentPicker() {
       setTextBoxDisabled((d) => !d);
     };
     return (
-      <InputAdornment position="end">
-        <Stack direction="row">
-          <CopyButton data={content} />
-          <Tooltip
-            placement="top-start"
-            title={textBoxDisabled ? "Enable editing" : "Disable editing"}
+      <div className="flex flex-row gap-1">
+        <CopyButton data={content} />
+        <Tooltip
+          placement="top-start"
+          content={textBoxDisabled ? "Enable editing" : "Disable editing"}
+        >
+          <Button
+            className="text-gray-500 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 w-10 h-10"
+            id="extent-edit-toggle"
+            aria-label="toggle extent textbox editing"
+            onClick={handleEditClick}
           >
-            <IconButton
-              id="extent-edit-toggle"
-              aria-label="toggle extent textbox editing"
-              onClick={handleEditClick}
-            >
-              {textBoxDisabled ? <Edit /> : <EditOff />}
-            </IconButton>
-          </Tooltip>
-        </Stack>
-      </InputAdornment>
+            {textBoxDisabled ? <Edit /> : <EditOff />}
+          </Button>
+        </Tooltip>
+      </div>
     );
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: ".5rem .5rem" }}>
+    <div className="dark:bg-dark-bg" style={{ display: "flex", flexDirection: "column", gap: ".5rem .5rem" }}>
       <div ref={elRef} className="w-full h-[63vh]" />
-      <TextField
-        id="boundary-text-field"
-        variant="outlined"
-        label="Boundary"
-        placeholder="You can also paste in a boundary defined by JSON"
-        fullWidth
-        disabled={textBoxDisabled}
-        value={textBoxValue}
-        onChange={(e) => void onTextBoxChange(e.currentTarget.value)}
-        size="small"
-        InputProps={{
-          endAdornment: <BoundaryAdornment content={textBoxValue} />,
-        }}
-      />
+      <div className="flex flex-row gap-1">
+
+        <input type="search" name="layer-url" id="boundary-text-field" className="w-full text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-dark-text-bg dark:border-gray-600 dark:placeholder-gray-100 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+          value={textBoxValue}
+          placeholder="You can also paste a JSON boundary"
+          onChange={e => onTextBoxChange(e.currentTarget.value)}
+          required
+          {...(textBoxDisabled ? { readOnly: true } : {})}
+        />
+        <BoundaryAdornment content={textBoxValue} />
+      </div>
       <StatusAlert
         msg={
           <div>

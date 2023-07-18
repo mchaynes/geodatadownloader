@@ -1,6 +1,5 @@
 import ContentCopy from "@mui/icons-material/ContentCopy";
-import IconButton from "@mui/material/IconButton";
-import Tooltip from "@mui/material/Tooltip";
+import { Button, Tooltip } from "flowbite-react";
 import { useState } from "react";
 
 export type CopyButtonProps = {
@@ -21,14 +20,13 @@ export default function CopyButton({ data }: CopyButtonProps) {
   return (
     <Tooltip
       placement="top-start"
-      title={copyState === "success" ? "Copied" : "Click to Copy"}
-      TransitionProps={{
-        onExited: () => setCopyState(""),
-      }}
+      content={copyState === "success" ? "Copied" : "Click to Copy"}
     >
-      <IconButton aria-label="copy extent to clipboard" onClick={handleCopy}>
+      <Button
+        className="text-gray-500 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 w-10 h-10"
+        aria-label="copy extent to clipboard" onClick={handleCopy}>
         <ContentCopy />
-      </IconButton>
+      </Button>
     </Tooltip>
   );
 }

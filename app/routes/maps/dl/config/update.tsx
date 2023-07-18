@@ -41,7 +41,7 @@ export default function UpdateMapDlConfig() {
     <div id="updateProductModal"
       tabIndex={-1}
       key={`${dlConfig?.id}-updateProductModal`}
-      className={`${dlConfig ? "" : "hidden"} fixed bg-gray-600/80 left-0 right-0 z-50 items-center justify-center overflow-x-hidden overflow-y-auto top-4 md:inset-0 h-modal sm:h-full flex`}
+      className={`${dlConfig ? "" : "hidden"} fixed bg-gray-600/80 left-0 right-0 z-50 items-center justify-center overflow-y-auto top-4 md:inset-0 h-modal sm:h-full flex`}
       role="modal"
     >
       <div className="relative p-4 w-full max-w-2xl h-full md:h-auto">

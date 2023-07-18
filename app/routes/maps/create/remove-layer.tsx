@@ -7,7 +7,7 @@ import { getMapConfigLocal, saveMapConfigLocal } from '../../../database';
 export const removeLayerAction = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData()
   const url = formData.get("url")
-  const mapData = getMapConfigLocal()
+  const mapData = await getMapConfigLocal()
   // if url is defined, only remove the url specified. otherwise remove all layers 
   mapData.layers = url ? mapData.layers.filter(l => l.url !== url) : []
   saveMapConfigLocal(mapData)

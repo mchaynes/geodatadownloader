@@ -1,8 +1,10 @@
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
+import Layer from "@arcgis/core/layers/Layer";
 import FeatureSet from "@arcgis/core/rest/support/FeatureSet";
 import Geometry from "@arcgis/core/geometry/Geometry";
 import EsriExtent from "@arcgis/core/geometry/Extent";
 import EsriPolygon from "@arcgis/core/geometry/Polygon";
+import { EsriLayerWithConfig } from "./types";
 
 type SpatialReference = {
   wkid: number;
@@ -67,6 +69,53 @@ export function parseGeometryFromString(str: string): Geometry {
 
 export type GeometryUpdateListener = (_?: Geometry) => void;
 
+const pageSize = 200;
+
+
+export async function queryLayer(layer: EsriLayerWithConfig, filterExtent?: Geometry) {
+  const objectIds = await layer.esri.queryObjectIds({
+    where: layer.config.where_clause ?? "1=1",
+    geometry: filterExtent,
+    spatialRelationship: filterExtent ? "intersects" : undefined,
+  });
+
+  const chunkedIds: number[][] = [];
+  let currentChunk: number[] = [];
+  for (const id of objectIds) {
+    currentChunk.push(id);
+    if (currentChunk.length === pageSize) {
+      chunkedIds.push(currentChunk);
+      currentChunk = [];
+    }
+  }
+  if (currentChunk.length !== pageSize) {
+    chunkedIds.push(currentChunk);
+  }
+
+  return {
+    getPage: async (page: number) => {
+      // Find the object id field, default to OBJECTID
+      const objectIdField =
+        layer.esri.fields.find((f) => f.type === "oid")?.name ?? "OBJECTID";
+
+      return await layer.esri.queryFeatures({
+        where: `${objectIdField} IN (${chunkedIds[page].join(",")})`,
+        outFields: ["*"],
+        returnGeometry: true,
+        outSpatialReference: {
+          // geojson is always in 4326
+          wkid: 4326,
+        },
+      });
+    },
+    numPages: chunkedIds.length,
+    totalCount: objectIds.length,
+    layer: layer,
+  }
+}
+
+export type QueryResult = Awaited<ReturnType<typeof queryLayer>>
+
 export class QueryResults {
   private paginatedObjectIds: number[][] = [];
   private where: string;
@@ -74,27 +123,23 @@ export class QueryResults {
   private queryExtent?: Geometry;
   private pageSize: number;
 
-  constructor(layer: FeatureLayer, queryExtent?: Geometry, pageSize = 200) {
+  constructor(layer: FeatureLayer, where: string, queryExtent?: Geometry, pageSize = 200) {
     this.layer = layer;
+    this.where = where
     this.queryExtent = queryExtent;
     this.pageSize = pageSize;
   }
 
-  private initialize = async (where: string): Promise<void> => {
-    if (this.where === where) {
-      return;
-    }
-    const objectIds = await this.getObjectIds(where);
-    this.where = where;
+  private initialize = async (): Promise<void> => {
+    const objectIds = await this.getObjectIds();
     this.paginatedObjectIds = this.paginateIds(objectIds, this.pageSize);
   };
 
   getPage = async (
     page: number,
-    where: string,
     outFields?: string[],
   ): Promise<FeatureSet> => {
-    await this.initialize(where);
+    await this.initialize();
     if (!this.layer) {
       throw new Error("layer is not set");
     }
@@ -113,17 +158,17 @@ export class QueryResults {
     });
   };
 
-  getTotalCount = async (where: string): Promise<number> => {
+  getTotalCount = async (): Promise<number> => {
     return (
       (await this.layer?.queryFeatureCount({
-        where: where,
+        where: this.where,
         geometry: this.queryExtent,
       })) || 0
     );
   };
 
-  getNumPages = async (where: string) => {
-    await this.initialize(where);
+  getNumPages = async () => {
+    await this.initialize();
     return this.paginatedObjectIds.length;
   };
 
@@ -139,12 +184,12 @@ export class QueryResults {
    * Queries layer for all objectIds
    * @returns list of all object ids for the server
    */
-  private getObjectIds = async (where: string): Promise<number[]> => {
+  private getObjectIds = async (): Promise<number[]> => {
     if (!this.layer) {
       throw new Error("layer is not set");
     }
     return await this.layer?.queryObjectIds({
-      where: where,
+      where: this.where,
       geometry: this.queryExtent,
       spatialRelationship: this.queryExtent ? "intersects" : undefined,
     });

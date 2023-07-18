@@ -59,8 +59,8 @@ export default function MapDlConfigTable() {
   const dlConfigs = useLoaderData() as Awaited<ReturnType<typeof dlConfigLoader>>
 
   return (
-    <main>
-      <div className="p-4 bg-white block sm:flex items-center justify-between border-b border-gray-200 lg:mt-1.5 dark:bg-gray-800 dark:border-gray-700">
+    <main className="h-[81vh]">
+      <div className="p-4 bg-white block sm:flex items-center justify-between border-b border-gray-200 lg:mt-1.5 dark:bg-dark-bg dark:border-gray-700">
         <div className="w-full mb-1">
           <div className="mb-4">
             <nav className="flex mb-5" aria-label="Breadcrumb">
@@ -92,7 +92,7 @@ export default function MapDlConfigTable() {
               <form className="sm:pr-3" action="#" method="GET">
                 <label htmlFor="products-search" className="sr-only">Search</label>
                 <div className="relative w-48 mt-1 sm:w-64 xl:w-96">
-                  <input type="text" name="email" id="products-search" className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Search" />
+                  <input type="text" name="email" id="products-search" className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-dark-text-bg dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Search" />
                 </div>
               </form>
               <div className="flex items-center w-full sm:justify-end">
@@ -116,95 +116,93 @@ export default function MapDlConfigTable() {
         </div>
       </div>
       <div className="flex flex-col">
-        <div className="overflow-x-auto">
-          <div className="inline-block min-w-full align-middle">
-            <div className="overflow-hidden shadow">
-              <table className="min-w-full divide-y divide-gray-200 table-fixed dark:divide-gray-600">
-                <thead className="bg-gray-100 dark:bg-gray-700">
-                  <tr>
-                    <th scope="col" className="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                      Map Name
-                    </th>
-                    <th scope="col" className="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                      Last Run
-                    </th>
-                    <th scope="col" className="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                      Frequency
-                    </th>
-                    <th scope="col" className="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                      Active
-                    </th>
-                    <th scope="col" className="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
-                  {dlConfigs.map(({ id, format, downloads, active, frequency, map }) =>
-                    <tr key={id} className="hover:bg-gray-100 dark:hover:bg-gray-700">
-                      <td className="p-4 text-sm font-normal text-gray-500 whitespace-nowrap dark:text-gray-400">
-                        <Link to={`/maps/${map.id}`} className="font-medium text-blue-600 dark:text-blue-500 hover:underline">{map.name}</Link>
-                        <div className="text-sm font-normal text-gray-500 dark:text-gray-400">{format.toUpperCase()}</div>
-                      </td>
-                      <td className="p-4 text-sm font-normal text-gray-500 whitespace-nowrap dark:text-gray-400">
+        <div className="inline-block min-w-full align-middle">
+          <div className="overflow-hidden shadow">
+            <table className="min-w-full divide-y divide-gray-200 table-fixed dark:divide-gray-600">
+              <thead className="bg-gray-100 dark:bg-dark-bg">
+                <tr>
+                  <th scope="col" className="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
+                    Map Name
+                  </th>
+                  <th scope="col" className="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
+                    Last Run
+                  </th>
+                  <th scope="col" className="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
+                    Frequency
+                  </th>
+                  <th scope="col" className="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
+                    Active
+                  </th>
+                  <th scope="col" className="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200 dark:bg-dark-bg dark:divide-gray-700">
+                {dlConfigs.map(({ id, format, downloads, active, frequency, map }) =>
+                  <tr key={id} className="hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <td className="p-4 text-sm font-normal text-gray-500 whitespace-nowrap dark:text-gray-400">
+                      <Link to={`/maps/${map.id}`} className="font-medium text-blue-600 dark:text-blue-500 hover:underline">{map.name}</Link>
+                      <div className="text-sm font-normal text-gray-500 dark:text-gray-400">{format.toUpperCase()}</div>
+                    </td>
+                    <td className="p-4 text-sm font-normal text-gray-500 whitespace-nowrap dark:text-gray-400">
 
-                        {downloads && downloads?.length > 0 ? (
-                          <>
-                            <Link to={`/downloads/${downloads[0].id}`} className="text-base font-semibold text-gray-900 dark:text-white">{getRelativeTime(downloads[0].updated_at)} ago</Link>
-                            <div className="text-sm font-normal text-gray-500 dark:text-gray-400">
-                              {downloads[0].finished_at ?
-                                <>
-                                  Ran for {getRelativeTime(downloads[0].created_at, downloads[0].finished_at)}
-                                </>
-                                : <>Running...</>
-                              }
-                            </div>
-                          </>
-                        )
-                          : "No downloads yet"
+                      {downloads && downloads?.length > 0 ? (
+                        <>
+                          <Link to={`/downloads/${downloads[0].id}`} className="text-base font-semibold text-gray-900 dark:text-white">{getRelativeTime(downloads[0].updated_at)} ago</Link>
+                          <div className="text-sm font-normal text-gray-500 dark:text-gray-400">
+                            {downloads[0].finished_at ?
+                              <>
+                                Ran for {getRelativeTime(downloads[0].created_at, downloads[0].finished_at)}
+                              </>
+                              : <>Running...</>
+                            }
+                          </div>
+                        </>
+                      )
+                        : "No downloads yet"
+                      }
+                    </td>
+                    <td className="max-w-sm p-4 overflow-hidden text-base font-normal text-gray-500 truncate xl:max-w-xs dark:text-gray-400">{frequency}</td>
+                    <td className="p-4 text-base font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                      <div className="flex items-center">
+                        {active ? <>
+                          <div className="h-2.5 w-2.5 rounded-full bg-green-400 mr-2"></div>  Active
+                        </> :
+                          <><div className="h-2.5 w-2.5 rounded-full bg-red-500 mr-2"></div> Off</>
                         }
-                      </td>
-                      <td className="max-w-sm p-4 overflow-hidden text-base font-normal text-gray-500 truncate xl:max-w-xs dark:text-gray-400">{frequency}</td>
-                      <td className="p-4 text-base font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                        <div className="flex items-center">
-                          {active ? <>
-                            <div className="h-2.5 w-2.5 rounded-full bg-green-400 mr-2"></div>  Active
-                          </> :
-                            <><div className="h-2.5 w-2.5 rounded-full bg-red-500 mr-2"></div> Off</>
-                          }
-                        </div>
-                      </td>
+                      </div>
+                    </td>
 
-                      <td className="p-4 space-x-2 whitespace-nowrap">
-                        <button id="triggerDownloadButton" className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white rounded-lg bg-emerald-700 hover:bg-emerald-800 focus:ring-4 focus:ring-emerald-300 dark:bg-emerald-600 dark:hover:bg-emerald-700 dark:focus:ring-emerald-800">
-                          <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="m7.164 3.805-4.475.38L.327 6.546a1.114 1.114 0 0 0 .63 1.89l3.2.375 3.007-5.006ZM11.092 15.9l.472 3.14a1.114 1.114 0 0 0 1.89.63l2.36-2.362.38-4.475-5.102 3.067Zm8.617-14.283A1.613 1.613 0 0 0 18.383.291c-1.913-.33-5.811-.736-7.556 1.01-1.98 1.98-6.172 9.491-7.477 11.869a1.1 1.1 0 0 0 .193 1.316l.986.985.985.986a1.1 1.1 0 0 0 1.316.193c2.378-1.3 9.889-5.5 11.869-7.477 1.746-1.745 1.34-5.643 1.01-7.556Zm-3.873 6.268a2.63 2.63 0 1 1-3.72-3.72 2.63 2.63 0 0 1 3.72 3.72Z" />
-                          </svg>
-                          Trigger
+                    <td className="p-4 space-x-2 whitespace-nowrap">
+                      <button id="triggerDownloadButton" className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white rounded-lg bg-emerald-700 hover:bg-emerald-800 focus:ring-4 focus:ring-emerald-300 dark:bg-emerald-600 dark:hover:bg-emerald-700 dark:focus:ring-emerald-800">
+                        <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="m7.164 3.805-4.475.38L.327 6.546a1.114 1.114 0 0 0 .63 1.89l3.2.375 3.007-5.006ZM11.092 15.9l.472 3.14a1.114 1.114 0 0 0 1.89.63l2.36-2.362.38-4.475-5.102 3.067Zm8.617-14.283A1.613 1.613 0 0 0 18.383.291c-1.913-.33-5.811-.736-7.556 1.01-1.98 1.98-6.172 9.491-7.477 11.869a1.1 1.1 0 0 0 .193 1.316l.986.985.985.986a1.1 1.1 0 0 0 1.316.193c2.378-1.3 9.889-5.5 11.869-7.477 1.746-1.745 1.34-5.643 1.01-7.556Zm-3.873 6.268a2.63 2.63 0 1 1-3.72-3.72 2.63 2.63 0 0 1 3.72 3.72Z" />
+                        </svg>
+                        Trigger
+                      </button>
+                      <Link to={`${id}`}>
+                        <button type="button"
+                          id="updateDownloadConfigButton"
+                          className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white rounded-lg bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
+                        >
+                          <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path><path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd"></path></svg>
+                          Modify
                         </button>
-                        <Link to={`${id}`}>
-                          <button type="button"
-                            id="updateDownloadConfigButton"
-                            className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white rounded-lg bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
-                          >
-                            <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path><path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd"></path></svg>
-                            Modify
-                          </button>
-                        </Link>
-                        <button type="button" id="deleteProductButton" className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-red-700 rounded-lg hover:bg-red-800 focus:ring-4 focus:ring-red-300 dark:focus:ring-red-900">
-                          <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd"></path></svg>
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                      </Link>
+                      <button type="button" id="deleteProductButton" className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-red-700 rounded-lg hover:bg-red-800 focus:ring-4 focus:ring-red-300 dark:focus:ring-red-900">
+                        <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd"></path></svg>
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
-      <div className="sticky bottom-0 right-0 items-center w-full p-4 bg-white border-t border-gray-200 sm:flex sm:justify-between dark:bg-gray-800 dark:border-gray-700">
+      <div className="sticky bottom-0 right-0 items-center w-full p-4 bg-white border-t border-gray-200 sm:flex sm:justify-between dark:bg-dark-bg dark:border-gray-700">
         <div className="flex items-center mb-4 sm:mb-0">
           <a href="#" className="inline-flex justify-center p-1 text-gray-500 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-white">
             <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd"></path></svg>
