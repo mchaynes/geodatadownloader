@@ -4,7 +4,7 @@ import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 import { getQueryParameter } from "../../../url";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getRealUrl, queryLayer, QueryResult, QueryResults } from "../../../arcgis";
 import Geometry from "@arcgis/core/geometry/Geometry";
 import { ExtentPicker } from "../../../ExtentPicker";
@@ -16,6 +16,7 @@ import { getMapConfigLocal, saveMap, saveMapConfigLocal } from "../../../databas
 import { HiOutlineExclamationCircle } from "react-icons/hi";
 import FeatureSet from "@arcgis/core/rest/support/FeatureSet";
 import { EsriLayerWithConfig, LayerWithConfig, raise } from "../../../types";
+import { Dialog, Transition } from "@headlessui/react";
 
 type SupportedExportType = string;
 
@@ -128,6 +129,7 @@ export default function MapCreator() {
     undefined
   );
   const [format, setFormat] = useState<keyof typeof Drivers>("GPKG")
+  const [concurrent, setConcurrent] = useState(1)
 
   const [results, setResults] = useState<QueryResult[]>([])
   const [featDld, setFeatDld] = useState(0)
@@ -164,9 +166,9 @@ export default function MapCreator() {
   const [showRemoveModal, setShowRemoveModal] = useState(false)
 
   return (
-    <div className="h-full p-2 pt-3">
-      <div className="flex flex-row gap-1 max-h-[85vh]">
-        <div className="w-3/12 min-w-3/12 max-h-full overflow-y-auto max-w-xs p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-8 dark:bg-dark-bg dark:border-gray-700">
+    <div className="p-2">
+      <div className="flex flex-row gap-1">
+        <div className="w-3/12 min-w-3/12 overflow-y-auto max-w-xs p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-8 dark:bg-dark-bg dark:border-gray-700">
           <div className="flex items-center justify-between mb-4">
             <h5 className="text-xl font-bold leading-none text-gray-900 dark:text-white">Layers</h5>
 
@@ -217,24 +219,37 @@ export default function MapCreator() {
         </div>
         <div className="w-2/12 max-w-sm p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-6 md:p-8 dark:bg-dark-bg dark:border-gray-700">
           <Form className="space-y-6" method="post">
-            <label htmlFor="format" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Format</label>
-            <select id="format" name="format" defaultValue={format} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-dark-text-bg dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-              onSelect={e => setFormat(e.currentTarget.value)}
-            >
-              {Object.keys(Drivers).map(format =>
-                <option key={format} value={format}>{format}</option>
-              )}
-            </select>
+            <div>
+              <label htmlFor="format" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Format</label>
+              <select id="format" name="format" value={format} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-dark-text-bg dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                onChange={e => setFormat(e.currentTarget.value)}
+              >
+                {Object.keys(Drivers).map(format =>
+                  <option key={format} value={format}>{format}</option>
+                )}
+              </select>
+            </div>
 
-            <label htmlFor="steps-range" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Concurrent Requests</label>
-            <input id="steps-range" type="range" min="1" max="5" defaultValue="1" step="1" className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700" />
+            <div>
+              <label htmlFor="steps-range" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Concurrent Requests ({concurrent})</label>
+              <input
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                id="steps-range"
+                type="range"
+                min="1"
+                max="9"
+                step="1"
+                value={concurrent}
+                onChange={e => setConcurrent(parseInt(e.currentTarget.value))}
+              />
+            </div>
             <button className="w-full ml-2 text-white bg-orange-700 hover:bg-orange-800 focus:ring-4 focus:outline-none focus:ring-orange-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-orange-600 dark:hover:bg-orange-700 dark:focus:ring-orange-800"
             >
               Schedule
             </button>
             <button className="w-full ml-2 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
               onClick={() => {
-                downloader.download(results, 1, format as string)
+                downloader.download(results, concurrent, format as string)
               }}
             >
               Download
@@ -313,7 +328,7 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
       </Dropdown.Item>
       <Dropdown.Divider />
       <Dropdown.Item
-        className="text-red-500 dark:text-red-500"
+        className="text-red-500 dark:text-red-500 hover:text-red-500 hover:dark:text-red-500"
         icon={() =>
           <svg className="w-5 h-5 pr-2" aria-hidden="true" fill="currentColor" viewBox="0 0 18 20">
             <path d="M17 4h-4V2a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v2H1a1 1 0 0 0 0 2h1v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6h1a1 1 0 1 0 0-2ZM7 2h4v2H7V2Zm1 14a1 1 0 1 1-2 0V8a1 1 0 0 1 2 0v8Zm4 0a1 1 0 0 1-2 0V8a1 1 0 0 1 2 0v8Z" />
@@ -395,6 +410,8 @@ function ModifyLayerConfig({ show, setShow, boundary, layer }: ModifyLayerConfig
   const fetcher = useFetcher()
   const [where, setWhere] = useState(layer.config.where_clause ?? "1=1")
 
+  const cancelButtonRef = useRef(null)
+
   const onUpdateClick = async (where: string) => {
     setWhere(where)
     setResults(await layer.esri.queryFeatures({
@@ -410,65 +427,106 @@ function ModifyLayerConfig({ show, setShow, boundary, layer }: ModifyLayerConfig
     onUpdateClick(where)
   }, [])
 
+  useEffect(() => {
+    if (fetcher.data) {
+      setShow(false)
+    }
+  }, [fetcher])
+
   return (
-    <Modal show={show} size="3xl" onClose={() => setShow(false)} popup dismissible>
-      <Modal.Header className="p-4">
-        Modify Layer Properties: <strong>{layer.esri.sourceJSON["name"]}</strong>
-      </Modal.Header>
-      <Modal.Body className="h-96">
-        <fetcher.Form action="/maps/create/layers/configure" method="post">
-          <div className="flex flex-col gap-2">
-            <input name="url" value={layer.config.url} className="hidden" readOnly />
-            <WhereInput defaultWhere={layer.config.where_clause ?? "1=1"} onUpdateClick={onUpdateClick} />
-            <div>
-              <div className="max-h-96 overflow-y-auto">
-                <Table striped hoverable className="border-gray-50 rounded-lg">
-                  <Table.Head>
-                    {fields.map(field =>
-                      <Table.HeadCell key={field.name} >
-                        <div className="flex flex-col items-center gap-1">
-                          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 place-self-start">{field.name}</p>
-                          <div className="flex flex-row gap-2 items-center">
-                            <Checkbox defaultChecked={layer.config.column_mapping ? layer.config.column_mapping[field.name] : true} name={`${field.name}-enabled`} />
-                            <TextInput sizing="sm"
-                              id={field.name}
-                              name={`${field.name}-new`}
-                              defaultValue={layer.config.column_mapping ? layer.config.column_mapping[field.name] ?? field.name : field.name}
-                              required
-                            />
-                          </div>
+    <Transition.Root show={show} as={Fragment}>
+      <Dialog as="div" className="relative z-10" initialFocus={cancelButtonRef} onClose={setShow}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+        </Transition.Child>
+        <div className="fixed inset-0 z-10 overflow-y-auto">
+          <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              enterTo="opacity-100 translate-y-0 sm:scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+              leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            >
+              <Dialog.Panel>
+                <div className="bg-white dark:bg-dark-bg dark:text-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                  <div className="sm:flex sm:items-start">
+                    <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                      <Dialog.Title as="h3" className="text-base font-semibold leading-6 text-gray-900 dark:text-white">
+                        Configure Layer {layer.config.name}
+                      </Dialog.Title>
+                    </div>
+                  </div>
+                  <fetcher.Form action="/maps/create/layers/configure" method="post">
+                    <div className="flex flex-col gap-2">
+                      <input name="url" value={layer.config.url} className="hidden" readOnly />
+                      <WhereInput defaultWhere={layer.config.where_clause ?? "1=1"} onUpdateClick={onUpdateClick} />
+                      <div>
+                        <div className="max-h-96 overflow-y-auto">
+                          <Table striped hoverable className="border-gray-50 rounded-lg">
+                            <Table.Head>
+                              {fields.map(field =>
+                                <Table.HeadCell key={field.name} >
+                                  <div className="flex flex-col items-center gap-1">
+                                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 place-self-start">{field.name}</p>
+                                    <div className="flex flex-row gap-2 items-center">
+                                      <Checkbox defaultChecked={layer.config.column_mapping ? layer.config.column_mapping[field.name] : true} name={`${field.name}-enabled`} />
+                                      <TextInput sizing="sm"
+                                        id={field.name}
+                                        name={`${field.name}-new`}
+                                        defaultValue={layer.config.column_mapping ? layer.config.column_mapping[field.name] ?? field.name : field.name}
+                                        required
+                                      />
+                                    </div>
+                                  </div>
+                                </Table.HeadCell>
+                              )}
+                            </Table.Head>
+                            <Table.Body className="divide-y">
+                              {results?.features.map((feature, i) =>
+                                <Table.Row key={i} className="bg-white dark:border-gray-700 dark:bg-gray-800">
+                                  {fields.map(({ name }) =>
+                                    <Table.Cell key={name} className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
+                                      {feature.getAttribute(name)}
+                                    </Table.Cell>
+                                  )}
+                                </Table.Row>
+                              )}
+                            </Table.Body>
+                          </Table>
                         </div>
-                      </Table.HeadCell>
-                    )}
-                  </Table.Head>
-                  <Table.Body className="divide-y">
-                    {results?.features.map((feature, i) =>
-                      <Table.Row key={i} className="bg-white dark:border-gray-700 dark:bg-gray-800">
-                        {fields.map(({ name }) =>
-                          <Table.Cell key={name} className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
-                            {feature.getAttribute(name)}
-                          </Table.Cell>
-                        )}
-                      </Table.Row>
-                    )}
-                  </Table.Body>
-                </Table>
-              </div>
-            </div>
-            <div className="flex flex-row">
-              <div className="flex-grow text-sm text-gray-500 truncate dark:text-gray-400">
-                Displaying first {results?.features.length} features
-              </div>
-              <Button type="submit"
-                className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                name="intent"
-                value="save-layer"
-              >Save</Button>
-            </div>
+                      </div>
+                      <div className="flex flex-row">
+                        <div className="flex-grow text-sm text-gray-500 truncate dark:text-gray-400">
+                          Displaying first {results?.features.length} features
+                        </div>
+                        <Button type="submit"
+                          className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                          name="intent"
+                          value="save-layer"
+                        >Save
+                        </Button>
+                      </div>
+                    </div>
+                  </fetcher.Form>
+                </div>
+
+              </Dialog.Panel>
+            </Transition.Child>
           </div>
-        </fetcher.Form>
-      </Modal.Body>
-    </Modal>
+        </div>
+      </Dialog>
+    </Transition.Root>
   )
 }
 
@@ -480,23 +538,25 @@ function WhereInput({ defaultWhere, onUpdateClick }: WhereInputProps) {
   const [where, setWhere] = useState(defaultWhere ? defaultWhere : "1=1")
   return (
     <div>
-      <div className="relative">
-        <label htmlFor="where" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Where Clause</label>
-        <input type="search" name="where" id="where" className="block w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required
+      <label htmlFor="where" className="block mb-2 text-sm font-medium leading-6 text-gray-900 dark:text-white">Where Clause</label>
+      <div className="flex flex-row">
+        <input type="search" name="where" id="where" className="block w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-dark-text-bg dark:border-slate-600 dark:placeholder-slate-400 dark:text-white dark:focus:ring-slate-500 dark:focus:border-slate-500" required
           value={where}
           onChange={(e) => {
             e.preventDefault()
             setWhere(e.currentTarget.value)
           }}
         />
-        <button type="button" name="intent" value="modify-where"
-          className="p-2 text-white text-sm absolute right-2 bottom-1.5 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-          onClick={() => onUpdateClick(where)}
-        >
-          Refresh
-        </button>
+        <div className="inset-y-0 right-0 flex items-center">
+          <button type="button" name="intent" value="modify-where"
+            className="rounded-md border-0 bg-transparent py-0 pl-2 pr-7 text-gray-500 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
+            onClick={() => onUpdateClick(where)}
+          >
+            Refresh
+          </button>
+        </div>
       </div>
-      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Use original column names in query</p>
+      <p className="mt-2 text-xs text-gray-500 dark:text-gray-300 place-self-start">Use original column names in query</p>
     </div>
   )
 }

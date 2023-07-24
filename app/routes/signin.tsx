@@ -13,6 +13,10 @@ export const signInAction = async ({ request }: ActionFunctionArgs) => {
   })
 }
 
+export const getUserLoader = async () => {
+  await supabase.auth.getUser()
+}
+
 export default function SignIn() {
   const signInData = useActionData() as Awaited<ReturnType<typeof signInAction>>
   if (signInData?.data && !signInData?.error) {
