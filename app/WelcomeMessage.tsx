@@ -20,15 +20,17 @@ export function WelcomeMessage() {
   const submit = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/", {
+      const response = await fetch("https://formspree.io/f/mrgnzwak", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Accept": "application/json",
+        },
         body: new URLSearchParams({
-          "form-name": "feedback",
           ...data,
         }).toString(),
       });
-      if (response.status !== 200) {
+      if (!response.ok) {
         throw new Error(
           `Error from server: ${response.status} - ${await response.text()}`
         );
