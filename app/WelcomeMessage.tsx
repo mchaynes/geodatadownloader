@@ -28,7 +28,7 @@ export function WelcomeMessage() {
           ...data,
         }).toString(),
       });
-      if (response.status !== 200) {
+      if (!response.ok) {
         throw new Error(
           `Error from server: ${response.status} - ${await response.text()}`
         );
