@@ -22,9 +22,11 @@ export function WelcomeMessage() {
     try {
       const response = await fetch("https://formspree.io/f/mrgnzwak", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Accept": "application/json",
+        },
         body: new URLSearchParams({
-          "form-name": "feedback",
           ...data,
         }).toString(),
       });
