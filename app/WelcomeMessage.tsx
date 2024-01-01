@@ -14,6 +14,7 @@ export function WelcomeMessage() {
     dismissed: localStorage.getItem(localStorageKey) ?? "false",
   });
   const [loading, setLoading] = useState(false);
+  const [disabled, setDisabled] = useState(true);
 
   const [submissionProps, setSubmissionProps] = useStatusAlert("", undefined);
 
@@ -60,6 +61,10 @@ export function WelcomeMessage() {
       dismissed: "true",
     }));
   };
+
+  useEffect(() => {
+    setDisabled(data.email.length === 0 && data.suggestions.length === 0)
+  }, [data]);
 
   return (
     <StatusAlert
@@ -158,7 +163,7 @@ export function WelcomeMessage() {
               <Button variant="outlined" onClick={onClose}>
                 Dismiss
               </Button>
-              <Button variant="contained" onClick={() => void submit()}>
+              <Button id="submit" disabled={disabled} variant="contained" onClick={() => void submit()}>
                 Submit
               </Button>
             </Box>
