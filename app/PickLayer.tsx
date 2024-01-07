@@ -25,14 +25,11 @@ type RecentUrl = {
   url: string
 }
 
-<<<<<<< HEAD
-=======
 function addRecentUrl(urls: RecentUrls, newUrl: RecentUrl): RecentUrls {
   urls.urls = urls.urls.filter((url) => url.url !== newUrl.url)
   return { urls: [newUrl, ...urls.urls] }
 }
 
->>>>>>> fda990e (Save recently used urls so you can pick em easily later on (#55))
 export function PickLayer({ defaultLayerUrl, onLayerLoad }: PickLayerProps) {
   const [loading, setLoading] = useState(false);
   const [alertProps, setAlertProps] = useStatusAlert("", undefined);
@@ -59,11 +56,7 @@ export function PickLayer({ defaultLayerUrl, onLayerLoad }: PickLayerProps) {
           await layer.load();
           setAlertProps("", undefined);
           onLayerLoad(layer);
-<<<<<<< HEAD
-          setRecentUrls(urls => ({ urls: [{ url: layerUrl }, ...urls.urls] }))
-=======
           setRecentUrls(urls => addRecentUrl(urls, { url: layerUrl }))
->>>>>>> fda990e (Save recently used urls so you can pick em easily later on (#55))
         } catch (e) {
           const err = e as Error;
           setAlertProps(`${err.message}`, "error");
