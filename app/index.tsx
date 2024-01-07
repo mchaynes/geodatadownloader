@@ -4,6 +4,7 @@ import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import * as Sentry from "@sentry/react";
+import Hotjar from '@hotjar/browser';
 
 
 Sentry.init({
@@ -24,6 +25,13 @@ Sentry.init({
   replaysSessionSampleRate: 0.3, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
   replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
 });
+
+
+
+const siteId = 3816062;
+const hotjarVersion = 6;
+
+Hotjar.init(siteId, hotjarVersion);
 
 const rootEl = document.getElementById("root");
 
