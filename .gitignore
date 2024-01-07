@@ -39,3 +39,6 @@ dist/
 public/build/
 stats.html
 *.numbers
+
+# Sentry Config File
+.env.sentry-build-plugin
