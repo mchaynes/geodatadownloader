@@ -21,9 +21,10 @@ export default defineConfig({
         dest: ".",
       },
     ],
-  }), sentryVitePlugin({
+  }),
+  sentryVitePlugin({
     org: "geodatadownloader",
-    project: "javascript-react"
+    project: "geodatadownloader"
   })],
 
   build: {
