@@ -11,6 +11,8 @@
     "@mui/icons-material": "^5.11.0",
     "@mui/material": "^5.11.3",
     "@mui/x-data-grid": "^5.17.17",
+    "@sentry/react": "^7.92.0",
+    "@sentry/vite-plugin": "^2.10.2",
     "@terraformer/arcgis": "^2.1.2",
     "csv-writer-browser": "^1.0.0",
     "fastq": "^1.15.0",
