@@ -94,8 +94,13 @@ export function AttributeTablePreview({
           console.error(e);
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           const { details } = e as EsriError;
-          const { messages } = details as { messages: string[] };
-          setAlertProps(`Failed: ${messages.join(", ")}`, "error");
+          if (details) {
+            const { messages } = details as { messages: string[] };
+            setAlertProps(`Failed: ${messages.join(", ")}`, "error");
+          } else {
+            setAlertProps(`Failed ${e}`, "error");
+          }
+
           setRows([]);
           setTotalFeaturesCount(0);
         }
