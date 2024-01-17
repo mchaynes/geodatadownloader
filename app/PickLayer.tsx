@@ -103,7 +103,6 @@ export function PickLayer({ defaultLayerUrl, onLayerLoad }: PickLayerProps) {
           options={recentUrlsMemod}
           value={url}
           freeSolo
-
           onChange={(_, value) => setUrl(value ?? "")}
           fullWidth
           renderInput={(params) =>
@@ -115,10 +114,10 @@ export function PickLayer({ defaultLayerUrl, onLayerLoad }: PickLayerProps) {
               label="Layer Url"
               placeholder="https://gismaps.kingcounty.gov/arcgis/rest/services/Environment/KingCo_SensitiveAreas/MapServer/11"
               onKeyPress={handleKeyPress}
+              onChange={(e) => setUrl(e.currentTarget.value ?? "")}
             />
           }
         />
-
         <Button
           disabled={!url}
           id="load-layer"
