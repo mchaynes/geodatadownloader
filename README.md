@@ -29,10 +29,8 @@ Conversion to from arcgis json to geojson is done browser side as well.
 - KML
 - GPX
 - PGDUMP
-- SVG
 - DXF
 - SQLite
-- XSLX
 
 ## How does geodatadownloader download all of the data for a layer?
 
