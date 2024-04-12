@@ -304,7 +304,7 @@ export function ExtentPicker({
       <TextField
         id="boundary-text-field"
         variant="outlined"
-        label="Boundary"
+        label="Boundary (You can also use drawing tools on map to define boundary)"
         placeholder="You can also paste in a boundary defined by JSON"
         fullWidth
         disabled={textBoxDisabled}
