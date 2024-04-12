@@ -7,7 +7,8 @@ import type { } from "@mui/x-data-grid/themeAugmentation";
 import { StatusAlert, useStatusAlert } from "./StatusAlert";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import { setLoadingWhile } from "./loading";
-import { Autocomplete } from "@mui/material";
+import { Autocomplete, IconButton } from "@mui/material";
+import DeleteIcon from '@mui/icons-material/Delete';
 
 export type Status = "not_started" | "loading" | "error" | "loaded";
 
@@ -105,6 +106,13 @@ export function PickLayer({ defaultLayerUrl, onLayerLoad }: PickLayerProps) {
           freeSolo
           onChange={(_, value) => setUrl(value ?? "")}
           fullWidth
+          //@ts-ignore
+          renderOption={({ key }) =>
+            <SavedLayerListItem
+              url={key}
+              onDelete={() => setRecentUrls(recents => ({ urls: recents.urls.filter(r => r.url !== key) }))}
+            />
+          }
           renderInput={(params) =>
             <TextField
               {...params}
@@ -132,4 +140,29 @@ export function PickLayer({ defaultLayerUrl, onLayerLoad }: PickLayerProps) {
       </Box>
     </div>
   );
+}
+
+type SavedLayerListItemParams = {
+  url: string
+  onDelete: () => void
+}
+
+function SavedLayerListItem({ url, onDelete }: SavedLayerListItemParams) {
+  const [clicked, setClicked] = useState(false)
+  return (
+    <li style={{ display: "flex", margin: "0.5rem", flexDirection: "row" }}>
+      <div style={{ display: "flex", flexGrow: 1 }}>
+        {url}
+      </div>
+      <IconButton onClick={() => {
+        const c = clicked
+        setClicked(!c)
+        if (c) {
+          onDelete()
+        }
+      }}>
+        <DeleteIcon htmlColor={clicked ? "red" : undefined} />
+      </IconButton>
+    </li>
+  )
 }
