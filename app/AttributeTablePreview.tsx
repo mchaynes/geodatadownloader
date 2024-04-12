@@ -11,6 +11,7 @@ import EsriError from "@arcgis/core/core/Error";
 import { setLoadingWhile } from "./loading";
 import { StatusAlert, useStatusAlert } from "./StatusAlert";
 import Typography from "@mui/material/Typography";
+import useWindowDimensions from "./window";
 
 export type AttributeTableProps = {
   queryResults?: QueryResults;
@@ -117,10 +118,12 @@ export function AttributeTablePreview({
     );
   }
 
+  const { height } = useWindowDimensions()
+
   return (
     <>
       <StatusAlert {...alertProps} />
-      <div style={{ height: "30rem", width: "100%" }}>
+      <div style={{ height: Math.floor(height * 0.565), width: "100%" }}>
         <DataGrid
           loading={loading}
           pageSize={100}

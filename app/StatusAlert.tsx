@@ -32,6 +32,7 @@ export function StatusAlert({
   loading,
   msg,
   alertType,
+  sx,
   onClose,
 }: StatusAlertProps) {
   if (loading) {
@@ -39,7 +40,7 @@ export function StatusAlert({
   }
   if (alertType) {
     return (
-      <Alert onClose={onClose} severity={alertType}>
+      <Alert onClose={onClose} severity={alertType} sx={sx}>
         {msg}
       </Alert>
     );

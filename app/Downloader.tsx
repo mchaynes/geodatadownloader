@@ -146,88 +146,94 @@ export function DownloaderForm({
         flexDirection: "column",
         alignItems: "stretch",
         flexGrow: 1,
-        gap: "2rem 2rem",
+        gap: "1rem",
       }}
     >
-      <Box>
-        <Stack spacing={2}>
-          <FormControl fullWidth={true}>
-            <InputLabel>File Type</InputLabel>
-            <Select
-              labelId="file-type-label"
-              id="type-type"
-              value={exportType}
-              label="Export File Type"
-              onChange={(e) => {
-                setExportType(e.target.value);
-              }}
-            >
-              {Object.keys(Drivers).map(t =>
-                <MenuItem key={t} value={t}>{t}</MenuItem>
-              )}
-            </Select>
-          </FormControl>
-          <Box>
-            <Typography id="input-slider" gutterBottom={true}>
-              Concurrent Requests
-            </Typography>
-            <Grid container={true} spacing={2} alignItems="center">
-              <Grid item={true} xs={true}>
-                <Slider
-                  aria-label="Concurrent Requests"
-                  onChange={handleSliderChange}
-                  value={concRequests}
-                  marks={true}
-                  step={1}
-                  min={1}
-                  max={20}
-                />
-              </Grid>
-              <Grid item={true}>
-                <Input
-                  id="concurrent-requests-input"
-                  value={concRequests}
-                  size="small"
-                  onChange={handleInputChange}
-                  inputProps={{
-                    step: 1,
-                    min: 1,
-                    max: MAX_CONCURRENT_REQUESTS,
-                    type: "number",
-                    "aria-labelledby": "input-slider",
-                  }}
-                />
-              </Grid>
-            </Grid>
-          </Box>
-        </Stack>
-      </Box>
-      <Button
-        disabled={!queryResults}
-        variant="contained"
-        sx={{ alignSelf: "flex-end" }}
-        onClick={() => void download()}
-      >
-        Download
-      </Button>
-
-      <StatusAlert {...concAlertProps} />
-      {downloading && (
-        <Box sx={{ mt: 3, ml: 1, mr: 1, mb: 3 }}>
-          <LinearProgress
-            variant="buffer"
-            value={normalise(featuresWritten)}
-            valueBuffer={normalise(queryResults?.getPageSize() ?? 0)}
-          />
-          <Typography
-            sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
-            variant="h6"
+      <div style={{ display: "flex", flexDirection: "row", gap: "1rem", alignContent: "space-between" }}>
+        <FormControl style={{ flexGrow: 1 }}>
+          <InputLabel>File Type</InputLabel>
+          <Select
+            labelId="file-type-label"
+            id="type-type"
+            value={exportType}
+            label="Export File Type"
+            onChange={(e) => {
+              setExportType(e.target.value);
+            }}
           >
-            {featuresWritten} / {totalFeatures}
+            {Object.keys(Drivers).map(t =>
+              <MenuItem key={t} value={t}>{t}</MenuItem>
+            )}
+          </Select>
+        </FormControl>
+        <Box style={{ flexGrow: 2 }}>
+          <Typography id="input-slider" gutterBottom={true}>
+            Concurrent Requests
           </Typography>
+          <Grid container={true} spacing={2} alignItems="center">
+            <Grid item={true} xs={true}>
+              <Slider
+                aria-label="Concurrent Requests"
+                size="small"
+                onChange={handleSliderChange}
+                value={concRequests}
+                marks={true}
+                step={1}
+                min={1}
+                max={20}
+              />
+            </Grid>
+            <Grid item={true}>
+              <Input
+                id="concurrent-requests-input"
+                value={concRequests}
+                size="small"
+                onChange={handleInputChange}
+                inputProps={{
+                  step: 1,
+                  min: 1,
+                  max: MAX_CONCURRENT_REQUESTS,
+                  type: "number",
+                  "aria-labelledby": "input-slider",
+                }}
+              />
+            </Grid>
+          </Grid>
         </Box>
-      )}
-      <StatusAlert {...alertProps} />
+
+      </div>
+      <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}>
+        <div style={{ flexGrow: 2 }}>
+          {downloading && (
+            <div>
+              <LinearProgress
+                variant="buffer"
+                value={normalise(featuresWritten)}
+                valueBuffer={normalise(queryResults?.getPageSize() ?? 0)}
+              />
+              <Typography
+                sx={{ display: "flex", justifyContent: "flex-end" }}
+                variant="body2"
+              >
+                {featuresWritten} / {totalFeatures}
+              </Typography>
+            </div>
+          )}
+          <div style={{ maxHeight: "70%" }}>
+            <StatusAlert {...alertProps} sx={{ m: 0, height: "60%" }} />
+          </div>
+        </div>
+        <div style={{ alignSelf: "flex-end", justifySelf: "flex-end" }}>
+          <Button
+            disabled={!queryResults}
+            variant="contained"
+            sx={{}}
+            onClick={() => void download()}
+          >
+            Download
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

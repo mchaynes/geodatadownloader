@@ -30,6 +30,7 @@ import { ColorModeContext } from "./context";
 import BasemapToggle from "@arcgis/core/widgets/BasemapToggle";
 import Basemap from "@arcgis/core/Basemap";
 import CopyButton from "./CopyButton";
+import useWindowDimensions from "./window";
 
 const GEOMETRY_LINK =
   "https://developers.arcgis.com/documentation/common-data-types/geometry-objects.htm";
@@ -298,9 +299,11 @@ export function ExtentPicker({
     );
   }
 
+  const { height } = useWindowDimensions()
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: ".5rem .5rem" }}>
-      <div ref={elRef} style={{ height: "25rem", width: "100%" }} />
+      <div ref={elRef} style={{ height: Math.floor(height * 0.6), width: "100%" }} />
       <TextField
         id="boundary-text-field"
         variant="outlined"
@@ -334,3 +337,5 @@ export function ExtentPicker({
     </Box>
   );
 }
+
+

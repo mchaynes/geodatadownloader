@@ -32,8 +32,9 @@ export function Where({ defaultWhere, onChange: onWhereChange }: WhereProps) {
         fullWidth
         variant="outlined"
         label="Where"
+        size="small"
         helperText={
-          <Typography variant="caption">
+          <Typography variant="inherit">
             {
               "Ex: population BETWEEN 100 AND 500, population <= 100, city = 'Seattle'. Use 1=1 to return all features"
             }

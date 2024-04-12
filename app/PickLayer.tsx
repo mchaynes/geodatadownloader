@@ -119,7 +119,7 @@ export function PickLayer({ defaultLayerUrl, onLayerLoad }: PickLayerProps) {
               id="layer-url"
               required
               fullWidth
-              label="Layer Url"
+              label="Paste Layer Url Here"
               placeholder="https://gismaps.kingcounty.gov/arcgis/rest/services/Environment/KingCo_SensitiveAreas/MapServer/11"
               onKeyPress={handleKeyPress}
               onChange={(e) => setUrl(e.currentTarget.value ?? "")}
