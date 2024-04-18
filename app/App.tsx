@@ -32,6 +32,7 @@ import { DownloaderForm } from "./Downloader";
 import ShareUrlButton from "./ShareUrlButton";
 import React from "react";
 import { ColorModeContext } from "./context";
+import "./App.css"
 
 
 function App() {

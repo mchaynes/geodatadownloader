@@ -107,10 +107,12 @@ export function PickLayer({ defaultLayerUrl, onLayerLoad }: PickLayerProps) {
           onChange={(_, value) => setUrl(value ?? "")}
           fullWidth
           //@ts-ignore
-          renderOption={({ key }) =>
+          renderOption={(props) =>
             <SavedLayerListItem
-              url={key}
-              onDelete={() => setRecentUrls(recents => ({ urls: recents.urls.filter(r => r.url !== key) }))}
+              props={props}
+              url={props.key}
+              onDelete={() => setRecentUrls(recents => ({ urls: recents.urls.filter(r => r.url !== props.key) }))}
+              onClick={() => setUrl(props.key)}
             />
           }
           renderInput={(params) =>
@@ -142,16 +144,18 @@ export function PickLayer({ defaultLayerUrl, onLayerLoad }: PickLayerProps) {
   );
 }
 
-type SavedLayerListItemParams = {
+type SavedLayerListItemParams<T> = {
+  props: T
   url: string
   onDelete: () => void
+  onClick: () => void
 }
 
-function SavedLayerListItem({ url, onDelete }: SavedLayerListItemParams) {
+function SavedLayerListItem<T>({ url, onDelete, onClick, props }: SavedLayerListItemParams<T>) {
   const [clicked, setClicked] = useState(false)
   return (
-    <li style={{ display: "flex", margin: "0.5rem", flexDirection: "row" }}>
-      <div style={{ display: "flex", flexGrow: 1 }}>
+    <Box component="li" {...props}>
+      <div onClick={onClick} style={{ display: "flex", flexGrow: 1 }}>
         {url}
       </div>
       <IconButton onClick={() => {
@@ -163,6 +167,6 @@ function SavedLayerListItem({ url, onDelete }: SavedLayerListItemParams) {
       }}>
         <DeleteIcon htmlColor={clicked ? "red" : undefined} />
       </IconButton>
-    </li>
+    </Box>
   )
 }
