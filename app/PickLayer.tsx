@@ -158,13 +158,7 @@ function SavedLayerListItem<T>({ url, onDelete, onClick, props }: SavedLayerList
       <div onClick={onClick} style={{ display: "flex", flexGrow: 1 }}>
         {url}
       </div>
-      <IconButton onClick={() => {
-        const c = clicked
-        setClicked(!c)
-        if (c) {
-          onDelete()
-        }
-      }}>
+      <IconButton onClick={onDelete}>
         <DeleteIcon htmlColor={clicked ? "red" : undefined} />
       </IconButton>
     </Box>
