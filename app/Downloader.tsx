@@ -10,8 +10,6 @@ import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
 import {
   DEFAULT_CONCURRENT_REQUESTS,
-  Downloader,
-  GeojsonDownloader,
   MAX_CONCURRENT_REQUESTS,
 } from "./formats/geojson";
 import { StatusAlert, useStatusAlert } from "./StatusAlert";
@@ -21,14 +19,11 @@ import Slider from "@mui/material/Slider";
 import Grid from "@mui/material/Grid";
 import MuiInput from "@mui/material/Input";
 import Stack from "@mui/material/Stack";
-import { CsvDownloader } from "./formats/csv";
-import { ShpDownloader } from "./formats/shp";
 
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import CheckBox from "@mui/icons-material/CheckBox";
-import { CircularProgress, Divider, ListItemText } from "@mui/material";
+import { CircularProgress, ListItemText } from "@mui/material";
 import { Writer } from "./formats/writer";
-import { GpkgDownloader } from "./formats/gpkg";
 import { Drivers, GdalDownloader } from "./formats/gdal";
 
 
