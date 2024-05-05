@@ -80,7 +80,7 @@ function App() {
     >
       <CssBaseline />
       <div style={{ display: "flex", flexDirection: "row" }}>
-        <img src={logo as string} width="36px" height="36px" alt="Pine" />
+        <img src={logo as string} width="48px" height="48px" alt="Pine" />
         <Typography sx={{ ml: 3 }} variant="h1" color="inherit" noWrap={true}>
           geodatadownloader
         </Typography>
@@ -106,13 +106,15 @@ function App() {
             style={{
               display: "flex",
               flexGrow: 1,
-              flexDirection: isLg ? "row" : "column",
-              flexWrap: "wrap",
-              gap: "1rem",
+              flexDirection: "column",
+              justifyItems: "stretch",
+              alignSelf: "stretch",
+              gap: "1rem 1rem",
               alignItems: "stretch",
+              paddingBottom: "2rem",
             }}
           >
-            <div style={{ flexGrow: 4 }}>
+            <div>
               <ExtentPicker
                 defaultBoundaryExtent={boundaryExtent}
                 layer={layer}
@@ -120,10 +122,12 @@ function App() {
                 where={where}
               />
             </div>
+            <Divider sx={{ paddingTop: 0 }} />
             <div
               style={{
                 display: "flex",
-                flexDirection: "column",
+                flexDirection: isLg ? "row" : "column",
+                alignSelf: "stretch",
                 alignContent: "space-between",
                 gap: "1rem 1rem",
               }}
@@ -132,9 +136,11 @@ function App() {
                 style={{
                   display: "flex",
                   flexDirection: "column",
+                  minWidth: "50%",
                   flexGrow: 1,
                 }}
               >
+                <Typography variant="h3">Attribute Table Preview</Typography>
                 <Where defaultWhere={where} onChange={setWhere} />
                 <AttributeTablePreview
                   selectedFields={selectedFields}
@@ -144,20 +150,22 @@ function App() {
                   where={where}
                 />
               </div>
-            </div>
-            <div
-              style={{
-                flexGrow: 1,
-                minWidth: "48%",
-              }}
-            >
-              <DownloaderForm
-                outFields={selectedFields}
-                queryResults={queryResults}
-                where={where}
-                exportType={exportType}
-                setExportType={setExportType}
-              />
+              {isLg && <Divider orientation="vertical" flexItem={true} />}
+              <div
+                style={{
+                  flexGrow: 1,
+                  minWidth: "48%",
+                }}
+              >
+                <Typography variant="h3">Download Options</Typography>
+                <DownloaderForm
+                  outFields={selectedFields}
+                  queryResults={queryResults}
+                  where={where}
+                  exportType={exportType}
+                  setExportType={setExportType}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -261,7 +269,7 @@ export default function WithStyles() {
           fontWeightBold: 400,
           fontSize: 14,
           h1: {
-            fontSize: "1.5rem",
+            fontSize: "1.9rem",
             flexGrow: 1,
           },
           h2: {
