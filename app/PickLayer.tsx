@@ -51,8 +51,11 @@ export function PickLayer({ defaultLayerUrl, onLayerLoad }: PickLayerProps) {
     async (layerUrl: string) => {
       await setLoadingWhile(async () => {
         try {
+          const url = new URL(layerUrl)
+          const strippedUrl = url.protocol + "//" + url.hostname + url.pathname
+          console.log(strippedUrl)
           const layer = new FeatureLayer({
-            url: layerUrl,
+            url: strippedUrl,
           });
           await layer.load();
           setAlertProps("", undefined);
