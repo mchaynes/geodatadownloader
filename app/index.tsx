@@ -1,37 +1,27 @@
-import { StrictMode } from "react";
+import { StrictMode, useEffect, useMemo, useState } from "react";
 import ReactDomClient from "react-dom/client";
 import "./index.css";
-import App from "./App";
+import MapCreator, { mapCreatorAction, mapCreatorLoader } from "./routes/maps/create";
 import reportWebVitals from "./reportWebVitals";
-import * as Sentry from "@sentry/react";
-import Hotjar from '@hotjar/browser';
+import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
+import ErrorPage from "./ErrorPage";
+import Root from "./routes/root";
 
+import { RequireAuth } from "./RequireAuth";
+import MapDlConfigTable, { dlConfigLoader, dlConfigAction } from "./routes/maps/dl/config";
 
-Sentry.init({
-  dsn: "https://43e1102d38f442cb55ebb2110c81c6ef@o4506528837140480.ingest.sentry.io/4506528838909952",
-  integrations: [
-    new Sentry.BrowserTracing({
-      // Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
-      tracePropagationTargets: ["localhost", /^https:\/\/yourserver\.io\/api/],
-    }),
-    new Sentry.Replay({
-      maskAllText: false,
-      blockAllMedia: false,
-    }),
-  ],
-  // Performance Monitoring
-  tracesSampleRate: 1.0, //  Capture 100% of the transactions
-  // Session Replay
-  replaysSessionSampleRate: 0.3, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
-  replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
-});
+import SignUp, { signUpAction } from "./routes/signup";
+import SignIn, { signInAction } from './routes/signin'
+import Forgot, { sendResetEmailAction } from "./routes/forgot";
+import { signoutAction } from "./routes/signout";
+import UpdateMapDlConfig, { updateMapDlConfigAction, updateMapDlConfigLoader } from "./routes/maps/dl/config/update";
+import AddLayerToMap from "./routes/maps/create/layers/add";
+import { Flowbite } from "flowbite-react";
+import { removeLayerAction } from "./routes/maps/create/remove-layer";
+import { getQueryResultsLoader } from "./routes/maps/create/layers/results";
+import { ExtentPicker, extentPickerAction } from "./ExtentPicker";
+import { configureLayerAction } from "./routes/maps/create/layers/configure";
 
-
-
-const siteId = 3816062;
-const hotjarVersion = 6;
-
-Hotjar.init(siteId, hotjarVersion);
 
 const rootEl = document.getElementById("root");
 
@@ -40,9 +30,114 @@ if (!rootEl) {
 }
 const root = ReactDomClient.createRoot(rootEl);
 
+
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <Root />,
+    errorElement: <ErrorPage />,
+    children: [
+      {
+        path: "/",
+        element: <Navigate to="/maps/create" />,
+        action: mapCreatorAction,
+        errorElement: <ErrorPage />,
+
+      },
+      {
+        path: "/maps/create",
+        element: <MapCreator />,
+        action: mapCreatorAction,
+        loader: mapCreatorLoader,
+        errorElement: <ErrorPage />,
+        children: [
+          {
+            path: "/maps/create",
+            loader: mapCreatorLoader,
+            action: mapCreatorAction,
+            element: <ExtentPicker />
+          },
+          {
+            path: "/maps/create/boundary",
+            action: extentPickerAction,
+          },
+          {
+            path: "/maps/create/layers/add",
+            element: <AddLayerToMap />
+          },
+          {
+            path: "/maps/create/remove-layer",
+            action: removeLayerAction,
+          },
+          {
+            path: "/maps/create/layers/results",
+            loader: getQueryResultsLoader,
+          },
+          {
+            path: "/maps/create/layers/configure",
+            action: configureLayerAction,
+          }
+        ]
+      },
+      {
+        path: "/maps/dl/config",
+        errorElement: <ErrorPage />,
+        loader: dlConfigLoader,
+        action: dlConfigAction,
+        element: (
+          <RequireAuth>
+            <MapDlConfigTable />
+          </RequireAuth>
+        ),
+        children: [
+          {
+            path: "/maps/dl/config/:id",
+            loader: updateMapDlConfigLoader,
+            action: updateMapDlConfigAction,
+            element: (
+              <UpdateMapDlConfig />
+            )
+          },
+        ]
+      },
+    ]
+  },
+  {
+    path: "/signin",
+    element: <SignIn />,
+    action: signInAction,
+  },
+  {
+    path: "/signup",
+    element: <SignUp />,
+    action: signUpAction,
+  },
+  {
+    path: "/forgot",
+    element: <Forgot />,
+    action: sendResetEmailAction,
+  },
+  {
+    path: "/signout",
+    action: signoutAction,
+  }
+])
+
+
+export default function WithStyles() {
+
+  return (
+    <div>
+      <Flowbite>
+        <RouterProvider router={router} />
+      </Flowbite>
+    </div>
+  );
+}
+
 root.render(
   <StrictMode>
-    <App />
+    <WithStyles />
   </StrictMode>
 );
 

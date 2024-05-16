@@ -50,6 +50,7 @@
       href="https://js.arcgis.com/4.22/esri/themes/light/main.css"
       media="none"
     />
+
     <link
       rel="stylesheet"
       href="https://js.arcgis.com/4.22/esri/themes/dark/main.css"
@@ -62,6 +63,8 @@
       name="description"
       content="Geodatadownloader downloads spatial data from any ESRI ArcGIS Server. It has no max size and downloads entirely in your browser"
     />
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.6.6/flowbite.min.css" rel="stylesheet" />
     <link rel="apple-touch-icon" href="/logo192.png" />
     <!--
       manifest.json provides metadata used when your web app is installed on a
@@ -71,7 +74,7 @@
     <title>geodatadownloader</title>
     <!-- <script type="module" src="index.js"></script> -->
   </head>
-  <body>
+  <body class="dark:bg-dark-bg bg-white">
     <!-- helper for netlify bots to create forms -->
     <form
       name="feedback"
@@ -115,5 +118,7 @@
       To begin the development, run `npm start` or `yarn start`.
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.6.6/flowbite.min.js"></script>
   </body>
 </html>

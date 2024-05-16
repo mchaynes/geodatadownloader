@@ -21,7 +21,7 @@ export function WelcomeMessage() {
   const submit = async () => {
     setLoading(true);
     try {
-      const response = await fetch("https://formspree.io/f/mrgnzwak", {
+      const response = await fetch("/api/submit", {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",

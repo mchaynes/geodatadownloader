@@ -1,0 +1,18 @@
+projects:
+  geodatadownloader:
+    schemaPath: amplify/backend/api/geodatadownloader/build/schema.graphql
+    includes:
+      - app/graphql/**/*.ts
+    excludes:
+      - ./amplify/**
+    extensions:
+      amplify:
+        codeGenTarget: typescript
+        generatedFileName: app/API.ts
+        docsFilePath: app/graphql
+        region: us-west-2
+        apiId: null
+        maxDepth: 3
+extensions:
+  amplify:
+    version: 3
