@@ -88,10 +88,10 @@ export const Drivers: { [key: string]: string[] } = {
   "CSV": ["csv"],
   "GPX": ["gpx"],
   "PGDUMP": ["sql"],
-  "SVG": ["svg"],
+  // "SVG": ["svg"],
   "DXF": ["dxf"],
   "SQLite": ["sqlite"],
-  "XSLX": ["xlsx"],
+  // "XSLX": ["xlsx"],
 }
 
 

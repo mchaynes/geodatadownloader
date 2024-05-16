@@ -307,12 +307,12 @@ export function ExtentPicker() {
 
         <input
 
-          className="w-full text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-dark-text-bg dark:border-gray-600 dark:placeholder-gray-100 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+          className="w-full text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-dark-text-bg dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
           type="search"
           name="layer-url"
           id="boundary-text-field"
           value={textBoxValue}
-          placeholder="You can also paste a JSON boundary"
+          placeholder="Draw on map using tools (Or you can also paste a JSON boundary in this box)"
           onChange={e => onTextBoxChange(e.currentTarget.value)}
           required
           {...(textBoxDisabled ? { readOnly: true } : {})}
