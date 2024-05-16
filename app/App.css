@@ -24,6 +24,10 @@
   color: white;
 }
 
+.SearchLi:hover {
+  background-color: rgba(0, 184, 212, 0.12);
+}
+
 .App-link {
   color: #61dafb;
 }

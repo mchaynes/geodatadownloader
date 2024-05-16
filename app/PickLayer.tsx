@@ -7,6 +7,8 @@ import type { } from "@mui/x-data-grid/themeAugmentation";
 import { StatusAlert, useStatusAlert } from "./StatusAlert";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import { setLoadingWhile } from "./loading";
+import { Autocomplete, IconButton } from "@mui/material";
+import DeleteIcon from '@mui/icons-material/Delete';
 
 export type Status = "not_started" | "loading" | "error" | "loaded";
 
@@ -15,21 +17,50 @@ export type PickLayerProps = {
   onLayerLoad: (_: FeatureLayer) => void;
 };
 
+
+type RecentUrls = {
+  urls: RecentUrl[]
+}
+
+type RecentUrl = {
+  url: string
+}
+
+function addRecentUrl(urls: RecentUrls, newUrl: RecentUrl): RecentUrls {
+  urls.urls = urls.urls.filter((url) => url.url !== newUrl.url)
+  return { urls: [newUrl, ...urls.urls] }
+}
+
 export function PickLayer({ defaultLayerUrl, onLayerLoad }: PickLayerProps) {
   const [loading, setLoading] = useState(false);
   const [alertProps, setAlertProps] = useStatusAlert("", undefined);
   const [url, setUrl] = useState(defaultLayerUrl);
 
+  const [recentUrls, setRecentUrls] = useState(() => {
+    return JSON.parse(localStorage.getItem("recent_urls") ?? `{"urls": []}`) as RecentUrls
+  })
+
+  const recentUrlsMemod = React.useMemo(() => recentUrls?.urls?.map(u => u.url) ?? [], [recentUrls])
+
+
+  useEffect(() => {
+    localStorage.setItem("recent_urls", JSON.stringify(recentUrls))
+  }, [recentUrls])
+
   const loadLayer = useCallback(
     async (layerUrl: string) => {
       await setLoadingWhile(async () => {
         try {
+          const url = new URL(layerUrl)
+          const strippedUrl = url.protocol + "//" + url.hostname + url.pathname
+          console.log(strippedUrl)
           const layer = new FeatureLayer({
-            url: layerUrl,
+            url: strippedUrl,
           });
           await layer.load();
           setAlertProps("", undefined);
           onLayerLoad(layer);
+          setRecentUrls(urls => addRecentUrl(urls, { url: layerUrl }))
         } catch (e) {
           const err = e as Error;
           setAlertProps(`${err.message}`, "error");
@@ -84,4 +115,25 @@ export function PickLayer({ defaultLayerUrl, onLayerLoad }: PickLayerProps) {
       </Box>
     </div>
   );
+}
+
+type SavedLayerListItemParams<T> = {
+  props: T
+  url: string
+  onDelete: () => void
+  onClick: () => void
+}
+
+function SavedLayerListItem<T>({ url, onDelete, onClick, props }: SavedLayerListItemParams<T>) {
+  const [clicked, setClicked] = useState(false)
+  return (
+    <Box component="li" {...props}>
+      <div onClick={onClick} style={{ display: "flex", flexGrow: 1 }}>
+        {url}
+      </div>
+      <IconButton onClick={onDelete}>
+        <DeleteIcon htmlColor={clicked ? "red" : undefined} />
+      </IconButton>
+    </Box>
+  )
 }

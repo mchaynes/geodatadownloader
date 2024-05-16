@@ -25,11 +25,12 @@ Conversion to from arcgis json to geojson is done browser side as well.
 - GeoJSON
 - CSV
 - SHP (ESRI Shapefile)
-
-### Coming Soon
-
 - GPKG
-- GBP (ESRI Geodatabase)
+- KML
+- GPX
+- PGDUMP
+- DXF
+- SQLite
 
 ## How does geodatadownloader download all of the data for a layer?
 

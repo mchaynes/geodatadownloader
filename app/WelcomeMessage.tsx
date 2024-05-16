@@ -14,6 +14,7 @@ export function WelcomeMessage() {
     dismissed: localStorage.getItem(localStorageKey) ?? "false",
   });
   const [loading, setLoading] = useState(false);
+  const [disabled, setDisabled] = useState(true);
 
   const [submissionProps, setSubmissionProps] = useStatusAlert("", undefined);
 
@@ -22,13 +23,15 @@ export function WelcomeMessage() {
     try {
       const response = await fetch("/api/submit", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Accept": "application/json",
+        },
         body: new URLSearchParams({
-          "form-name": "feedback",
           ...data,
         }).toString(),
       });
-      if (response.status !== 200) {
+      if (!response.ok) {
         throw new Error(
           `Error from server: ${response.status} - ${await response.text()}`
         );
@@ -58,6 +61,10 @@ export function WelcomeMessage() {
       dismissed: "true",
     }));
   };
+
+  useEffect(() => {
+    setDisabled(data.email.length === 0 && data.suggestions.length === 0)
+  }, [data]);
 
   return (
     <StatusAlert
@@ -156,7 +163,7 @@ export function WelcomeMessage() {
               <Button variant="outlined" onClick={onClose}>
                 Dismiss
               </Button>
-              <Button variant="contained" onClick={() => void submit()}>
+              <Button id="submit" disabled={disabled} variant="contained" onClick={() => void submit()}>
                 Submit
               </Button>
             </Box>
