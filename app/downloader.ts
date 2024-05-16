@@ -181,7 +181,11 @@ export class GdalDownloader {
       zip.file(fileName, blob);
     }
     const zipBytes = await zip.generateAsync({ type: "blob" });
-    saveAs(zipBytes, `geodatadownloader.zip`);
+    let fileName = `geodatadownloader.zip`
+    if (results.length === 1) {
+      fileName = `${results[0].layer.esri.title}.zip`
+    }
+    saveAs(zipBytes, fileName);
     this.featuresWritten = 0;
   };
 }

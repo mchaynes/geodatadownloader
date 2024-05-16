@@ -7,14 +7,11 @@ import { supabase } from "../supabase";
 import { Session } from "@supabase/supabase-js";
 import 'flowbite'
 
-import { Avatar, DarkThemeToggle, Dropdown, Navbar, Sidebar, Tooltip } from "flowbite-react";
+import { Tooltip } from "flowbite-react";
 import GitHubButton from "react-github-btn";
 import { Menu, Transition } from "@headlessui/react";
 
 
-function classNames(...classes) {
-  return classes.filter(Boolean).join(' ')
-}
 
 export default function Root() {
   const location = useLocation()
@@ -36,14 +33,14 @@ export default function Root() {
           <div className="flex flex-wrap justify-between items-center mx-auto">
             <a href="https://geodatadownloader.com" className="flex items-center">
               <img src={logo as string} className="mr-3 h-6 sm:h-9" alt="Geodatadownloader Logo" />
-              <span className="self-center text-xl font-semibold whitespace-nowrap dark:text-white">Geodatadownloader</span>
+              <span className="self-center text-xl font-semibold whitespace-nowrap dark:text-white">geodatadownloader</span>
             </a>
             <div className="flex flex-row justify-between items-center gap-5">
               <div className="h-full pt-2"> {/*Make the button align with the rest of the buttons*/}
                 <GitHubButton href="https://github.com/mchaynes/geodatadownloader" data-color-scheme="no-preference: light; light: light; dark: dark;" data-size="large" data-show-count="true" aria-label="Star mchaynes/geodatadownloader on GitHub">Star</GitHubButton>
               </div>
               <div className="md:order-3">
-                <Menu as="div" className="relative ml-3">
+                {/*<Menu as="div" className="relative ml-3">
                   <div>
                     <Menu.Button className="flex rounded-full dark:bg-dark-text-bg text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
                       <span className="sr-only">Open user menu</span>
@@ -96,7 +93,7 @@ export default function Root() {
                       </Menu.Item>
                     </Menu.Items>
                   </Transition>
-                </Menu>
+                </Menu>*/}
               </div>
             </div>
           </div>
@@ -118,7 +115,7 @@ export default function Root() {
                       </Link>
                     </Tooltip>
                   </li>
-                  <li>
+                  {/*<li>
 
                     <Tooltip placement="right-end" content="Saved Maps" className="w-28">
                       <Link to="/maps/saved" className="flex items-center p-2 mt-3 text-base text-gray-900 rounded-lg hover:bg-gray-100 group dark:text-gray-200 dark:hover:bg-gray-700">
@@ -139,7 +136,7 @@ export default function Root() {
                         </svg>
                       </Link>
                     </Tooltip>
-                  </li>
+                  </li>*/}
                 </ul>
               </div>
             </div>
