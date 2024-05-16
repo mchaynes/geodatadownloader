@@ -13,6 +13,7 @@
     "@mui/material": "^5.13.6",
     "@mui/x-data-grid": "^5.17.17",
     "@mui/x-date-pickers": "^6.8.0",
+    "@sentry/vite-plugin": "^2.16.1",
     "@supabase/auth-ui-react": "^0.4.2",
     "@supabase/auth-ui-shared": "^0.1.6",
     "@supabase/supabase-js": "^2.25.0",
@@ -63,7 +64,6 @@
     ]
   },
   "devDependencies": {
-    "@sentry/vite-plugin": "^2.16.1",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^14.4.3",
