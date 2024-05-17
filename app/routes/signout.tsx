@@ -7,3 +7,9 @@ export const signoutAction = async () => {
   return await supabase.auth.signOut()
 }
 
+export default function SignOut() {
+  return (
+    <Navigate to="/" />
+  )
+}
+

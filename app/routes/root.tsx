@@ -40,7 +40,7 @@ export default function Root() {
                 <GitHubButton href="https://github.com/mchaynes/geodatadownloader" data-color-scheme="no-preference: light; light: light; dark: dark;" data-size="large" data-show-count="true" aria-label="Star mchaynes/geodatadownloader on GitHub">Star</GitHubButton>
               </div>
               <div className="md:order-3">
-                {/*<Menu as="div" className="relative ml-3">
+                <Menu as="div" className="relative ml-3">
                   <div>
                     <Menu.Button className="flex rounded-full dark:bg-dark-text-bg text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
                       <span className="sr-only">Open user menu</span>
@@ -93,7 +93,7 @@ export default function Root() {
                       </Menu.Item>
                     </Menu.Items>
                   </Transition>
-                </Menu>*/}
+                </Menu>
               </div>
             </div>
           </div>

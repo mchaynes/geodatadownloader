@@ -558,6 +558,7 @@ function WhereInput({ defaultWhere, onUpdateClick }: WhereInputProps) {
         </div>
       </div>
       <p className="mt-2 text-xs text-gray-500 dark:text-gray-300 place-self-start">Use original column names in query</p>
+      <p className="mt-2 text-xs text-red-800 dark:text-red-800 place-self-start">The Edit Columns feature doesn't work yet</p>
     </div>
   )
 }

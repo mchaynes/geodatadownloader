@@ -13,7 +13,7 @@ import MapDlConfigTable, { dlConfigLoader, dlConfigAction } from "./routes/maps/
 import SignUp, { signUpAction } from "./routes/signup";
 import SignIn, { signInAction } from './routes/signin'
 import Forgot, { sendResetEmailAction } from "./routes/forgot";
-import { signoutAction } from "./routes/signout";
+import SignOut, { signoutAction } from "./routes/signout";
 import UpdateMapDlConfig, { updateMapDlConfigAction, updateMapDlConfigLoader } from "./routes/maps/dl/config/update";
 import AddLayerToMap from "./routes/maps/create/layers/add";
 import { Flowbite } from "flowbite-react";
@@ -120,6 +120,7 @@ const router = createBrowserRouter([
   {
     path: "/signout",
     action: signoutAction,
+    element: <SignOut />,
   }
 ])
 
