@@ -20,7 +20,7 @@ import { Flowbite } from "flowbite-react";
 import { removeLayerAction } from "./routes/maps/create/remove-layer";
 import { getQueryResultsLoader } from "./routes/maps/create/layers/results";
 import { ExtentPicker, extentPickerAction } from "./ExtentPicker";
-import { configureLayerAction } from "./routes/maps/create/layers/configure";
+import ConfigureLayerModal from "./routes/maps/create/layers/configure";
 
 
 const rootEl = document.getElementById("root");
@@ -29,6 +29,17 @@ if (!rootEl) {
   throw new Error("yo something's messed up");
 }
 const root = ReactDomClient.createRoot(rootEl);
+
+
+import * as Sentry from "@sentry/react";
+import Hotjar from '@hotjar/browser';
+
+
+
+const siteId = 3816062;
+const hotjarVersion = 6;
+
+Hotjar.init(siteId, hotjarVersion);
 
 
 const router = createBrowserRouter([
@@ -75,7 +86,7 @@ const router = createBrowserRouter([
           },
           {
             path: "/maps/create/layers/configure",
-            action: configureLayerAction,
+            element: <ConfigureLayerModal open={true} />,
           }
         ]
       },
