@@ -1,4 +1,4 @@
-import { ActionFunctionArgs, Form, useActionData, useLoaderData, useNavigate, useRouteLoaderData } from "react-router-dom"
+import { ActionFunctionArgs, Form, useActionData, useNavigate } from "react-router-dom"
 
 
 export const addLayerToMapAction = async ({ request }: ActionFunctionArgs) => {

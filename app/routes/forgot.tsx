@@ -3,7 +3,7 @@ import * as React from 'react';
 import logo from "/IMG_1039.png";
 
 import { supabase } from '../supabase';
-import { ActionFunctionArgs, Form, Link, Navigate, useActionData } from 'react-router-dom';
+import { ActionFunctionArgs, Navigate, useActionData } from 'react-router-dom';
 
 
 export const sendResetEmailAction = async ({ request }: ActionFunctionArgs) => {

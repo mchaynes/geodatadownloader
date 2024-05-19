@@ -1,10 +1,8 @@
-import { useCallback, useContext } from "react";
+import { useCallback } from "react";
 import { useEffect, useRef, useState } from "react";
 import { setLoadingWhile } from "./loading";
-import { GeometryUpdateListener, getRealUrl, parseGeometryFromString } from "./arcgis";
+import { getRealUrl, parseGeometryFromString } from "./arcgis";
 
-import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
 import Edit from "@mui/icons-material/Edit";
 import EditOff from "@mui/icons-material/EditOff";
 import Geometry from "@arcgis/core/geometry/Geometry";
@@ -21,16 +19,14 @@ import FeatureFilter from "@arcgis/core/layers/support/FeatureFilter";
 import Graphic from "@arcgis/core/Graphic";
 import SimpleFillSymbol from "@arcgis/core/symbols/SimpleFillSymbol";
 import { AlertType, StatusAlert } from "./StatusAlert";
-import InputAdornment from "@mui/material/InputAdornment";
-import IconButton from "@mui/material/IconButton";
 import BasemapToggle from "@arcgis/core/widgets/BasemapToggle";
 import Basemap from "@arcgis/core/Basemap";
 import CopyButton from "./CopyButton";
 import { useMediaQuery } from "usehooks-ts";
 import { mapCreatorLoader } from "./routes/maps/create";
-import { ActionFunctionArgs, useFetcher, useLoaderData, useParams, useSearchParams } from "react-router-dom";
+import { ActionFunctionArgs, useFetcher, useLoaderData, useSearchParams } from "react-router-dom";
 import { getMapConfigLocal, saveMapConfigLocal } from "./database";
-import { Button, TextInput, Tooltip } from "flowbite-react";
+import { Button, Tooltip } from "flowbite-react";
 
 const GEOMETRY_LINK =
   "https://developers.arcgis.com/documentation/common-data-types/geometry-objects.htm";

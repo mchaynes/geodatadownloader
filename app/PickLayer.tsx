@@ -1,5 +1,3 @@
-import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
 import { useCallback, useEffect, useState } from "react";
 import * as React from "react";
@@ -7,7 +5,7 @@ import type { } from "@mui/x-data-grid/themeAugmentation";
 import { StatusAlert, useStatusAlert } from "./StatusAlert";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import { setLoadingWhile } from "./loading";
-import { Autocomplete, IconButton } from "@mui/material";
+import { IconButton } from "@mui/material";
 import DeleteIcon from '@mui/icons-material/Delete';
 
 export type Status = "not_started" | "loading" | "error" | "loaded";

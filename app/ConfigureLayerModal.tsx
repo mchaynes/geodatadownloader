@@ -2,7 +2,6 @@
 
 import FeatureLayer from '@arcgis/core/layers/FeatureLayer';
 import { Button, Checkbox, Label, Modal, TextInput } from 'flowbite-react';
-import { useState } from 'react';
 import { LayerConfig } from './types';
 
 type ConfigureLayerModalProps = {

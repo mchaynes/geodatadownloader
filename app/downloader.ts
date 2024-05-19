@@ -1,4 +1,4 @@
-import { QueryResults, QueryResult } from "./arcgis";
+import { QueryResult } from "./arcgis";
 import { arcgisToGeoJSON } from "@terraformer/arcgis";
 import fastq from "fastq";
 import type { queueAsPromised } from "fastq";

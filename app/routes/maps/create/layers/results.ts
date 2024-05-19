@@ -1,4 +1,3 @@
-import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import { LoaderFunctionArgs } from "react-router-dom";
 import { parseGeometryFromString } from "../../../../arcgis";
 
