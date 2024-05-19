@@ -1,4 +1,4 @@
-import { StrictMode, useEffect, useMemo, useState } from "react";
+import { StrictMode } from "react";
 import ReactDomClient from "react-dom/client";
 import "./index.css";
 import MapCreator, { mapCreatorAction, mapCreatorLoader } from "./routes/maps/create";
@@ -31,7 +31,6 @@ if (!rootEl) {
 const root = ReactDomClient.createRoot(rootEl);
 
 
-import * as Sentry from "@sentry/react";
 import Hotjar from '@hotjar/browser';
 
 
