@@ -30,10 +30,15 @@ export default function Root() {
       <header className="z-40">
         <nav className="fixed w-full bg-white dark:border-gray-700 border-gray-200 px-4 lg:px-6 pt-2 pb-1 dark:bg-dark-bg border-b z-10">
           <div className="flex flex-wrap justify-between items-center mx-auto">
-            <a href="https://geodatadownloader.com" className="flex items-center">
-              <img src={logo as string} className="mr-3 h-6 sm:h-9" alt="Geodatadownloader Logo" />
-              <span className="self-center text-xl font-semibold whitespace-nowrap dark:text-white">geodatadownloader</span>
-            </a>
+            <div className="flex flex-row h-6 justify-center">
+              <a href="https://geodatadownloader.com" className="flex items-center">
+                <img src={logo as string} className="mr-3 h-6 sm:h-9" alt="Geodatadownloader Logo" />
+                <span className="self-center text-xl font-semibold whitespace-nowrap dark:text-white">geodatadownloader</span>
+              </a>
+              <div className="ml-10 text-green-700 bg-green-50 border-1 ring-green-600/20">
+                <span className="self-center text-xs font-semibold whitespace-nowrap">Looking for data? Check out <a className="text-bold text-green-800 hover:underline" about="_blank" href="https://galileo.gisdata.io">Galileo</a></span>
+              </div>
+            </div>
             <div className="flex flex-row justify-between items-center gap-5">
               <div className="h-full pt-2"> {/*Make the button align with the rest of the buttons*/}
                 <GitHubButton href="https://github.com/mchaynes/geodatadownloader" data-color-scheme="no-preference: light; light: light; dark: dark;" data-size="large" data-show-count="true" aria-label="Star mchaynes/geodatadownloader on GitHub">Star</GitHubButton>
