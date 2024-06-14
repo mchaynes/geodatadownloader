@@ -257,7 +257,7 @@ export default function MapCreator() {
                 <span>
                   <p>
                     <span className="font-medium">
-                      Done 😘
+                      Done 🙌
                     </span>
                   </p>
                 </span>
@@ -311,7 +311,7 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
           </svg>}
         onClick={() => setShowConfigureModal(true)}
       >
-        Configure
+        Filters & Attributes...
       </Dropdown.Item>
       <Dropdown.Item
         icon={() =>

@@ -35,7 +35,8 @@ export default function Root() {
                 <img src={logo as string} className="mr-3 h-6 sm:h-9" alt="Geodatadownloader Logo" />
                 <span className="self-center text-xl font-semibold whitespace-nowrap dark:text-white">geodatadownloader</span>
               </a>
-              <div className="ml-10 text-green-700 bg-green-50 border-1 ring-green-600/20">
+
+              <div className="ml-10 text-green-700 bg-green-50 dark:bg-green-100 dark:text-green-800 ring-green-600/20 rounded-md whitespace-nowrap mt-0.5 px-1.5 py-0.5 text-xs font-medium ring-1 ring-inset">
                 <span className="self-center text-xs font-semibold whitespace-nowrap">Looking for data? Check out <a className="text-bold text-green-800 hover:underline" about="_blank" href="https://galileo.gisdata.io">Galileo</a></span>
               </div>
             </div>
