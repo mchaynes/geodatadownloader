@@ -14,7 +14,7 @@
     "@mui/material": "^5.13.6",
     "@mui/x-data-grid": "^5.17.17",
     "@mui/x-date-pickers": "^6.8.0",
-    "@sentry/react": "^8.2.1",
+    "@sentry/react": "^8.33.1",
     "@sentry/vite-plugin": "^2.16.1",
     "@supabase/auth-ui-react": "^0.4.2",
     "@supabase/auth-ui-shared": "^0.1.6",
