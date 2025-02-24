@@ -31,6 +31,7 @@
     "leaflet": "^1.9.3",
     "material-ui-popup-state": "^5.0.9",
     "nth-check": "2.1.1",
+    "path-browserify": "^1.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-github-btn": "^1.4.0",

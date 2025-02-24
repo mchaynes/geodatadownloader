@@ -6,7 +6,7 @@ import { Writer } from "./writer";
 import JSZip from "jszip";
 import saveAs from "file-saver";
 import { getGdalJs } from "./gdal";
-
+import { basename, dirname, extname, join } from "path-browserify";
 
 // Open geojson FeatureCollection object and "features" array
 const header = `
@@ -109,9 +109,9 @@ export class GdalDownloader {
     format: string
   ) => {
     const Gdal = await getGdalJs();
-    let outputFiles: FileInfo[] = []
+    const outputPaths: string[] = [];
     for (const result of results) {
-      const writer = new Writer()
+      const writer = new Writer();
       const layer = result.layer;
       if (!layer) {
         throw new Error("layer not defined");
@@ -160,30 +160,39 @@ export class GdalDownloader {
       const srcDataset = await Gdal.open(
         new File(writer.data, `${layerName}.json`)
       );
-      await Gdal.ogr2ogr(srcDataset.datasets[0], ["-f", format, "-skipfailures"]);
-      const files = (await Gdal.getOutputFiles()).filter(f => {
-        for (const ext of Drivers[format]) {
-          if (f.path.includes(`${layerName}.${ext}`)) {
-            return true
-          }
-        }
-        return false
-      });
-      outputFiles = outputFiles.concat(files)
+      const outFilePath = await Gdal.ogr2ogr(srcDataset.datasets[0], [
+        "-f",
+        format,
+        "-skipfailures",
+      ]);
+
+      // Remove the extension from the output file path
+      const outBasename = basename(
+        outFilePath.local,
+        extname(outFilePath.local)
+      );
+      const outDirname = dirname(outFilePath.local);
+      const filePaths = Drivers[format].map((ext) =>
+        join(outDirname, `${outBasename}.${ext}`)
+      );
+
+      for (const f of filePaths) {
+        outputPaths.push(f);
+      }
       for (const d of srcDataset.datasets) {
         await Gdal.close(d);
       }
     }
     const zip = new JSZip();
-    for (const f of outputFiles) {
-      const blob = new Blob([await Gdal.getFileBytes(f.path)]);
-      const fileName = f.path.split("/")[2];
+    for (const p of outputPaths) {
+      const blob = new Blob([await Gdal.getFileBytes(p)]);
+      const fileName = basename(p);
       zip.file(fileName, blob);
     }
     const zipBytes = await zip.generateAsync({ type: "blob" });
-    let fileName = `geodatadownloader.zip`
+    let fileName = `geodatadownloader.zip`;
     if (results.length === 1) {
-      fileName = `${results[0].layer.esri.title}.zip`
+      fileName = `${results[0].layer.esri.title}.zip`;
     }
     saveAs(zipBytes, fileName);
     this.featuresWritten = 0;
