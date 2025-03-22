@@ -11,7 +11,8 @@ import { ActionFunctionArgs, Form, Link, Outlet, useFetcher, useLoaderData } fro
 import { Alert, Button, Checkbox, Dropdown, Modal, Progress, Table, TextInput } from "flowbite-react";
 import { Drivers, GdalDownloader } from "../../../downloader";
 import { getMapConfigLocal, saveMapConfigLocal } from "../../../database";
-import { HiOutlineExclamationCircle } from "react-icons/hi";
+
+import { HiOutlineExclamationCircle, HiOutlineArrowCircleDown } from "react-icons/hi";
 import FeatureSet from "@arcgis/core/rest/support/FeatureSet";
 import { EsriLayerWithConfig, raise } from "../../../types";
 import { Dialog, Transition } from "@headlessui/react";
@@ -229,7 +230,7 @@ export default function MapCreator() {
               <Modal.Header />
               <Modal.Body>
                 <div className="text-center">
-                  <HiOutlineExclamationCircle className="mx-auto mb-4 h-14 w-14 text-gray-400 dark:text-gray-200" />
+                  <HiOutlineArrowCircleDown className="mx-auto mb-4 h-14 w-14 text-gray-400 dark:text-gray-200" />
                   <h3 className="mb-5 text-lg font-normal text-black dark:text-white truncate max-w-[400px]">
                     Loading layer {fetcher.formData?.get("layer-url") as string}
                   </h3>
