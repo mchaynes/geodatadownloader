@@ -10,7 +10,7 @@ import Geometry from "@arcgis/core/geometry/Geometry";
 import { ActionFunctionArgs, Form, Link, Outlet, useFetcher, useLoaderData } from "react-router-dom";
 import { Alert, Button, Checkbox, Dropdown, Modal, Progress, Table, TextInput } from "flowbite-react";
 import { Drivers, GdalDownloader } from "../../../downloader";
-import { getMapConfigLocal, saveMap, saveMapConfigLocal } from "../../../database";
+import { getMapConfigLocal, saveMapConfigLocal } from "../../../database";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
 import FeatureSet from "@arcgis/core/rest/support/FeatureSet";
 import { EsriLayerWithConfig, raise } from "../../../types";
@@ -57,9 +57,9 @@ export const mapCreatorAction = async ({ request }: ActionFunctionArgs) => {
       }
     }
   }
-  if (formData.get("intent") === "save-map") {
-    await saveMap(mapConfig)
-  }
+  // if (formData.get("intent") === "save-map") {
+  //   await saveMap(mapConfig)
+  // }
   const layers: Array<FeatureLayer> = []
   const promises: Promise<void>[] = []
   for (const savedLayers of mapConfig.layers) {
@@ -136,6 +136,19 @@ export default function MapCreator() {
   const [totalFeatures, setTotalFeatures] = useState(0)
   const [percent, setPercent] = useState(0)
 
+
+  const [showLoadingModal, setShowLoadingModal] = useState(false)
+  const fetcher = useFetcher()
+  // Show/hide modal based on fetcher state
+  useEffect(() => {
+    console.log(fetcher)
+    if (fetcher.state === "submitting" || fetcher.state === "loading") {
+      setShowLoadingModal(true);
+    } else {
+      setShowLoadingModal(false);
+    }
+  }, [fetcher.state]);
+
   useEffect(() => {
     const f = async () => {
       const promises: Promise<QueryResult>[] = []
@@ -202,7 +215,7 @@ export default function MapCreator() {
           </div>
         </div>
         <div className="flex flex-col gap-2 w-full flex-grow p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-8 dark:bg-dark-bg dark:border-gray-700">
-          <Form method="post">
+          <fetcher.Form method="post">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                 <svg aria-hidden="true" className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -212,7 +225,18 @@ export default function MapCreator() {
                 Add
               </button>
             </div>
-          </Form>
+            <Modal show={showLoadingModal} onClose={() => setShowLoadingModal(false)} size="md" popup dismissible>
+              <Modal.Header />
+              <Modal.Body>
+                <div className="text-center">
+                  <HiOutlineExclamationCircle className="mx-auto mb-4 h-14 w-14 text-gray-400 dark:text-gray-200" />
+                  <h3 className="mb-5 text-lg font-normal text-black dark:text-white truncate max-w-[400px]">
+                    Loading layer {fetcher.formData?.get("layer-url") as string}
+                  </h3>
+                </div>
+              </Modal.Body>
+            </Modal>
+          </fetcher.Form>
           <Outlet />
         </div>
         <div className="w-2/12 max-w-sm p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-6 md:p-8 dark:bg-dark-bg dark:border-gray-700">
