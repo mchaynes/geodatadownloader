@@ -133,6 +133,12 @@ export function ExtentPicker() {
     }
   }, [fetcher, textBoxValue])
 
+  useEffect(() => {
+    data.layers.forEach((l) => {
+      const template = l.esri.createPopupTemplate();
+      l.esri.popupTemplate = template;  // Set the popup template on the layer
+    })
+  }, [data])
 
 
   // Attaches map to ref
