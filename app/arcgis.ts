@@ -72,9 +72,9 @@ export type GeometryUpdateListener = (_?: Geometry) => void;
 const pageSize = 200;
 
 
-export async function queryLayer(layer: EsriLayerWithConfig, filterExtent?: Geometry) {
+export async function queryLayer(layer, filterExtent?: Geometry) {
   const objectIds = await layer.esri.queryObjectIds({
-    where: layer.config.where_clause ?? "1=1",
+    where: layer?.config?.where_clause ?? "1=1",
     geometry: filterExtent,
     spatialRelationship: filterExtent ? "intersects" : undefined,
   });

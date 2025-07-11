@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 
 import logo from "/IMG_1039.png";
-import { supabase } from "../supabase";
+// import { supabase } from "../supabase";
 import { Session } from "@supabase/supabase-js";
 import 'flowbite'
 
@@ -16,15 +16,15 @@ export default function Root() {
   const location = useLocation()
   const [session, setSession] = useState<Session>()
 
-  useEffect(() => {
-    async function f() {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) {
-        setSession(session)
-      }
-    }
-    void f()
-  }, [location])
+  // useEffect(() => {
+  //   async function f() {
+  //     const { data: { session } } = await supabase.auth.getSession()
+  //     if (session) {
+  //       setSession(session)
+  //     }
+  //   }
+  //   void f()
+  // }, [location])
   return (
     <div>
       <header className="z-40">

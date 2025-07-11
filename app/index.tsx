@@ -7,14 +7,8 @@ import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom"
 import ErrorPage from "./ErrorPage";
 import Root from "./routes/root";
 
-import { RequireAuth } from "./RequireAuth";
-import MapDlConfigTable, { dlConfigLoader, dlConfigAction } from "./routes/maps/dl/config";
 
-import SignUp, { signUpAction } from "./routes/signup";
-import SignIn, { signInAction } from './routes/signin'
 import Forgot, { sendResetEmailAction } from "./routes/forgot";
-import SignOut, { signoutAction } from "./routes/signout";
-import UpdateMapDlConfig, { updateMapDlConfigAction, updateMapDlConfigLoader } from "./routes/maps/dl/config/update";
 import AddLayerToMap from "./routes/maps/create/layers/add";
 import { Flowbite } from "flowbite-react";
 import { removeLayerAction } from "./routes/maps/create/remove-layer";
@@ -89,49 +83,8 @@ const router = createBrowserRouter([
           }
         ]
       },
-      {
-        path: "/maps/dl/config",
-        errorElement: <ErrorPage />,
-        loader: dlConfigLoader,
-        action: dlConfigAction,
-        element: (
-          <RequireAuth>
-            <MapDlConfigTable />
-          </RequireAuth>
-        ),
-        children: [
-          {
-            path: "/maps/dl/config/:id",
-            loader: updateMapDlConfigLoader,
-            action: updateMapDlConfigAction,
-            element: (
-              <UpdateMapDlConfig />
-            )
-          },
-        ]
-      },
     ]
   },
-  {
-    path: "/signin",
-    element: <SignIn />,
-    action: signInAction,
-  },
-  {
-    path: "/signup",
-    element: <SignUp />,
-    action: signUpAction,
-  },
-  {
-    path: "/forgot",
-    element: <Forgot />,
-    action: sendResetEmailAction,
-  },
-  {
-    path: "/signout",
-    action: signoutAction,
-    element: <SignOut />,
-  }
 ])
 
 

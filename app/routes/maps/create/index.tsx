@@ -76,9 +76,9 @@ export const mapCreatorAction = async ({ request }: ActionFunctionArgs) => {
     const err = e as Error;
     errMsg = err.message
   }
-  const esriWithConfig: EsriLayerWithConfig[] = layers.map(esri => ({
+  const esriWithConfig = layers.map(esri => ({
     esri: esri,
-    config: mapConfig.layers.find(l => l.url === getRealUrl(esri)) ?? raise("can't find feature layer")
+    config: mapConfig.layers.find(l => l.url === getRealUrl(esri)) 
   }))
 
 
@@ -107,9 +107,9 @@ export const mapCreatorLoader = async () => {
     const err = e as Error;
     errMsg = err.message
   }
-  const esriWithConfig: EsriLayerWithConfig[] = layers.map(esri => ({
+  const esriWithConfig = layers.map(esri => ({
     esri: esri,
-    config: mapConfig.layers.find(l => l.url === getRealUrl(esri)) ?? raise("can't find feature layer")
+    config: mapConfig.layers.find(l => l.url === getRealUrl(esri))
   }))
   return {
     mapConfig: mapConfig,
@@ -200,7 +200,7 @@ export default function MapCreator() {
             <ul role="list" className="divide-y divide-gray-200 dark:divide-gray-700">
               {loaderData.layers.length > 0 ? loaderData.layers.map((layer) =>
                 <LayerDropdownMenu
-                  key={layer.config.url}
+                  key={layer?.config?.url}
                   layer={layer}
                   boundary={filterExtent}
                 />
@@ -296,7 +296,7 @@ export default function MapCreator() {
 }
 
 type LayerDropdownMenuProps = {
-  layer: EsriLayerWithConfig
+  layer: any
   boundary?: Geometry
 }
 
@@ -432,7 +432,7 @@ function ModifyLayerConfig({ show, setShow, boundary, layer }: ModifyLayerConfig
   const fields = layer.esri.fields
   const [results, setResults] = useState<FeatureSet>()
   const fetcher = useFetcher()
-  const [where, setWhere] = useState(layer.config.where_clause ?? "1=1")
+  const [where, setWhere] = useState(layer?.config?.where_clause ?? "1=1")
 
   const cancelButtonRef = useRef(null)
 
@@ -487,14 +487,14 @@ function ModifyLayerConfig({ show, setShow, boundary, layer }: ModifyLayerConfig
                   <div className="sm:flex sm:items-start">
                     <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
                       <Dialog.Title as="h3" className="text-base font-semibold leading-6 text-gray-900 dark:text-white">
-                        Configure Layer {layer.config.name}
+                        Configure Layer {layer?.config?.name}
                       </Dialog.Title>
                     </div>
                   </div>
                   <fetcher.Form action="/maps/create/layers/configure" method="post">
                     <div className="flex flex-col gap-2">
-                      <input name="url" value={layer.config.url} className="hidden" readOnly />
-                      <WhereInput defaultWhere={layer.config.where_clause ?? "1=1"} onUpdateClick={onUpdateClick} />
+                      <input name="url" value={layer?.config?.url} className="hidden" readOnly />
+                      <WhereInput defaultWhere={layer?.config?.where_clause ?? "1=1"} onUpdateClick={onUpdateClick} />
                       <div>
                         <div className="max-h-96 overflow-y-auto">
                           <Table striped hoverable className="border-gray-50 rounded-lg">
@@ -504,11 +504,11 @@ function ModifyLayerConfig({ show, setShow, boundary, layer }: ModifyLayerConfig
                                   <div className="flex flex-col items-center gap-1">
                                     <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 place-self-start">{field.name}</p>
                                     <div className="flex flex-row gap-2 items-center">
-                                      <Checkbox defaultChecked={layer.config.column_mapping ? layer.config.column_mapping[field.name] : true} name={`${field.name}-enabled`} />
+                                      <Checkbox defaultChecked={layer?.config?.column_mapping ? layer.config.column_mapping[field.name] : true} name={`${field.name}-enabled`} />
                                       <TextInput sizing="sm"
                                         id={field.name}
                                         name={`${field.name}-new`}
-                                        defaultValue={layer.config.column_mapping ? layer.config.column_mapping[field.name] ?? field.name : field.name}
+                                        defaultValue={layer?.config?.column_mapping ? layer.config.column_mapping[field.name] ?? field.name : field.name}
                                         required
                                       />
                                     </div>
