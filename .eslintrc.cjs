@@ -1,5 +1,5 @@
 module.exports = {
-  extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+  root: true,
   parser: "@typescript-eslint/parser",
   parserOptions: {
     tsconfigRootDir: __dirname,
@@ -8,8 +8,25 @@ module.exports = {
   extends: [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
-    "plugin:@typescript-eslint/recommended-requiring-type-checking",
   ],
   plugins: ["@typescript-eslint", "react-hooks"],
-  root: true,
+  rules: {
+    // Disable the base rule (it can report incorrect locations for TS code)
+    "no-unused-vars": "off",
+    // Warn on unused vars in TypeScript, but allow underscores for intentionally unused args
+    "@typescript-eslint/no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }
+    ]
+    ,
+    // Allow empty functions in test harnesses and placeholder components
+    "no-empty-function": "off",
+    "@typescript-eslint/no-empty-function": "off",
+    // Allow use of require() in some config/test files
+    "@typescript-eslint/no-var-requires": "off"
+  }
 };

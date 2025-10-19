@@ -6,6 +6,7 @@ import { Writer } from "./writer";
 import JSZip from "jszip";
 import saveAs from "file-saver";
 import { getGdalJs } from "./gdal";
+import { assertNoArcGISError } from "./arcgis";
 import { basename, dirname, extname, join } from "path-browserify";
 
 // Open geojson FeatureCollection object and "features" array
@@ -123,6 +124,9 @@ export class GdalDownloader {
       const fetchResults = async (pageNum: number): Promise<void> => {
         const features = await result.getPage(pageNum);
         const json = features.toJSON() as ArcgisFeatureResp;
+        // Detect ArcGIS embedded error payloads and abort so the UI can
+        // surface the server message instead of producing an empty zip.
+        assertNoArcGISError(json, `layer ${result.layer.esri?.url ?? result.layer.url}`);
         // strip features that contain no geometry
         json.features = json.features.filter(containsValidGeometry)
 
@@ -183,9 +187,20 @@ export class GdalDownloader {
         await Gdal.close(d);
       }
     }
+    // If no output files were generated, abort — creating an empty zip is
+    // confusing and indicates the conversion/feature fetch likely failed.
+    if (outputPaths.length === 0 || this.featuresWritten === 0) {
+      throw new Error(
+        "No output files were generated. The layer produced no outputs — this may indicate a server error or that no features matched the query."
+      );
+    }
+
     const zip = new JSZip();
     for (const p of outputPaths) {
-      const blob = new Blob([await Gdal.getFileBytes(p)]);
+      // Gdal.getFileBytes may return a Uint8Array or ArrayBuffer-like type; cast
+      // to any here to avoid strict typing issues when constructing the Blob.
+      const bytes = await Gdal.getFileBytes(p) as any;
+      const blob = new Blob([bytes]);
       const fileName = basename(p);
       zip.file(fileName, blob);
     }

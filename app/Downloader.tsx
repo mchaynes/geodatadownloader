@@ -110,7 +110,26 @@ export function DownloaderForm({
     } catch (e) {
       const err = e as Error;
       console.error(err);
-      setAlertProps(err.message, "error");
+      const msg = err.message ?? "An unknown error occurred while downloading.";
+      // Map technical/internal messages to user-friendly messages
+      if (msg.includes("No output files were generated")) {
+        setAlertProps(
+          "No files were generated for this download. This may mean the ArcGIS server returned an error, or no features matched your query. Check the layer URL and try again.",
+          "error",
+          err.message
+        );
+      } else if (msg.includes("ArcGIS server error")) {
+        // Try to surface the server's message portion while keeping it friendly
+        const parts = msg.split(":");
+        const serverMsg = parts.slice(1).join(":").trim() || msg;
+        setAlertProps(
+          `Server error when fetching layer: ${serverMsg}. Try again later or check the layer's service URL.`,
+          "error",
+          err.message
+        );
+      } else {
+        setAlertProps(`Download failed: ${msg}`, "error", err.message);
+      }
     } finally {
       setDownloading(false);
       // await fetch("/", {

@@ -13,6 +13,9 @@ export interface StatusAlertProps extends AlertProps {
    */
   msg?: JSX.Element | string;
 
+  /** Optional detailed text shown when user clicks "Show details" */
+  details?: string;
+
   alertType?: AlertType;
 
   onClose?: () => void;
@@ -33,6 +36,7 @@ export function StatusAlert({
   msg,
   alertType,
   onClose,
+  details,
 }: StatusAlertProps) {
   if (loading) {
     return <LinearProgress />;
@@ -40,7 +44,15 @@ export function StatusAlert({
   if (alertType) {
     return (
       <Alert onClose={onClose} severity={alertType}>
-        {msg}
+        <div>
+          {msg}
+          {details && (
+            <details style={{ marginTop: 8 }}>
+              <summary style={{ cursor: "pointer" }}>Show details</summary>
+              <pre style={{ whiteSpace: "pre-wrap", marginTop: 8 }}>{details}</pre>
+            </details>
+          )}
+        </div>
       </Alert>
     );
   }
@@ -49,7 +61,8 @@ export function StatusAlert({
 
 export type StatusAlertSetter = (
   msg: JSX.Element | string,
-  alertType: AlertType
+  alertType: AlertType,
+  details?: string
 ) => void;
 
 export const useStatusAlert = (
@@ -63,10 +76,11 @@ export const useStatusAlert = (
   // Wrap function in useCallback with no deps because this function should always be the same object
   // this mimics the guarantee set by useState()
   const setStatusAlert = useCallback(
-    (newMsg: string, newAlertType: AlertType) => {
+    (newMsg: string, newAlertType: AlertType, details?: string) => {
       setProps({
         msg: <Typography sx={{ wordWrap: "break-word" }}>{newMsg}</Typography>,
         alertType: newAlertType,
+        details,
       });
     },
     []
