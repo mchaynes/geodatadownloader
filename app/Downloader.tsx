@@ -13,6 +13,7 @@ import {
   MAX_CONCURRENT_REQUESTS,
 } from "./formats/geojson";
 import { StatusAlert, useStatusAlert } from "./StatusAlert";
+import Alert from '@mui/material/Alert';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -57,10 +58,11 @@ export function DownloaderForm({
   const [totalFeatures, setTotalFeatures] = useState<number>(100);
 
   const [downloading, setDownloading] = useState(false);
-  const [alertProps, setAlertProps] = useStatusAlert("", undefined);
+  const [, setAlertProps] = useStatusAlert("", undefined);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [detailsText, setDetailsText] = useState<string | undefined>(undefined);
   const [prettyMsg, setPrettyMsg] = useState<string | undefined>(undefined);
+  const [compactVisible, setCompactVisible] = useState(false);
 
   const MIN = 0;
   const normalise = (value: number) =>
@@ -116,16 +118,7 @@ export function DownloaderForm({
       const err = e as Error;
       console.error(err);
       const msg = err.message ?? "An unknown error occurred while downloading.";
-
-      const compact = (
-        <span>
-          Download failed.{' '}
-          <Link component="button" underline="always" onClick={() => setDetailsOpen(true)}>
-            See why
-          </Link>
-        </span>
-      );
-
+      // prepare UI-friendly and technical messages
       if (msg.includes("No output files were generated")) {
         setPrettyMsg(
           "No files were generated for this download. This may mean the ArcGIS server returned an error, or no features matched your query. Check the layer URL and try again."
@@ -138,7 +131,10 @@ export function DownloaderForm({
         setPrettyMsg(msg);
       }
       setDetailsText(err.message);
-      setAlertProps(compact, "error", undefined);
+      // clear any existing StatusAlert props so the old long message isn't shown
+      setAlertProps("", undefined, undefined);
+      // show a compact inline alert next to the download button and allow opening details modal
+      setCompactVisible(true);
     } finally {
       setDownloading(false);
     }
@@ -224,6 +220,24 @@ export function DownloaderForm({
         Download
       </MuiButton>
 
+      {compactVisible && (
+        <Box sx={{ mt: 2 }}>
+          <Alert severity="error" onClose={() => setCompactVisible(false)}>
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <span>Download failed.</span>
+              <Link
+                component="button"
+                underline="always"
+                onClick={() => setDetailsOpen(true)}
+                sx={{ alignSelf: "flex-start", padding: 0, marginTop: 0.5 }}
+              >
+                See why
+              </Link>
+            </div>
+          </Alert>
+        </Box>
+      )}
+
       <StatusAlert {...concAlertProps} />
       {downloading && (
         <Box sx={{ mt: 3, ml: 1, mr: 1, mb: 3 }}>
@@ -240,7 +254,7 @@ export function DownloaderForm({
           </Typography>
         </Box>
       )}
-      <StatusAlert {...alertProps} />
+
 
       <Dialog
         open={detailsOpen}
