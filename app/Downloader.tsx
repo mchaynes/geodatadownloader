@@ -2,7 +2,7 @@ import * as React from "react";
 import InputLabel from "@mui/material/InputLabel";
 import { styled } from "@mui/material/styles";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
+import MuiButton from "@mui/material/Button";
 import { useEffect, useState } from "react";
 import { QueryResults } from "./arcgis";
 import Select from "@mui/material/Select";
@@ -13,8 +13,13 @@ import {
   MAX_CONCURRENT_REQUESTS,
 } from "./formats/geojson";
 import { StatusAlert, useStatusAlert } from "./StatusAlert";
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Link from '@mui/material/Link';
+import Typography from '@mui/material/Typography';
 import LinearProgress from "@mui/material/LinearProgress";
-import Typography from "@mui/material/Typography";
 import Slider from "@mui/material/Slider";
 import Grid from "@mui/material/Grid";
 import MuiInput from "@mui/material/Input";
@@ -22,7 +27,7 @@ import Stack from "@mui/material/Stack";
 
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import CheckBox from "@mui/icons-material/CheckBox";
-import { CircularProgress, ListItemText, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import { CircularProgress, ListItemText } from "@mui/material";
 import { Writer } from "./formats/writer";
 import { Drivers, GdalDownloader } from "./formats/gdal";
 
@@ -54,6 +59,8 @@ export function DownloaderForm({
   const [downloading, setDownloading] = useState(false);
   const [alertProps, setAlertProps] = useStatusAlert("", undefined);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsText, setDetailsText] = useState<string | undefined>(undefined);
+  const [prettyMsg, setPrettyMsg] = useState<string | undefined>(undefined);
 
   const MIN = 0;
   const normalise = (value: number) =>
@@ -104,64 +111,36 @@ export function DownloaderForm({
         where,
         exportType
       );
-      setAlertProps(
-        `Successfully downloaded ${totalFeatures} features`,
-        "success"
-      );
+      setAlertProps(`Successfully downloaded ${totalFeatures} features`, "success");
     } catch (e) {
       const err = e as Error;
       console.error(err);
       const msg = err.message ?? "An unknown error occurred while downloading.";
-      // Map technical/internal messages to user-friendly messages
+
+      const compact = (
+        <span>
+          Download failed.{' '}
+          <Link component="button" underline="always" onClick={() => setDetailsOpen(true)}>
+            See why
+          </Link>
+        </span>
+      );
+
       if (msg.includes("No output files were generated")) {
-        setAlertProps(
-          <>
-            No files were generated for this download. This may mean the ArcGIS server returned an error, or no features matched your query. Check the layer URL and try again.
-            <Button size="small" onClick={() => setDetailsOpen(true)} sx={{ ml: 1 }}>
-              Show details
-            </Button>
-          </>,
-          "error",
-          err.message
+        setPrettyMsg(
+          "No files were generated for this download. This may mean the ArcGIS server returned an error, or no features matched your query. Check the layer URL and try again."
         );
       } else if (msg.includes("ArcGIS server error")) {
-        // Try to surface the server's message portion while keeping it friendly
         const parts = msg.split(":");
         const serverMsg = parts.slice(1).join(":").trim() || msg;
-        setAlertProps(
-          <>
-            Server error when fetching layer: {serverMsg}. Try again later or check the layer's service URL.
-            <Button size="small" onClick={() => setDetailsOpen(true)} sx={{ ml: 1 }}>
-              Show details
-            </Button>
-          </>,
-          "error",
-          err.message
-        );
+        setPrettyMsg(`Server error when fetching layer: ${serverMsg}. Try again later or check the layer's service URL.`);
       } else {
-        setAlertProps(
-          <>
-            Download failed: {msg}
-            <Button size="small" onClick={() => setDetailsOpen(true)} sx={{ ml: 1 }}>
-              Show details
-            </Button>
-          </>,
-          "error",
-          err.message
-        );
+        setPrettyMsg(msg);
       }
+      setDetailsText(err.message);
+      setAlertProps(compact, "error", undefined);
     } finally {
       setDownloading(false);
-      // await fetch("/", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      //   body: new URLSearchParams({
-      //     "form-name": "downloads",
-      //     layer_url: `${queryResults.layer.url}/${queryResults.layer.layerId}`,
-      //     format: exportType,
-      //     error: error,
-      //   }).toString(),
-      // });
     }
   }
 
@@ -196,9 +175,9 @@ export function DownloaderForm({
                 setExportType(e.target.value);
               }}
             >
-              {Object.keys(Drivers).map(t =>
+              {Object.keys(Drivers).map(t => (
                 <MenuItem key={t} value={t}>{t}</MenuItem>
-              )}
+              ))}
             </Select>
           </FormControl>
           <Box>
@@ -236,14 +215,14 @@ export function DownloaderForm({
           </Box>
         </Stack>
       </Box>
-      <Button
+      <MuiButton
         disabled={!queryResults}
         variant="contained"
         sx={{ alignSelf: "flex-end" }}
         onClick={() => void download()}
       >
         Download
-      </Button>
+      </MuiButton>
 
       <StatusAlert {...concAlertProps} />
       {downloading && (
@@ -262,13 +241,30 @@ export function DownloaderForm({
         </Box>
       )}
       <StatusAlert {...alertProps} />
-      <Dialog open={detailsOpen} onClose={() => setDetailsOpen(false)} fullWidth maxWidth="md">
-        <DialogTitle>Download details</DialogTitle>
-        <DialogContent>
-          <pre style={{ whiteSpace: "pre-wrap" }}>{alertProps.details}</pre>
+
+      <Dialog
+        open={detailsOpen}
+        onClose={() => setDetailsOpen(false)}
+        fullWidth={true}
+        maxWidth="lg"
+        aria-labelledby="download-error-dialog"
+      >
+        <DialogTitle id="download-error-dialog">Download failed</DialogTitle>
+        <DialogContent dividers>
+          <Typography paragraph sx={{ wordWrap: 'break-word' }}>
+            {prettyMsg}
+          </Typography>
+          <Typography component="div" sx={{ mt: 2 }}>
+            <strong>Technical details</strong>
+            <div style={{ marginTop: 8 }}>
+              <pre style={{ overflowX: 'auto', whiteSpace: 'pre', background: '#f5f5f5', padding: 12, borderRadius: 4 }}>
+                {detailsText}
+              </pre>
+            </div>
+          </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDetailsOpen(false)}>Close</Button>
+          <MuiButton onClick={() => setDetailsOpen(false)}>Close</MuiButton>
         </DialogActions>
       </Dialog>
     </div>
@@ -308,7 +304,7 @@ function PotentialExportType({ format }: PotentialExportTypeProps) {
   return (
     <MenuItem value={format} disableRipple={true} disableTouchRipple={true}>
       <ListItemText>{format}</ListItemText>{" "}
-      <Button onClick={() => void onClick()} disabled={state !== ""}>
+      <MuiButton onClick={() => void onClick()} disabled={state !== ""}>
         {(function render() {
           switch (state) {
             case "success":
@@ -319,7 +315,8 @@ function PotentialExportType({ format }: PotentialExportTypeProps) {
               return <ThumbUpIcon />;
           }
         })()}
-      </Button>
+      </MuiButton>
     </MenuItem>
   );
 }
+
