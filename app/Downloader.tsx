@@ -22,7 +22,7 @@ import Stack from "@mui/material/Stack";
 
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import CheckBox from "@mui/icons-material/CheckBox";
-import { CircularProgress, ListItemText } from "@mui/material";
+import { CircularProgress, ListItemText, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
 import { Writer } from "./formats/writer";
 import { Drivers, GdalDownloader } from "./formats/gdal";
 
@@ -53,6 +53,7 @@ export function DownloaderForm({
 
   const [downloading, setDownloading] = useState(false);
   const [alertProps, setAlertProps] = useStatusAlert("", undefined);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const MIN = 0;
   const normalise = (value: number) =>
@@ -114,7 +115,12 @@ export function DownloaderForm({
       // Map technical/internal messages to user-friendly messages
       if (msg.includes("No output files were generated")) {
         setAlertProps(
-          "No files were generated for this download. This may mean the ArcGIS server returned an error, or no features matched your query. Check the layer URL and try again.",
+          <>
+            No files were generated for this download. This may mean the ArcGIS server returned an error, or no features matched your query. Check the layer URL and try again.
+            <Button size="small" onClick={() => setDetailsOpen(true)} sx={{ ml: 1 }}>
+              Show details
+            </Button>
+          </>,
           "error",
           err.message
         );
@@ -123,12 +129,26 @@ export function DownloaderForm({
         const parts = msg.split(":");
         const serverMsg = parts.slice(1).join(":").trim() || msg;
         setAlertProps(
-          `Server error when fetching layer: ${serverMsg}. Try again later or check the layer's service URL.`,
+          <>
+            Server error when fetching layer: {serverMsg}. Try again later or check the layer's service URL.
+            <Button size="small" onClick={() => setDetailsOpen(true)} sx={{ ml: 1 }}>
+              Show details
+            </Button>
+          </>,
           "error",
           err.message
         );
       } else {
-        setAlertProps(`Download failed: ${msg}`, "error", err.message);
+        setAlertProps(
+          <>
+            Download failed: {msg}
+            <Button size="small" onClick={() => setDetailsOpen(true)} sx={{ ml: 1 }}>
+              Show details
+            </Button>
+          </>,
+          "error",
+          err.message
+        );
       }
     } finally {
       setDownloading(false);
@@ -242,6 +262,15 @@ export function DownloaderForm({
         </Box>
       )}
       <StatusAlert {...alertProps} />
+      <Dialog open={detailsOpen} onClose={() => setDetailsOpen(false)} fullWidth maxWidth="md">
+        <DialogTitle>Download details</DialogTitle>
+        <DialogContent>
+          <pre style={{ whiteSpace: "pre-wrap" }}>{alertProps.details}</pre>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDetailsOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

@@ -136,6 +136,7 @@ export default function MapCreator() {
 
   const [downloader] = useState(new GdalDownloader((num) => setFeatDld(num)))
   const [mapAlertProps, setMapAlertProps] = useStatusAlert("", undefined);
+  const [mapDetailsOpen, setMapDetailsOpen] = useState(false);
   const [totalFeatures, setTotalFeatures] = useState(0)
   const [percent, setPercent] = useState(0)
 
@@ -284,7 +285,15 @@ export default function MapCreator() {
                   const err = e as Error;
                   console.error(err);
                   setMapAlertProps(
-                    `Download failed: ${err.message}`,
+                    <>
+                      Download failed: {err.message}
+                      <button
+                        className="ml-2 underline"
+                        onClick={() => setMapDetailsOpen(true)}
+                      >
+                        Show details
+                      </button>
+                    </>,
                     "error",
                     err.message
                   );
@@ -296,6 +305,15 @@ export default function MapCreator() {
             <div style={{ marginTop: 12 }}>
               <StatusAlert {...mapAlertProps} />
             </div>
+            <Modal show={mapDetailsOpen} onClose={() => setMapDetailsOpen(false)} size="lg" popup>
+              <Modal.Header />
+              <Modal.Body>
+                <div className="text-left">
+                  <h3 className="mb-4 text-lg font-medium">Download details</h3>
+                  <pre className="text-sm break-words">{mapAlertProps.details}</pre>
+                </div>
+              </Modal.Body>
+            </Modal>
             {percent === 100 &&
               <Alert color="success">
                 <span>
