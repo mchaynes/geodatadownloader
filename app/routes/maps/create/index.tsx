@@ -10,6 +10,7 @@ import Geometry from "@arcgis/core/geometry/Geometry";
 import { ActionFunctionArgs, Form, Link, Outlet, useFetcher, useLoaderData } from "react-router-dom";
 import { Alert, Button, Checkbox, Dropdown, Modal, Progress, Table, TextInput } from "flowbite-react";
 import { Drivers, GdalDownloader } from "../../../downloader";
+import { StatusAlert, useStatusAlert } from "../../../StatusAlert";
 import { getMapConfigLocal, saveMapConfigLocal } from "../../../database";
 
 import { HiOutlineExclamationCircle, HiOutlineArrowCircleDown } from "react-icons/hi";
@@ -134,6 +135,7 @@ export default function MapCreator() {
   const [featDld, setFeatDld] = useState(0)
 
   const [downloader] = useState(new GdalDownloader((num) => setFeatDld(num)))
+  const [mapAlertProps, setMapAlertProps] = useStatusAlert("", undefined);
   const [totalFeatures, setTotalFeatures] = useState(0)
   const [percent, setPercent] = useState(0)
 
@@ -270,13 +272,30 @@ export default function MapCreator() {
             >
               Schedule
             </button>*/}
-            <button className="w-full ml-2 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-              onClick={() => {
-                downloader.download(results, concurrent, format as string)
+            <button
+              className="w-full ml-2 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+              onClick={async () => {
+                try {
+                  // clear previous alerts
+                  setMapAlertProps("", undefined);
+                  await downloader.download(results, concurrent, format as string);
+                  setMapAlertProps("Download completed", "success");
+                } catch (e) {
+                  const err = e as Error;
+                  console.error(err);
+                  setMapAlertProps(
+                    `Download failed: ${err.message}`,
+                    "error",
+                    err.message
+                  );
+                }
               }}
             >
               Download
             </button>
+            <div style={{ marginTop: 12 }}>
+              <StatusAlert {...mapAlertProps} />
+            </div>
             {percent === 100 &&
               <Alert color="success">
                 <span>
