@@ -48,6 +48,7 @@ export function parseWFSUrl(url: string): { baseUrl: string; typename?: string }
   const typename = params.get("typename") || params.get("typeName") || params.get("TYPENAME");
   
   // Get base URL without query params
+  // For OWS endpoints, we want to keep the path but clear query params
   const baseUrl = `${urlObj.origin}${urlObj.pathname}`;
   
   return { baseUrl, typename: typename || undefined };
@@ -60,12 +61,24 @@ export function isWFSUrl(url: string): boolean {
   try {
     const lowerUrl = url.toLowerCase();
     // Check for common WFS patterns
-    return (
+    // Note: /ows endpoints (OGC Web Services) can serve both WMS and WFS
+    // We'll treat them as WFS if they don't explicitly specify WMS
+    const hasWfsIndicator = (
       lowerUrl.includes("/wfs") ||
       lowerUrl.includes("service=wfs") ||
       lowerUrl.includes("request=getcapabilities") ||
       lowerUrl.includes("request=getfeature")
     );
+    
+    const hasOwsEndpoint = lowerUrl.includes("/ows");
+    const hasWmsService = lowerUrl.includes("service=wms");
+    
+    // If it's an OWS endpoint without explicit WMS service parameter, treat as WFS
+    if (hasOwsEndpoint && !hasWmsService) {
+      return true;
+    }
+    
+    return hasWfsIndicator;
   } catch {
     return false;
   }

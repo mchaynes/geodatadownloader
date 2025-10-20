@@ -255,13 +255,21 @@ export default function MapCreator() {
       const formData = new FormData(form);
       const rawUrl = (formData.get("layer-url") as string | null)?.trim() ?? "";
       if (!rawUrl) {
-        setLayerAlert("Please enter an ArcGIS REST URL.", "warning");
+        setLayerAlert("Please enter a layer URL.", "warning");
         return;
       }
 
       closeExplorer();
       setLayerAlert("", undefined);
       setLayerUrlInput(rawUrl);
+      
+      // Check if this is a WFS URL - if so, skip ArcGIS analysis and submit directly
+      if (isWFSUrl(rawUrl)) {
+        setLoadingMessage(`Loading WFS layer ${rawUrl}`);
+        submitAddLayer(rawUrl);
+        return;
+      }
+      
       setAnalyzingUrl(true);
       setLoadingMessage(`Analyzing ${rawUrl}`);
 
