@@ -39,7 +39,7 @@ export default function RemoveLayerModal() {
               Are you sure you want to remove layer?
             </h3>
             <div className="flex justify-center gap-4">
-              <Button color="failure" type="submit" name="url" value={url}>
+              <Button color="failure" type="submit" name="url" value={url} className="!text-white">
                 Yes, I'm sure
               </Button>
               <Button color="gray" onClick={navigateBack}>
