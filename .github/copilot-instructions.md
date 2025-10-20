@@ -7,7 +7,7 @@ geodatadownloader.com (GDD) is a client-side browser application that downloads 
 ### Key Features
 - Downloads data from ArcGIS feature layers without max query size limitations
 - Supports custom extents and column selection
-- Exports to multiple formats: GeoJSON, CSV, SHP, GPKG, KML, GPX, PGDUMP, DXF, SQLite
+- Exports to multiple formats: GeoJSON, CSV, SHP, GPKG, PMTiles
 - Client-side conversion using GDAL WebAssembly
 - Uses ESRI JavaScript library for map rendering
 
@@ -35,7 +35,8 @@ geodatadownloader.com (GDD) is a client-side browser application that downloads 
 - Module: ES2020
 - JSX: react-jsx
 - Strict null checks enabled
-- No implicit any allowed (but currently disabled in eslint - see .eslintrc.cjs)
+- Implicit any is allowed (`noImplicitAny: false`)
+- Explicit any usage allowed (but discouraged - `@typescript-eslint/no-explicit-any` is off)
 - No implicit returns/this required
 
 ### ESLint Rules
@@ -95,11 +96,12 @@ npm run cy:run             # Run Cypress tests
 - Requires PUPPETEER_SKIP_DOWNLOAD=true and CYPRESS_INSTALL_BINARY=0 in CI/restricted environments
 
 ### Testing Guidelines
-- Write tests in `app/__tests__/` directory
+- Write tests in `app/__tests__/` directory (legacy setup files in `src/`)
 - Use React Testing Library for component tests
 - Mock external dependencies (ArcGIS, GDAL)
 - Test files should match pattern: `*.test.ts` or `*.test.tsx`
 - Cypress E2E tests in `cypress/e2e/`
+- Jest configuration includes setup files from both `src/` (legacy) and test files from `app/`
 
 ## Important Considerations
 
@@ -128,11 +130,14 @@ npm run cy:run             # Run Cypress tests
 ## Common Tasks
 
 ### Adding a New Export Format
-1. Add format to `Formats` enum in `app/types.ts`
-2. Implement writer in `app/writer.ts`
-3. Update UI in relevant components
-4. Add tests for new format
-5. Update database schema if needed
+1. Update database schema first - add format to the enum in `supabase/migrations/`
+2. Regenerate database types: `npx supabase gen types typescript`
+3. Add format to `Formats` array in `app/types.ts` (it uses the database enum type)
+4. Implement writer in `app/writer.ts` or use GDAL for conversion
+5. Update UI in relevant components
+6. Add tests for new format
+
+Note: Currently supported formats (from database schema): pmtiles, gpkg, geojson, shp, csv
 
 ### Working with ArcGIS API
 - Use `@arcgis/core` imports, not legacy `esri-loader`
