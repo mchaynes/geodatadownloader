@@ -184,18 +184,46 @@ export default function MapCreator() {
 
 
   const [showRemoveModal, setShowRemoveModal] = useState(false)
+  const [isLayersPanelCollapsed, setIsLayersPanelCollapsed] = useState(false)
+
+  const layersPanelClasses = [
+    isLayersPanelCollapsed ? 'w-12' : 'w-3/12',
+    'min-w-fit overflow-y-auto max-w-xs p-4',
+    'bg-white border border-gray-200 rounded-lg shadow sm:p-8',
+    'dark:bg-dark-bg dark:border-gray-700',
+    'transition-all duration-300'
+  ].join(' ')
 
   return (
     <div className="p-2">
       <div className="flex flex-row gap-1">
-        <div className="w-3/12 min-w-3/12 overflow-y-auto max-w-xs p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-8 dark:bg-dark-bg dark:border-gray-700">
+        <div className={layersPanelClasses}>
           <div className="flex items-center justify-between mb-4">
-            <h5 className="text-xl font-bold leading-none text-gray-900 dark:text-white">Layers</h5>
+            {!isLayersPanelCollapsed && (
+              <>
+                <h5 className="text-xl font-bold leading-none text-gray-900 dark:text-white">Layers</h5>
 
+                <button
+                  onClick={() => setShowRemoveModal(srm => !srm)}
+                  className="inline-flex items-center p-2 text-sm font-medium rounded-lg text-primary-700 hover:bg-gray-100 dark:text-primary-500 dark:hover:bg-gray-700">
+                  Remove All
+                </button>
+              </>
+            )}
             <button
-              onClick={() => setShowRemoveModal(srm => !srm)}
-              className="inline-flex items-center p-2 text-sm font-medium rounded-lg text-primary-700 hover:bg-gray-100 dark:text-primary-500 dark:hover:bg-gray-700">
-              Remove All
+              onClick={() => setIsLayersPanelCollapsed(!isLayersPanelCollapsed)}
+              className="inline-flex items-center p-2 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+              title={isLayersPanelCollapsed ? "Expand layers panel" : "Collapse layers panel"}
+            >
+              {isLayersPanelCollapsed ? (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              )}
             </button>
             <RemoveLayerModal
               url=""
@@ -204,24 +232,26 @@ export default function MapCreator() {
             />
           </div>
 
-          <div className="flow-root">
-            <ul role="list" className="divide-y divide-gray-200 dark:divide-gray-700">
-              {loaderData.layers.length > 0 ? loaderData.layers.map((layer) =>
-                <LayerDropdownMenu
-                  key={layer?.config?.url}
-                  layer={layer}
-                  boundary={filterExtent}
-                />
-              )
-                :
-                <li className="h-full flex flex-col items-center justify-items-center">
-                  <p className="text-gray-400">
-                    Add some layers :)
-                  </p>
-                </li>
-              }
-            </ul>
-          </div>
+          {!isLayersPanelCollapsed && (
+            <div className="flow-root">
+              <ul role="list" className="divide-y divide-gray-200 dark:divide-gray-700">
+                {loaderData.layers.length > 0 ? loaderData.layers.map((layer) =>
+                  <LayerDropdownMenu
+                    key={layer?.config?.url}
+                    layer={layer}
+                    boundary={filterExtent}
+                  />
+                )
+                  :
+                  <li className="h-full flex flex-col items-center justify-items-center">
+                    <p className="text-gray-400">
+                      Add some layers :)
+                    </p>
+                  </li>
+                }
+              </ul>
+            </div>
+          )}
         </div>
         <div className="flex flex-col gap-2 w-full flex-grow p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-8 dark:bg-dark-bg dark:border-gray-700">
           <fetcher.Form method="post">
