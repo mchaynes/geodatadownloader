@@ -4,18 +4,26 @@ import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 import { getQueryParameter } from "../../../url";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
-import React, { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getRealUrl, queryLayer, QueryResult } from "../../../arcgis";
 import Geometry from "@arcgis/core/geometry/Geometry";
 import { ActionFunctionArgs, Form, Link, Outlet, useFetcher, useLoaderData } from "react-router-dom";
 import { Alert, Button, Checkbox, Dropdown, Modal, Progress, Table, TextInput } from "flowbite-react";
 import { Drivers, GdalDownloader } from "../../../downloader";
-import { useStatusAlert } from "../../../StatusAlert";
+import { StatusAlert, useStatusAlert } from "../../../StatusAlert";
 import { getMapConfigLocal, saveMapConfigLocal } from "../../../database";
 
 import { HiOutlineExclamationCircle, HiOutlineArrowCircleDown } from "react-icons/hi";
 import FeatureSet from "@arcgis/core/rest/support/FeatureSet";
 import { EsriLayerWithConfig, raise } from "../../../types";
+import {
+  analyzeArcGISEndpoint,
+  traverseFeatureLayers,
+  ArcGISTraversalResult,
+  ArcGISServiceNode,
+  ArcGISFolderNode,
+  ArcGISFeatureLayerNode,
+} from "../../../traverse";
 import { Dialog, Transition } from "@headlessui/react";
 
 type SupportedExportType = string;
@@ -125,6 +133,13 @@ export default function MapCreator() {
 
   const loaderData = useLoaderData() as Awaited<ReturnType<typeof mapCreatorLoader>>
 
+  const [layerUrlInput, setLayerUrlInput] = useState("");
+  const [layerAlert, setLayerAlert] = useStatusAlert("", undefined);
+  const [analyzingUrl, setAnalyzingUrl] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState<string>("");
+  const [layerExplorerResult, setLayerExplorerResult] = useState<ArcGISTraversalResult | null>(null);
+  const [layerExplorerVisible, setLayerExplorerVisible] = useState(false);
+
   const [filterExtent, setFilterExtent] = useState<Geometry | undefined>(
     undefined
   );
@@ -148,15 +163,109 @@ export default function MapCreator() {
 
   const [showLoadingModal, setShowLoadingModal] = useState(false)
   const fetcher = useFetcher()
-  // Show/hide modal based on fetcher state
+
+  const closeExplorer = useCallback(() => {
+    setLayerExplorerVisible(false);
+    setLayerExplorerResult(null);
+  }, [setLayerExplorerVisible, setLayerExplorerResult]);
+
+  const submitAddLayer = useCallback(
+    (layerUrl: string) => {
+      const normalized = layerUrl.trim();
+      if (!normalized) {
+        return;
+      }
+      closeExplorer();
+      setLayerAlert("", undefined);
+      setLayerUrlInput(normalized);
+      setLoadingMessage(`Loading layer ${normalized}`);
+      const data = new FormData();
+      data.set("layer-url", normalized);
+      data.set("intent", "add-layer");
+      fetcher.submit(data, { method: "post" });
+    },
+    [closeExplorer, fetcher, setLayerAlert, setLayerUrlInput, setLoadingMessage]
+  );
+
+  const handleExplorerClose = useCallback(() => {
+    closeExplorer();
+  }, [closeExplorer]);
+
+  const handleExplorerAdd = useCallback(
+    (layer: ArcGISFeatureLayerNode, _service: ArcGISServiceNode) => {
+      submitAddLayer(layer.url);
+    },
+    [submitAddLayer]
+  );
+
+  const handleLayerSubmit = useCallback(
+    async (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const formData = new FormData(form);
+      const rawUrl = (formData.get("layer-url") as string | null)?.trim() ?? "";
+      if (!rawUrl) {
+        setLayerAlert("Please enter an ArcGIS REST URL.", "warning");
+        return;
+      }
+
+      closeExplorer();
+      setLayerAlert("", undefined);
+      setLayerUrlInput(rawUrl);
+      setAnalyzingUrl(true);
+      setLoadingMessage(`Analyzing ${rawUrl}`);
+
+      try {
+        const analysis = await analyzeArcGISEndpoint(rawUrl);
+        const normalized = analysis.normalizedUrl;
+        setLayerUrlInput(normalized);
+
+        if (analysis.endpointType === "feature-layer") {
+          setAnalyzingUrl(false);
+          submitAddLayer(normalized);
+          return;
+        }
+
+        const traversal = await traverseFeatureLayers(normalized, analysis);
+        setAnalyzingUrl(false);
+
+        if (traversal.featureLayers.length === 0) {
+          setLayerAlert("No feature layers found at this endpoint.", "warning");
+          return;
+        }
+
+        setLayerExplorerResult(traversal);
+        setLayerExplorerVisible(true);
+      } catch (err) {
+        const error = err as Error;
+        setAnalyzingUrl(false);
+        setLayerAlert(error.message, "error");
+      }
+    },
+    [closeExplorer, setLayerAlert, setLayerUrlInput, setAnalyzingUrl, setLoadingMessage, setLayerExplorerResult, setLayerExplorerVisible, submitAddLayer]
+  );
+
+  // Show/hide modal based on fetcher or analysis state
   useEffect(() => {
-    console.log(fetcher)
-    if (fetcher.state === "submitting" || fetcher.state === "loading") {
+    if (analyzingUrl || fetcher.state === "submitting" || fetcher.state === "loading") {
       setShowLoadingModal(true);
     } else {
       setShowLoadingModal(false);
     }
-  }, [fetcher.state]);
+  }, [analyzingUrl, fetcher.state]);
+
+  useEffect(() => {
+    if (!analyzingUrl && fetcher.state === "idle") {
+      setLoadingMessage("");
+    }
+  }, [analyzingUrl, fetcher.state]);
+
+  useEffect(() => {
+    const err = (fetcher.data as { err?: string } | undefined)?.err;
+    if (err) {
+      setLayerAlert(err, "error");
+    }
+  }, [fetcher.data, setLayerAlert]);
 
   useEffect(() => {
     const f = async () => {
@@ -254,12 +363,22 @@ export default function MapCreator() {
           )}
         </div>
         <div className="flex flex-col gap-2 w-full flex-grow p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-8 dark:bg-dark-bg dark:border-gray-700">
-          <fetcher.Form method="post">
+          <fetcher.Form method="post" onSubmit={handleLayerSubmit}>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                 <svg aria-hidden="true" className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
               </div>
-              <input type="search" name="layer-url" id="default-search" className="block w-full p-4 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-dark-text-bg dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Add Layer Url Here (Like: https://gismaps.kingcounty.gov/arcgis/rest/services/Environment/KingCo_SensitiveAreas/MapServer/11)" required />
+              <input
+                type="search"
+                name="layer-url"
+                id="default-search"
+                className="block w-full p-4 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-dark-text-bg dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                placeholder="Add Layer Url Here (Like: https://gismaps.kingcounty.gov/arcgis/rest/services/Environment/KingCo_SensitiveAreas/MapServer/11)"
+                value={layerUrlInput}
+                onChange={(event) => setLayerUrlInput(event.currentTarget.value)}
+                autoComplete="off"
+                required
+              />
               <button type="submit" name="intent" value="add-layer" className="text-white text-sm absolute right-2.5 bottom-2.5 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                 Add
               </button>
@@ -270,12 +389,29 @@ export default function MapCreator() {
                 <div className="text-center">
                   <HiOutlineArrowCircleDown className="mx-auto mb-4 h-14 w-14 text-gray-400 dark:text-gray-200" />
                   <h3 className="mb-5 text-lg font-normal text-black dark:text-white truncate max-w-[400px]">
-                    Loading layer {fetcher.formData?.get("layer-url") as string}
+                    {loadingMessage
+                      ? loadingMessage
+                      : fetcher.formData?.get("layer-url")
+                        ? `Loading layer ${fetcher.formData?.get("layer-url") as string}`
+                        : "Loading layer..."}
                   </h3>
                 </div>
               </Modal.Body>
             </Modal>
           </fetcher.Form>
+          {(analyzingUrl || layerAlert.alertType) && (
+            <div className="mt-3">
+              <StatusAlert loading={analyzingUrl} {...layerAlert} />
+            </div>
+          )}
+          {layerExplorerResult && (
+            <FeatureLayerExplorerModal
+              visible={layerExplorerVisible}
+              traversal={layerExplorerResult}
+              onClose={handleExplorerClose}
+              onAddLayer={handleExplorerAdd}
+            />
+          )}
           <Outlet />
         </div>
         <div className="w-2/12 max-w-sm p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-6 md:p-8 dark:bg-dark-bg dark:border-gray-700">
@@ -680,4 +816,138 @@ function WhereInput({ defaultWhere, onUpdateClick }: WhereInputProps) {
       <p className="mt-2 text-xs text-red-800 dark:text-red-800 place-self-start">The Edit Columns feature doesn't work yet</p>
     </div>
   )
+}
+
+const INDENT_PX = 20;
+
+type FeatureLayerExplorerModalProps = {
+  visible: boolean;
+  traversal: ArcGISTraversalResult;
+  onClose: () => void;
+  onAddLayer: (layer: ArcGISFeatureLayerNode, service: ArcGISServiceNode) => void;
+};
+
+function FeatureLayerExplorerModal({ visible, traversal, onClose, onAddLayer }: FeatureLayerExplorerModalProps) {
+  return (
+    <Modal show={visible} onClose={onClose} size="5xl" popup>
+      <Modal.Header>Select Feature Layer</Modal.Header>
+      <Modal.Body>
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            Source: <span className="break-all font-mono text-xs">{traversal.analyzedUrl}</span>
+          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            Choose a feature layer below to add it to the map.
+          </p>
+          <div className="max-h-[60vh] overflow-y-auto pr-2">
+            <FolderNodeView node={traversal.root} depth={0} onAddLayer={onAddLayer} />
+          </div>
+        </div>
+      </Modal.Body>
+    </Modal>
+  );
+}
+
+type FolderNodeViewProps = {
+  node: ArcGISFolderNode;
+  depth: number;
+  onAddLayer: (layer: ArcGISFeatureLayerNode, service: ArcGISServiceNode) => void;
+};
+
+function FolderNodeView({ node, depth, onAddLayer }: FolderNodeViewProps) {
+  const currentIndent = depth * INDENT_PX;
+  const childDepth = node.isVirtualRoot ? depth : depth + 1;
+
+  return (
+    <div className="space-y-4">
+      {!node.isVirtualRoot && (
+        <div
+          className="text-sm font-semibold text-gray-800 dark:text-gray-100"
+          style={{ marginLeft: currentIndent }}
+        >
+          {node.displayName}
+        </div>
+      )}
+
+      {node.services.map((service) => (
+        <ServiceNodeView
+          key={`${service.fullName}:${service.type}`}
+          service={service}
+          depth={childDepth}
+          onAddLayer={onAddLayer}
+        />
+      ))}
+
+      {node.folders.map((child) => (
+        <FolderNodeView
+          key={child.pathFromServicesRoot.join("/") || child.displayName}
+          node={child}
+          depth={childDepth}
+          onAddLayer={onAddLayer}
+        />
+      ))}
+    </div>
+  );
+}
+
+type ServiceNodeViewProps = {
+  service: ArcGISServiceNode;
+  depth: number;
+  onAddLayer: (layer: ArcGISFeatureLayerNode, service: ArcGISServiceNode) => void;
+};
+
+function ServiceNodeView({ service, depth, onAddLayer }: ServiceNodeViewProps) {
+  if (!service.layers.length) {
+    return null;
+  }
+
+  const indent = depth * INDENT_PX;
+  const label = `${service.name} (${service.type})`;
+
+  return (
+    <div className="space-y-3" style={{ marginLeft: indent }}>
+      <div className="text-sm font-medium text-blue-700 dark:text-blue-400">{label}</div>
+      {service.layers.map((layer) => (
+        <LayerRow
+          key={`${service.url}:${layer.id}`}
+          layer={layer}
+          service={service}
+          depth={depth + 1}
+          onAddLayer={onAddLayer}
+        />
+      ))}
+    </div>
+  );
+}
+
+type LayerRowProps = {
+  layer: ArcGISFeatureLayerNode;
+  service: ArcGISServiceNode;
+  depth: number;
+  onAddLayer: (layer: ArcGISFeatureLayerNode, service: ArcGISServiceNode) => void;
+};
+
+function LayerRow({ layer, service, depth, onAddLayer }: LayerRowProps) {
+  const indent = depth * INDENT_PX;
+
+  return (
+    <div
+      className="flex items-center justify-between gap-3 rounded-md border border-gray-200 bg-white px-3 py-2 shadow-sm hover:border-blue-200 hover:bg-blue-50 dark:border-gray-700 dark:bg-dark-text-bg dark:hover:border-blue-400"
+      style={{ marginLeft: indent }}
+    >
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">{layer.name}</div>
+        {layer.geometryType && (
+          <div className="truncate text-xs text-gray-500 dark:text-gray-400">{layer.geometryType}</div>
+        )}
+      </div>
+      <button
+        type="button"
+        className="whitespace-nowrap rounded-md border border-blue-600 px-3 py-1 text-xs font-semibold text-blue-600 hover:bg-blue-600 hover:text-white dark:border-blue-400 dark:text-blue-300 dark:hover:bg-blue-500 dark:hover:text-white"
+        onClick={() => onAddLayer(layer, service)}
+      >
+        Add to Map
+      </button>
+    </div>
+  );
 }
