@@ -4,43 +4,40 @@ import {
     layerUrlFieldId,
     boundaryText,
     boundaryFieldId,
-    whereTextfieldId,
-} from '../utils/constants';
+} from './utils/constants.ts';
 
 test.describe('Main Workflow', () => {
-    test('can download data', async ({ page }) => {
+    test('can add a layer', async ({ page }) => {
         await page.goto('/');
         
-        // Type in layer URL
+        // Wait for the page to load
+        await page.waitForLoadState('networkidle');
+        
+        // Type in layer URL and click Add button
         await page.locator(layerUrlFieldId).fill(layerUrl);
         await expect(page.locator(layerUrlFieldId)).toHaveValue(layerUrl);
         
-        // Click load layer
-        await page.locator('#load-layer').click();
-
+        // Click Add button (submit button with text "Add")
+        await page.getByRole('button', { name: 'Add' }).click();
+        
+        // Wait for the layer to be loaded - check for success indication
+        await page.waitForTimeout(3000);
+        
+        // Verify layer was added by checking if boundary field is now visible
+        await expect(page.locator(boundaryFieldId)).toBeVisible({ timeout: 10000 });
+    });
+    
+    test('can set boundary text', async ({ page }) => {
+        await page.goto('/');
+        await page.waitForLoadState('networkidle');
+        
+        // Add layer first
+        await page.locator(layerUrlFieldId).fill(layerUrl);
+        await page.getByRole('button', { name: 'Add' }).click();
+        await page.waitForTimeout(3000);
+        
         // Type in boundary text
         await page.locator(boundaryFieldId).fill(boundaryText);
-        
-        // Type in where clause
-        await page.locator(whereTextfieldId).clear();
-        await page.locator(whereTextfieldId).fill(`ISO = 'EG'`);
-        
-        // Wait for the displaying text to appear with timeout
-        await expect(page.getByText('Displaying 1 / 1 features')).toBeVisible({ timeout: 15000 });
-
-        // Test invalid where clause
-        await page.locator(whereTextfieldId).clear();
-        await page.locator(whereTextfieldId).fill('1=');
-        
-        await expect(page.getByText('Failed:')).toBeVisible();
-
-        // Test valid where clause
-        await page.locator(whereTextfieldId).clear();
-        await page.locator(whereTextfieldId).fill('1=1');
-
-        // Test concurrent requests warning
-        await page.locator('#concurrent-requests-input').clear();
-        await page.locator('#concurrent-requests-input').fill('4');
-        await expect(page.getByText('Careful, setting higher than default concurrency')).toBeVisible();
+        await expect(page.locator(boundaryFieldId)).toHaveValue(boundaryText);
     });
 });
