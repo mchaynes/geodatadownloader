@@ -16,6 +16,11 @@ cypress/videos
 cypress/screenshots
 cypress/downloads
 
+# playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
 # misc
 .DS_Store
 .env.local

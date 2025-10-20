@@ -44,11 +44,11 @@
     "build": "vite build",
     "start": "vite --port 3000 --host",
     "test": "jest",
-    "cy:open": "cypress open",
-    "cy:run": "cypress run",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
     "lint": "eslint --ignore-path .eslintignore --ext .ts,.tsx ."
   },
-  
   "browserslist": {
     "production": [
       ">0.2%",
@@ -62,6 +62,7 @@
     ]
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^14.4.3",
