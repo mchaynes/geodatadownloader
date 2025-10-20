@@ -186,10 +186,18 @@ export default function MapCreator() {
   const [showRemoveModal, setShowRemoveModal] = useState(false)
   const [isLayersPanelCollapsed, setIsLayersPanelCollapsed] = useState(false)
 
+  const layersPanelClasses = [
+    isLayersPanelCollapsed ? 'w-12' : 'w-3/12',
+    'min-w-fit overflow-y-auto max-w-xs p-4',
+    'bg-white border border-gray-200 rounded-lg shadow sm:p-8',
+    'dark:bg-dark-bg dark:border-gray-700',
+    'transition-all duration-300'
+  ].join(' ')
+
   return (
     <div className="p-2">
       <div className="flex flex-row gap-1">
-        <div className={`${isLayersPanelCollapsed ? 'w-12' : 'w-3/12'} min-w-fit overflow-y-auto max-w-xs p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-8 dark:bg-dark-bg dark:border-gray-700 transition-all duration-300`}>
+        <div className={layersPanelClasses}>
           <div className="flex items-center justify-between mb-4">
             {!isLayersPanelCollapsed && (
               <>
