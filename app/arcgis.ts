@@ -114,6 +114,19 @@ export async function queryLayer(layer, filterExtent?: Geometry) {
   }
 }
 
+/**
+ * Throw if an ArcGIS JSON response contains an `error` object.
+ * Some ArcGIS servers return HTTP 200 but include an error payload like:
+ * { error: { code: 500, message: "..." } }
+ */
+export function assertNoArcGISError(json: unknown, context?: string) {
+  if (json && (json as any).error) {
+    const errObj = (json as any).error;
+    const msg = typeof errObj === "string" ? errObj : errObj?.message ?? JSON.stringify(errObj);
+    throw new Error(`ArcGIS server error${context ? ` (${context})` : ""}: ${msg}`);
+  }
+}
+
 export type QueryResult = Awaited<ReturnType<typeof queryLayer>>
 
 export class QueryResults {

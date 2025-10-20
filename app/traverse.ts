@@ -1,3 +1,5 @@
+import { assertNoArcGISError } from "./arcgis";
+
 const extractData = (data: Container): Container => {
   return { ...data };
 };
@@ -35,6 +37,8 @@ const recurseTree = async (
     folders?: string[];
     [key: string]: unknown;
   };
+  // Throw if the ArcGIS server embedded an error in the JSON body
+  assertNoArcGISError(json, fJson);
   const data = {
     ...json,
     folders: json.folders?.map(
