@@ -62,8 +62,10 @@ For WFS (Web Feature Service) layers, GDD uses the OGC standard WFS protocol:
 2. **DescribeFeatureType**: Retrieves schema information for the layer
 3. **GetFeature**: Downloads features in pages (typically 1000 features per request)
 
-WFS layers are accessed via the `/wfs` route in the application. Simply paste a WFS URL (e.g., `https://example.com/geoserver/wfs?service=wfs&version=2.0.0&typename=mylayer`) and the application will:
+WFS layers can be added using the same input box as ArcGIS layers. Simply paste a WFS URL (e.g., `https://example.com/geoserver/wfs?service=wfs&version=2.0.0&typename=mylayer`) and the application will:
 - Detect the WFS service version (2.0.0, 1.1.0, or 1.0.0)
 - Load layer metadata and field information
 - Download all features in paginated requests
 - Convert to your desired output format
+
+**Important Note about CORS**: Since geodatadownloader runs entirely in your browser, it can only access WFS services that have CORS (Cross-Origin Resource Sharing) enabled. Many WFS services are configured to block cross-origin requests for security reasons. If you encounter a CORS error, the WFS service administrator needs to configure their server to allow cross-origin requests, or you may need to use a CORS proxy service.

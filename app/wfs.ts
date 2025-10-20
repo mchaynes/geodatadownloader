@@ -93,7 +93,21 @@ export async function getWFSCapabilities(baseUrl: string, version = "2.0.0"): Pr
   url.searchParams.set("request", "GetCapabilities");
   url.searchParams.set("version", version);
 
-  const response = await fetch(url.toString());
+  let response;
+  try {
+    response = await fetch(url.toString());
+  } catch (error) {
+    // Check if this is a CORS error
+    const err = error as Error;
+    if (err.message.includes('Failed to fetch') || err.name === 'TypeError') {
+      throw new Error(
+        `Cannot access WFS service due to CORS restrictions. The server at ${baseUrl} does not allow cross-origin requests. ` +
+        `This is a browser security limitation. To use this WFS service, it must be configured to allow CORS, or you may need to use a proxy service.`
+      );
+    }
+    throw new Error(`Failed to fetch WFS capabilities: ${err.message}`);
+  }
+  
   if (!response.ok) {
     throw new Error(`Failed to fetch WFS capabilities: ${response.statusText}`);
   }
@@ -173,7 +187,17 @@ export async function getWFSFeatureCount(
     url.searchParams.set("bbox", `${xmin},${ymin},${xmax},${ymax}`);
   }
 
-  const response = await fetch(url.toString());
+  let response;
+  try {
+    response = await fetch(url.toString());
+  } catch (error) {
+    const err = error as Error;
+    if (err.message.includes('Failed to fetch') || err.name === 'TypeError') {
+      throw new Error(`Cannot access WFS service due to CORS restrictions. The server does not allow cross-origin requests.`);
+    }
+    throw new Error(`Failed to get feature count: ${err.message}`);
+  }
+  
   if (!response.ok) {
     throw new Error(`Failed to get feature count: ${response.statusText}`);
   }
@@ -240,7 +264,17 @@ export async function queryWFSFeatures(
     url.searchParams.set("propertyName", outFields.join(","));
   }
 
-  const response = await fetch(url.toString());
+  let response;
+  try {
+    response = await fetch(url.toString());
+  } catch (error) {
+    const err = error as Error;
+    if (err.message.includes('Failed to fetch') || err.name === 'TypeError') {
+      throw new Error(`Cannot access WFS service due to CORS restrictions. The server does not allow cross-origin requests.`);
+    }
+    throw new Error(`WFS GetFeature failed: ${err.message}`);
+  }
+  
   if (!response.ok) {
     throw new Error(`WFS GetFeature failed: ${response.statusText}`);
   }
