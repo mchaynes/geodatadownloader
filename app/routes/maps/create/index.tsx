@@ -400,6 +400,14 @@ export default function MapCreator() {
               </Modal.Body>
             </Modal>
           </fetcher.Form>
+          <div className="mt-2">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Need to download from a WFS service? {" "}
+              <Link to="/wfs" className="text-blue-600 hover:underline dark:text-blue-500">
+                Try the WFS downloader
+              </Link>
+            </p>
+          </div>
           {(analyzingUrl || layerAlert.alertType) && (
             <div className="mt-3">
               <StatusAlert loading={analyzingUrl} {...layerAlert} />

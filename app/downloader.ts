@@ -118,7 +118,10 @@ export class GdalDownloader {
       if (!layer) {
         throw new Error("layer not defined");
       }
-      const numPages = await result.getNumPages();
+      // Handle both old QueryResult (numPages property) and WFSQueryResults (getNumPages method)
+      const numPages = typeof (result as any).numPages === 'number' 
+        ? (result as any).numPages 
+        : await result.getNumPages();
       writer.write(header);
       // Create callable functions that fetch results for each page
       let firstPage = true;

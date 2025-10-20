@@ -16,6 +16,7 @@ import { removeLayerAction } from "./routes/maps/create/remove-layer";
 import { getQueryResultsLoader } from "./routes/maps/create/layers/results";
 import { ExtentPicker, extentPickerAction } from "./ExtentPicker";
 import ConfigureLayerModal from "./routes/maps/create/layers/configure";
+import WFSDownloader from "./routes/wfs-download";
 
 
 const rootEl = document.getElementById("root");
@@ -48,6 +49,11 @@ const router = createBrowserRouter([
         action: mapCreatorAction,
         errorElement: <ErrorPage />,
 
+      },
+      {
+        path: "/wfs",
+        element: <WFSDownloader />,
+        errorElement: <ErrorPage />,
       },
       {
         path: "/maps/create",
