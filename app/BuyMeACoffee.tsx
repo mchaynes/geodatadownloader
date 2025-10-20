@@ -8,8 +8,7 @@ export default function BuyMeACoffee({ slug = 'myleschayng' }: BuyMeACoffeeProps
       href={`https://www.buymeacoffee.com/${slug}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-medium rounded-lg transition-colors"
-      style={{ height: '40px' }}
+      className="inline-flex items-center px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-medium rounded-lg transition-colors h-10"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
