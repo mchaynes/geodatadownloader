@@ -25,6 +25,7 @@ import {
   ArcGISFeatureLayerNode,
 } from "../../../traverse";
 import { Dialog, Transition } from "@headlessui/react";
+import { isWFSUrl, loadWFSLayer, WFSLayer } from "../../../wfs";
 
 type SupportedExportType = string;
 
