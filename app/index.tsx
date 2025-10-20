@@ -11,6 +11,7 @@ import Root from "./routes/root";
 import Forgot, { sendResetEmailAction } from "./routes/forgot";
 import AddLayerToMap from "./routes/maps/create/layers/add";
 import { Flowbite } from "flowbite-react";
+import type { CustomFlowbiteTheme } from "flowbite-react";
 import { removeLayerAction } from "./routes/maps/create/remove-layer";
 import { getQueryResultsLoader } from "./routes/maps/create/layers/results";
 import { ExtentPicker, extentPickerAction } from "./ExtentPicker";
@@ -87,12 +88,20 @@ const router = createBrowserRouter([
   },
 ])
 
+// Custom theme to fix button visibility in light mode
+const customTheme: CustomFlowbiteTheme = {
+  button: {
+    color: {
+      failure: "text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900"
+    }
+  }
+};
 
 export default function WithStyles() {
 
   return (
     <div>
-      <Flowbite>
+      <Flowbite theme={{ theme: customTheme }}>
         <RouterProvider router={router} />
       </Flowbite>
     </div>
