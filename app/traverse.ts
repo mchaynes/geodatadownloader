@@ -262,12 +262,7 @@ async function collectServiceLayers(
   };
 
   for (const layerSummary of featureLayerSummaries) {
-    const id = typeof layerSummary.id === "number"
-      ? layerSummary.id
-      : Number(layerSummary.id);
-    if (!Number.isFinite(id)) {
-      continue;
-    }
+    const id = layerSummary.id;
 
     const layerUrl = pathJoin([serviceUrl, `${id}`]);
     const layerNode: ArcGISFeatureLayerNode = {
