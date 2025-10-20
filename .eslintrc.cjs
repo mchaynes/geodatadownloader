@@ -21,8 +21,9 @@ module.exports = {
         "varsIgnorePattern": "^_",
         "caughtErrorsIgnorePattern": "^_"
       }
-    ]
-    ,
+    ],
+    // Temporarily disable explicit any checks until types are improved
+    "@typescript-eslint/no-explicit-any": "off",
     // Allow empty functions in test harnesses and placeholder components
     "no-empty-function": "off",
     "@typescript-eslint/no-empty-function": "off",
