@@ -4,6 +4,7 @@ import logo from "/IMG_1039.png";
 import 'flowbite'
 
 import GitHubButton from "react-github-btn";
+import BuyMeACoffee from "../BuyMeACoffee";
 
 
 
@@ -24,6 +25,9 @@ export default function Root() {
               </div>
             </div>
             <div className="flex flex-row justify-between items-center gap-5">
+              <div className="h-full pt-2">
+                <BuyMeACoffee />
+              </div>
               <div className="h-full pt-2"> {/*Make the button align with the rest of the buttons*/}
                 <GitHubButton href="https://github.com/mchaynes/geodatadownloader" data-color-scheme="no-preference: light; light: light; dark: dark;" data-size="large" data-show-count="true" aria-label="Star mchaynes/geodatadownloader on GitHub">Star</GitHubButton>
               </div>
