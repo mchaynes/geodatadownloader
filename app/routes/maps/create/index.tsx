@@ -502,7 +502,7 @@ function RemoveLayerModal({ url, show, setShow }: RemoveLayerModalProps) {
                 : "Are you sure you want to remove all layers?"}
             </h3>
             <div className="flex justify-center gap-4">
-              {/* Using !text-white to override Flowbite React 0.4.9 button styling issue in light mode */}
+              {/* Using !text-white to override Flowbite React 0.4.9 styling issue in light mode */}
               <Button color="failure" type="submit" name="url" value={url} className="!text-white">
                 Yes, I'm sure
               </Button>
