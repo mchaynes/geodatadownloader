@@ -23,9 +23,7 @@ test.describe('WFS Workflow', () => {
         
         // Verify no error message about ArcGIS REST endpoint
         const errorMessage = page.getByText(/does not reference an ArcGIS REST services endpoint/i);
-        await expect(errorMessage).not.toBeVisible({ timeout: 2000 }).catch(() => {
-            // If the error is not found, that's good
-        });
+        await expect(errorMessage).not.toBeVisible({ timeout: 2000 });
         
         // Check for success indicators - layer should appear in the layers list or show WFS-related content
         // The layer name or WFS-related text should be visible
