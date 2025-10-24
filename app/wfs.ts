@@ -344,9 +344,17 @@ function convertGeoJSONGeometry(geom: any): any {
         spatialReference: { wkid: 4326 },
       };
     case "MultiPolygon":
+      // MultiPolygon coords are [[[polygon1_ring1]], [[polygon2_ring1]]]
+      // We need to extract all rings from all polygons
+      const rings: number[][][] = [];
+      for (const polygon of coords) {
+        for (const ring of polygon) {
+          rings.push(ring);
+        }
+      }
       return {
         type: "polygon",
-        rings: coords.flat(),
+        rings: rings,
         spatialReference: { wkid: 4326 },
       };
     default:

@@ -18,17 +18,21 @@ test.describe('WFS Workflow', () => {
         // Click Add button (submit button with text "Add")
         await page.getByRole('button', { name: 'Add' }).click();
         
-        // Wait for the layer to be loaded - should not show ArcGIS error
-        await page.waitForTimeout(5000);
+        // Wait for either success or error indicators to appear
+        const layerIndicator = page.getByText(/WFS Layer|as_dw_nuu_jwl/i);
+        const errorMessage = page.getByText(/does not reference an ArcGIS REST services endpoint/i);
+        
+        // Wait for one of the indicators to be visible
+        await Promise.race([
+            layerIndicator.waitFor({ state: 'visible', timeout: 15000 }),
+            errorMessage.waitFor({ state: 'visible', timeout: 15000 })
+        ]);
         
         // Verify no error message about ArcGIS REST endpoint
-        const errorMessage = page.getByText(/does not reference an ArcGIS REST services endpoint/i);
-        await expect(errorMessage).not.toBeVisible({ timeout: 2000 });
+        await expect(errorMessage).not.toBeVisible();
         
         // Check for success indicators - layer should appear in the layers list or show WFS-related content
-        // The layer name or WFS-related text should be visible
-        const layerIndicator = page.getByText(/WFS Layer|as_dw_nuu_jwl/i);
-        await expect(layerIndicator).toBeVisible({ timeout: 15000 });
+        await expect(layerIndicator).toBeVisible();
     });
     
     test('WFS layer can be added and shows in layers panel', async ({ page }) => {
@@ -39,13 +43,9 @@ test.describe('WFS Workflow', () => {
         await page.locator(layerUrlFieldId).fill(wfsLayerUrl);
         await page.getByRole('button', { name: 'Add' }).click();
         
-        // Wait for layer to load
-        await page.waitForTimeout(5000);
-        
-        // Check that layers panel shows the added layer
-        // Look for any text indicating the layer was added successfully
+        // Wait for layers panel to be visible
         const layersPanel = page.locator('.divide-y'); // layers list has this class
-        await expect(layersPanel).toBeVisible({ timeout: 10000 });
+        await layersPanel.waitFor({ state: 'visible', timeout: 10000 });
         
         // Verify layer appears (it might show typename or title)
         const layerItem = page.locator('li').filter({ hasText: /as_dw_nuu_jwl|WFS/i }).first();
