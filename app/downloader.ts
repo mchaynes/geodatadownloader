@@ -8,6 +8,28 @@ import saveAs from "file-saver";
 import { getGdalJs } from "./gdal";
 import { assertNoArcGISError } from "./arcgis";
 import { basename, dirname, extname, join } from "path-browserify";
+import { WFSQueryResults, WFSLayer } from "./wfs";
+
+// Unified interface for query results
+interface BaseQueryResult {
+  getPage(page: number, outFields?: string[]): Promise<any>;
+  layer: any;
+}
+
+// Type guard to check if result is WFSQueryResults
+function isWFSQueryResults(result: BaseQueryResult): result is WFSQueryResults {
+  return 'getNumPages' in result && typeof (result as any).getNumPages === 'function';
+}
+
+// Type guard to check if result has numPages property (ArcGIS QueryResult)
+function hasNumPagesProperty(result: BaseQueryResult): result is QueryResult {
+  return 'numPages' in result && typeof (result as any).numPages === 'number';
+}
+
+// Type guard to check if layer is WFSLayer
+function isWFSLayer(layer: any): layer is WFSLayer {
+  return layer && 'typename' in layer && typeof layer.typename === 'string';
+}
 
 // Open geojson FeatureCollection object and "features" array
 const header = `
@@ -105,7 +127,7 @@ export class GdalDownloader {
     this.zipper = new JSZip();
   }
   download = async (
-    results: QueryResult[],
+    results: Array<QueryResult | WFSQueryResults>,
     numConcurrent: number,
     format: string
   ) => {
@@ -117,20 +139,41 @@ export class GdalDownloader {
       if (!layer) {
         throw new Error("layer not defined");
       }
-      const numPages = result.numPages;
+      // Handle both old QueryResult (numPages property) and WFSQueryResults (getNumPages method)
+      const numPages = hasNumPagesProperty(result)
+        ? result.numPages 
+        : await result.getNumPages();
       writer.write(header);
       // Create callable functions that fetch results for each page
       let firstPage = true;
       const fetchResults = async (pageNum: number): Promise<void> => {
         const features = await result.getPage(pageNum);
-        const json = features.toJSON() as ArcgisFeatureResp;
-        // Detect ArcGIS embedded error payloads and abort so the UI can
-        // surface the server message instead of producing an empty zip.
-        assertNoArcGISError(json, `layer ${result.layer.esri?.url ?? result.layer.url}`);
-        // strip features that contain no geometry
-        json.features = json.features.filter(containsValidGeometry)
+        
+        let geojson: GeoJSON.FeatureCollection;
+        
+        // Check if this is a WFS layer or ArcGIS layer
+        if (isWFSLayer(layer)) {
+          // WFS layer - features are already in GeoJSON format from the FeatureSet
+          geojson = {
+            type: "FeatureCollection",
+            features: features.features.map(f => ({
+              type: "Feature",
+              geometry: f.geometry ? (f.geometry as any) : null,
+              properties: f.attributes || {}
+            }))
+          };
+        } else {
+          // ArcGIS layer - convert using arcgisToGeoJSON
+          const json = features.toJSON() as ArcgisFeatureResp;
+          // Detect ArcGIS embedded error payloads and abort so the UI can
+          // surface the server message instead of producing an empty zip.
+          const arcgisUrl = !isWFSLayer(layer) && layer.esri ? layer.esri.url : layer.url;
+          assertNoArcGISError(json, `layer ${arcgisUrl}`);
+          // strip features that contain no geometry
+          json.features = json.features.filter(containsValidGeometry)
+          geojson = arcgisToGeoJSON(json) as unknown as GeoJSON.FeatureCollection;
+        }
 
-        const geojson = arcgisToGeoJSON(json) as unknown as GeoJSON.FeatureCollection;
         let stringified = geojson.features
           .map((f) => JSON.stringify(f))
           .join(",");
@@ -143,10 +186,10 @@ export class GdalDownloader {
         }
         // Join features in chunk together, write to file
         writer.write(stringified);
-        if (!json.features) {
-          console.log("json features empty")
+        if (!geojson.features) {
+          console.log("geojson features empty")
         }
-        this.featuresWritten += json.features.length;
+        this.featuresWritten += geojson.features.length;
         // Notify listeners that we've written more features
         this.onWrite(this.featuresWritten);
       };
@@ -160,7 +203,10 @@ export class GdalDownloader {
       }
       await Promise.all(promises);
       writer.write(footer);
-      const layerName = result.layer.esri.title;
+      
+      // Get layer name based on type
+      const layerName = isWFSLayer(layer) ? layer.title : layer.esri.title;
+      
       const srcDataset = await Gdal.open(
         new File(writer.data, `${layerName}.json`)
       );
@@ -207,7 +253,10 @@ export class GdalDownloader {
     const zipBytes = await zip.generateAsync({ type: "blob" });
     let fileName = `geodatadownloader.zip`;
     if (results.length === 1) {
-      fileName = `${results[0].layer.esri.title}.zip`;
+      const firstLayer = results[0].layer;
+      fileName = isWFSLayer(firstLayer)
+        ? `${firstLayer.title}.zip` 
+        : `${firstLayer.esri.title}.zip`;
     }
     saveAs(zipBytes, fileName);
     this.featuresWritten = 0;

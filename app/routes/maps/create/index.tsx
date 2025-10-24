@@ -25,6 +25,7 @@ import {
   ArcGISFeatureLayerNode,
 } from "../../../traverse";
 import { Dialog, Transition } from "@headlessui/react";
+import { isWFSUrl, loadWFSLayer, WFSLayer } from "../../../wfs";
 
 type SupportedExportType = string;
 
@@ -44,26 +45,53 @@ export const mapCreatorAction = async ({ request }: ActionFunctionArgs) => {
   let errMsg = ""
   if (formData.get("intent") === "add-layer") {
     const layerUrl = formData.get("layer-url") as string
-    let layer: FeatureLayer | undefined = undefined
-    if (!mapConfig.layers.find(l => l.url === layerUrl)) {
-      try {
-        layer = new FeatureLayer({
-          url: layerUrl,
-        });
-        await layer.load();
-        mapConfig.layers.push({
-          url: layerUrl,
-          name: layer.sourceJSON["name"],
-          description: layer.sourceJSON["description"],
-          extent: layer.fullExtent,
-          fields: JSON.stringify(layer.fields),
-          geometry_type: layer.geometryType,
-          spatial_ref: `${layer.spatialReference.wkid}`,
-        })
-        saveMapConfigLocal(mapConfig)
-      } catch (e) {
-        const err = e as Error;
-        errMsg = err.message
+    
+    // Check if this is a WFS URL
+    if (isWFSUrl(layerUrl)) {
+      // Handle WFS layer
+      if (!mapConfig.layers.find(l => l.url === layerUrl)) {
+        try {
+          const wfsLayer = await loadWFSLayer(layerUrl);
+          // Store WFS layer in a format compatible with the existing structure
+          // We'll use a special marker in the fields to indicate this is a WFS layer
+          mapConfig.layers.push({
+            url: layerUrl,
+            name: wfsLayer.title,
+            description: `WFS Layer: ${wfsLayer.typename} (v${wfsLayer.version})`,
+            extent: { xmin: -180, ymin: -90, xmax: 180, ymax: 90, spatialReference: { wkid: 4326 } }, // Default WGS84 extent
+            fields: JSON.stringify({ _wfs: true, typename: wfsLayer.typename, version: wfsLayer.version, fields: wfsLayer.fields }),
+            geometry_type: "unknown", // WFS doesn't always specify geometry type upfront
+            spatial_ref: "4326", // WFS typically uses WGS84
+          })
+          saveMapConfigLocal(mapConfig)
+        } catch (e) {
+          const err = e as Error;
+          errMsg = err.message
+        }
+      }
+    } else {
+      // Handle ArcGIS layer
+      let layer: FeatureLayer | undefined = undefined
+      if (!mapConfig.layers.find(l => l.url === layerUrl)) {
+        try {
+          layer = new FeatureLayer({
+            url: layerUrl,
+          });
+          await layer.load();
+          mapConfig.layers.push({
+            url: layerUrl,
+            name: layer.sourceJSON["name"],
+            description: layer.sourceJSON["description"],
+            extent: layer.fullExtent,
+            fields: JSON.stringify(layer.fields),
+            geometry_type: layer.geometryType,
+            spatial_ref: `${layer.spatialReference.wkid}`,
+          })
+          saveMapConfigLocal(mapConfig)
+        } catch (e) {
+          const err = e as Error;
+          errMsg = err.message
+        }
       }
     }
   }
@@ -73,6 +101,17 @@ export const mapCreatorAction = async ({ request }: ActionFunctionArgs) => {
   const layers: Array<FeatureLayer> = []
   const promises: Promise<void>[] = []
   for (const savedLayers of mapConfig.layers) {
+    // Check if this is a WFS layer (stored with _wfs marker in fields)
+    try {
+      const fieldsData = JSON.parse(savedLayers.fields as string);
+      if (fieldsData._wfs) {
+        // Skip WFS layers - they'll be handled separately
+        continue;
+      }
+    } catch (e) {
+      // Not JSON or doesn't have _wfs marker, treat as ArcGIS layer
+    }
+    
     const layer = new FeatureLayer({
       url: savedLayers.url
     })
@@ -104,6 +143,17 @@ export const mapCreatorLoader = async () => {
   let errMsg = ""
   const promises: Promise<void>[] = []
   for (const savedLayers of mapConfig.layers) {
+    // Check if this is a WFS layer (stored with _wfs marker in fields)
+    try {
+      const fieldsData = JSON.parse(savedLayers.fields as string);
+      if (fieldsData._wfs) {
+        // Skip WFS layers - they'll be handled separately
+        continue;
+      }
+    } catch (e) {
+      // Not JSON or doesn't have _wfs marker, treat as ArcGIS layer
+    }
+    
     const layer = new FeatureLayer({
       url: savedLayers.url
     })
@@ -205,13 +255,21 @@ export default function MapCreator() {
       const formData = new FormData(form);
       const rawUrl = (formData.get("layer-url") as string | null)?.trim() ?? "";
       if (!rawUrl) {
-        setLayerAlert("Please enter an ArcGIS REST URL.", "warning");
+        setLayerAlert("Please enter a layer URL.", "warning");
         return;
       }
 
       closeExplorer();
       setLayerAlert("", undefined);
       setLayerUrlInput(rawUrl);
+      
+      // Check if this is a WFS URL - if so, skip ArcGIS analysis and submit directly
+      if (isWFSUrl(rawUrl)) {
+        setLoadingMessage(`Loading WFS layer ${rawUrl}`);
+        submitAddLayer(rawUrl);
+        return;
+      }
+      
       setAnalyzingUrl(true);
       setLoadingMessage(`Analyzing ${rawUrl}`);
 
@@ -270,9 +328,33 @@ export default function MapCreator() {
   useEffect(() => {
     const f = async () => {
       const promises: Promise<QueryResult>[] = []
+      
+      // Query ArcGIS layers
       for (const layer of loaderData.layers) {
         promises.push(queryLayer(layer))
       }
+      
+      // Query WFS layers
+      const wfsLayers = loaderData.mapConfig.layers.filter((l: any) => {
+        try {
+          const fieldsData = JSON.parse(l.fields);
+          return fieldsData._wfs === true;
+        } catch {
+          return false;
+        }
+      });
+      
+      for (const wfsLayerConfig of wfsLayers) {
+        try {
+          const wfsLayer = await loadWFSLayer(wfsLayerConfig.url);
+          const { WFSQueryResults } = await import("../../../wfs");
+          const wfsQueryResult = new WFSQueryResults(wfsLayer, "1=1", filterExtent);
+          promises.push(Promise.resolve(wfsQueryResult as any));
+        } catch (e) {
+          console.error("Failed to load WFS layer:", e);
+        }
+      }
+      
       const results = await Promise.all(promises)
       setResults(results)
     }
@@ -280,11 +362,19 @@ export default function MapCreator() {
   }, [loaderData, filterExtent])
 
   useEffect(() => {
-    let newTotal = 0
-    for (const r of results) {
-      newTotal += r.totalCount
+    const f = async () => {
+      let newTotal = 0
+      for (const r of results) {
+        // Handle both QueryResult (has totalCount property) and WFSQueryResults (has getTotalCount method)
+        if (typeof (r as any).totalCount === 'number') {
+          newTotal += (r as any).totalCount
+        } else if (typeof (r as any).getTotalCount === 'function') {
+          newTotal += await (r as any).getTotalCount()
+        }
+      }
+      setTotalFeatures(newTotal)
     }
-    setTotalFeatures(newTotal)
+    f()
   }, [results])
 
   useEffect(() => {
@@ -373,7 +463,7 @@ export default function MapCreator() {
                 name="layer-url"
                 id="default-search"
                 className="block w-full p-4 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-dark-text-bg dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                placeholder="Add Layer Url Here (Like: https://gismaps.kingcounty.gov/arcgis/rest/services/Environment/KingCo_SensitiveAreas/MapServer/11)"
+                placeholder="Add ArcGIS or WFS Layer URL (supports both ArcGIS REST and OGC WFS services)"
                 value={layerUrlInput}
                 onChange={(event) => setLayerUrlInput(event.currentTarget.value)}
                 autoComplete="off"
