@@ -29,7 +29,15 @@ type Extent = {
 type Geo = Polygon | Extent;
 
 export function getRealUrl({ url, layerId }: FeatureLayer) {
-  return `${url}/${layerId}`
+  // Normalize: remove trailing slashes
+  const base = url.replace(/\/+$/, "");
+  // If URL already ends with a numeric id, return as-is
+  const last = base.split("/").pop();
+  if (last && /^\d+$/.test(last)) {
+    return base;
+  }
+  // If layerId is defined, append it; otherwise return normalized base
+  return layerId !== undefined && layerId !== null ? `${base}/${layerId}` : base;
 }
 
 export function parseGeometryFromString(str: string): Geometry {

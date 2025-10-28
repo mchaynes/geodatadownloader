@@ -11,7 +11,8 @@ export const configureLayerAction = async ({ request }: ActionFunctionArgs) => {
   const url = formData.get("url") as string ?? raise("Url isn't defined")
   const where = formData.get("where") as string ?? raise("Where isn't defined")
   const mapConfig = await getMapConfigLocal()
-  const layer = mapConfig.layers.find(l => l.url === url) ?? raise("Unable to find layer")
+  const normalize = (u: string) => (u ?? "").replace(/\/+$/, "")
+  const layer = mapConfig.layers.find(l => normalize(l.url) === normalize(url)) ?? raise("Unable to find layer")
   const mapping: { [k: string]: string } = {}
   for (const [k, newName] of formData.entries()) {
     console.log(`${k}: ${newName}`)
