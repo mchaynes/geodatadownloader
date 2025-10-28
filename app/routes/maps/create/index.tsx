@@ -728,44 +728,59 @@ function ModifyLayerConfig({ show, setShow, boundary, layer }: ModifyLayerConfig
                       <input name="url" value={layer?.config?.url} className="hidden" readOnly />
                       <WhereInput defaultWhere={layer?.config?.where_clause ?? "1=1"} onUpdateClick={onUpdateClick} />
                       <div>
-                        <div className="max-h-96 overflow-y-auto">
-                          <Table striped hoverable className="border-gray-50 rounded-lg">
+                        <label className="block mb-2 text-sm font-medium leading-6 text-gray-900 dark:text-white">Select and Rename Columns</label>
+                        <div className="max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg">
+                          <Table striped hoverable>
                             <Table.Head>
-                              {fields.map(field =>
-                                <Table.HeadCell key={field.name} >
-                                  <div className="flex flex-col items-center gap-1">
-                                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 place-self-start">{field.name}</p>
-                                    <div className="flex flex-row gap-2 items-center">
-                                      <Checkbox defaultChecked={layer?.config?.column_mapping ? layer.config.column_mapping[field.name] : true} name={`${field.name}-enabled`} />
-                                      <TextInput sizing="sm"
-                                        id={field.name}
-                                        name={`${field.name}-new`}
-                                        defaultValue={layer?.config?.column_mapping ? layer.config.column_mapping[field.name] ?? field.name : field.name}
-                                        required
-                                      />
-                                    </div>
-                                  </div>
-                                </Table.HeadCell>
-                              )}
+                              <Table.HeadCell className="w-12">
+                                Include
+                              </Table.HeadCell>
+                              <Table.HeadCell className="w-1/3">
+                                Original Name
+                              </Table.HeadCell>
+                              <Table.HeadCell className="w-1/3">
+                                New Name
+                              </Table.HeadCell>
+                              <Table.HeadCell>
+                                Sample Value
+                              </Table.HeadCell>
                             </Table.Head>
                             <Table.Body className="divide-y">
-                              {results?.features.map((feature, i) =>
-                                <Table.Row key={i} className="bg-white dark:border-gray-700 dark:bg-gray-800">
-                                  {fields.map(({ name }) =>
-                                    <Table.Cell key={name} className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
-                                      {feature.getAttribute(name)}
+                              {fields.map(field => {
+                                const isSelected = layer?.config?.column_mapping ? (field.name in (layer.config.column_mapping as Record<string, string>)) : true;
+                                const newName = layer?.config?.column_mapping ? (layer.config.column_mapping as Record<string, string>)[field.name] ?? field.name : field.name;
+                                const sampleValue = results?.features?.[0]?.getAttribute(field.name);
+                                return (
+                                  <Table.Row key={field.name} className="bg-white dark:border-gray-700 dark:bg-gray-800">
+                                    <Table.Cell>
+                                      <Checkbox 
+                                        defaultChecked={isSelected} 
+                                        name={`${field.name}-enabled`} 
+                                      />
                                     </Table.Cell>
-                                  )}
-                                </Table.Row>
-                              )}
+                                    <Table.Cell className="font-medium text-gray-900 dark:text-white">
+                                      {field.name}
+                                    </Table.Cell>
+                                    <Table.Cell>
+                                      <TextInput 
+                                        sizing="sm"
+                                        id={field.name}
+                                        name={`${field.name}-new`}
+                                        defaultValue={newName}
+                                        placeholder={field.name}
+                                      />
+                                    </Table.Cell>
+                                    <Table.Cell className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
+                                      {sampleValue !== null && sampleValue !== undefined ? String(sampleValue) : '—'}
+                                    </Table.Cell>
+                                  </Table.Row>
+                                );
+                              })}
                             </Table.Body>
                           </Table>
                         </div>
                       </div>
-                      <div className="flex flex-row">
-                        <div className="flex-grow text-sm text-gray-500 truncate dark:text-gray-400">
-                          Displaying first {results?.features.length} features
-                        </div>
+                      <div className="flex flex-row justify-end">
                         <Button type="submit"
                           className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
                           name="intent"
@@ -813,7 +828,6 @@ function WhereInput({ defaultWhere, onUpdateClick }: WhereInputProps) {
         </div>
       </div>
       <p className="mt-2 text-xs text-gray-500 dark:text-gray-300 place-self-start">Use original column names in query</p>
-      <p className="mt-2 text-xs text-red-800 dark:text-red-800 place-self-start">The Edit Columns feature doesn't work yet</p>
     </div>
   )
 }
