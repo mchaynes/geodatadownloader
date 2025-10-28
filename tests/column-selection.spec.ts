@@ -34,10 +34,10 @@ test.describe('Column Selection and Renaming', () => {
         await expect(table).toBeVisible();
         
         // Verify table headers
-        await expect(page.getByText('Include')).toBeVisible();
-        await expect(page.getByText('Original Name')).toBeVisible();
-        await expect(page.getByText('New Name')).toBeVisible();
-        await expect(page.getByText('Sample Value')).toBeVisible();
+        await expect(page.getByRole('columnheader', { name: 'Include' })).toBeVisible();
+        await expect(page.getByRole('columnheader', { name: 'Original Name' })).toBeVisible();
+        await expect(page.getByRole('columnheader', { name: 'New Name' })).toBeVisible();
+        await expect(page.getByRole('columnheader', { name: 'Sample Value' })).toBeVisible();
         
         // Get the first few checkboxes and find specific fields to test with
         // We'll select only 3 columns and rename them
