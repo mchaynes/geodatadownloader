@@ -25,6 +25,7 @@ import {
   ArcGISFeatureLayerNode,
 } from "../../../traverse";
 import { Dialog, Transition } from "@headlessui/react";
+import { useMapView } from "../../../MapViewContext";
 
 type SupportedExportType = string;
 
@@ -537,6 +538,15 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
   const realUrl = getRealUrl(layer.esri)
   const [showRemoveModal, setShowRemoveModal] = useState(false)
   const [showConfigureModal, setShowConfigureModal] = useState(false)
+  const mapView = useMapView()
+
+  const handleZoomToLayer = useCallback(() => {
+    if (mapView && layer.esri.fullExtent) {
+      mapView.goTo(layer.esri.fullExtent).catch((err) => {
+        console.error("Error zooming to layer:", err);
+      });
+    }
+  }, [mapView, layer.esri.fullExtent]);
 
   return <li key={url} className="flex flex-row items-center p-2 bg-white dark:bg-dark-bg">
     <div className="flex-1 min-w-0 max-w-xs">
@@ -569,6 +579,15 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
         onClick={() => setShowConfigureModal(true)}
       >
         Filters & Attributes...
+      </Dropdown.Item>
+      <Dropdown.Item
+        icon={() =>
+          <svg className="w-5 h-5 pr-2 text-gray-800 dark:text-white" aria-hidden="true" fill="none" viewBox="0 0 20 18">
+            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 3a3 3 0 1 1-1.614 5.53M15 12a4 4 0 0 1 4 4v1h-3m-4.553-10.97 4.553 4.553M10 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Zm0 0v-6m3-3H7" />
+          </svg>}
+        onClick={handleZoomToLayer}
+      >
+        Zoom to Layer
       </Dropdown.Item>
       <Dropdown.Item
         icon={() =>
