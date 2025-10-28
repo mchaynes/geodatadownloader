@@ -554,6 +554,9 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
       return;
     }
     
+    console.log("Zooming to extent:", extentData);
+    console.log("MapView spatial reference:", mapView.spatialReference);
+    
     // Create an Extent object from the sourceJSON extent
     const extent = new Extent({
       xmin: extentData.xmin,
@@ -563,8 +566,16 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
       spatialReference: extentData.spatialReference
     });
     
+    console.log("Created extent object:", extent);
+    
     mapView.when(() => {
-      mapView.goTo(extent).catch((err) => {
+      console.log("MapView is ready, calling goTo...");
+      mapView.goTo(extent, {
+        animate: true,
+        duration: 1000
+      }).then(() => {
+        console.log("Successfully zoomed to layer extent");
+      }).catch((err) => {
         console.error(`Error zooming to layer "${sourceJSON["name"]}" (${realUrl}):`, err);
       });
     }).catch((err) => {
