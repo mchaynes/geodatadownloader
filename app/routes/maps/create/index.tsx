@@ -26,7 +26,7 @@ import {
   ArcGISFeatureLayerNode,
 } from "../../../traverse";
 import { Dialog, Transition } from "@headlessui/react";
-import { useMapView } from "../../../MapViewContext";
+import { useMapView, MapViewProvider } from "../../../MapViewContext";
 
 type SupportedExportType = string;
 
@@ -306,9 +306,10 @@ export default function MapCreator() {
   ].join(' ')
 
   return (
-    <div className="p-2">
-      <div className="flex flex-row gap-1">
-        <div className={layersPanelClasses}>
+    <MapViewProvider>
+      <div className="p-2">
+        <div className="flex flex-row gap-1">
+          <div className={layersPanelClasses}>
           <div className="flex items-center justify-between mb-4">
             {!isLayersPanelCollapsed && (
               <>
@@ -526,6 +527,7 @@ export default function MapCreator() {
         </div>
       </div>
     </div>
+    </MapViewProvider>
   );
 }
 

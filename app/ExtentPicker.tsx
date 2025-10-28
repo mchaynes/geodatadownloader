@@ -27,7 +27,7 @@ import { mapCreatorLoader } from "./routes/maps/create";
 import { ActionFunctionArgs, useFetcher, useLoaderData, useSearchParams } from "react-router-dom";
 import { getMapConfigLocal, saveMapConfigLocal } from "./database";
 import { Button, Tooltip } from "flowbite-react";
-import { MapViewContext } from "./MapViewContext";
+import { useMapViewContext } from "./MapViewContext";
 
 const GEOMETRY_LINK =
   "https://developers.arcgis.com/documentation/common-data-types/geometry-objects.htm";
@@ -55,6 +55,8 @@ export function ExtentPicker() {
   const data = useLoaderData() as Awaited<ReturnType<typeof mapCreatorLoader>>
   const fetcher = useFetcher()
   const { layers, mapConfig } = data
+  const { setMapView } = useMapViewContext();
+  
   // Form State variables
   const [loading, setLoading] = useState(false);
   const [boundaryErrMsg, setBoundaryErrMsg] = useState("");
@@ -141,6 +143,11 @@ export function ExtentPicker() {
     })
   }, [data])
 
+  // Set the mapView in context when it's created
+  useEffect(() => {
+    setMapView(mapView);
+    return () => setMapView(undefined);
+  }, [mapView, setMapView]);
 
   // Attaches map to ref
   useEffect(() => {
@@ -304,42 +311,40 @@ export function ExtentPicker() {
   }
 
   return (
-    <MapViewContext.Provider value={mapView}>
-      <div className="dark:bg-dark-bg" style={{ display: "flex", flexDirection: "column", gap: ".5rem .5rem" }}>
-        <div ref={elRef} className="w-full h-[63vh]" />
-        <div className="flex flex-row gap-1">
+    <div className="dark:bg-dark-bg" style={{ display: "flex", flexDirection: "column", gap: ".5rem .5rem" }}>
+      <div ref={elRef} className="w-full h-[63vh]" />
+      <div className="flex flex-row gap-1">
 
-          <input
+        <input
 
-            className="w-full text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-dark-text-bg dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-            type="search"
-            name="layer-url"
-            id="boundary-text-field"
-            value={textBoxValue}
-            placeholder="Draw on map using tools (Or you can also paste a JSON boundary in this box)"
-            onChange={e => onTextBoxChange(e.currentTarget.value)}
-            required
-            {...(textBoxDisabled ? { readOnly: true } : {})}
-          />
-          <BoundaryAdornment content={textBoxValue} />
-        </div>
-        <StatusAlert
-          msg={
-            <div>
-              Error parsing your boundary, you probably mistyped. Supported
-              Formats: <a {...esriDocLinkProps("POLYGON")}>Polygon</a>,{" "}
-              <a {...esriDocLinkProps("ENVELOPE")}>Envelope</a>
-              <p />
-              <code>
-                {"    "}
-                {boundaryErrMsg}
-              </code>
-            </div>
-          }
-          alertType={boundaryAlertType}
-          loading={loading}
+          className="w-full text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-dark-text-bg dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+          type="search"
+          name="layer-url"
+          id="boundary-text-field"
+          value={textBoxValue}
+          placeholder="Draw on map using tools (Or you can also paste a JSON boundary in this box)"
+          onChange={e => onTextBoxChange(e.currentTarget.value)}
+          required
+          {...(textBoxDisabled ? { readOnly: true } : {})}
         />
+        <BoundaryAdornment content={textBoxValue} />
       </div>
-    </MapViewContext.Provider>
+      <StatusAlert
+        msg={
+          <div>
+            Error parsing your boundary, you probably mistyped. Supported
+            Formats: <a {...esriDocLinkProps("POLYGON")}>Polygon</a>,{" "}
+            <a {...esriDocLinkProps("ENVELOPE")}>Envelope</a>
+            <p />
+            <code>
+              {"    "}
+              {boundaryErrMsg}
+            </code>
+          </div>
+        }
+        alertType={boundaryAlertType}
+        loading={loading}
+      />
+    </div>
   );
 }
