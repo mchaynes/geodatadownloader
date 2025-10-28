@@ -7,6 +7,7 @@ import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getRealUrl, queryLayer, QueryResult } from "../../../arcgis";
 import Geometry from "@arcgis/core/geometry/Geometry";
+import Extent from "@arcgis/core/geometry/Extent";
 import { ActionFunctionArgs, Form, Link, Outlet, useFetcher, useLoaderData } from "react-router-dom";
 import { Alert, Button, Checkbox, Dropdown, Modal, Progress, Table, TextInput } from "flowbite-react";
 import { Drivers, GdalDownloader } from "../../../downloader";
@@ -545,19 +546,31 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
       console.warn("MapView not available");
       return;
     }
-    if (!layer.esri.fullExtent) {
-      console.warn(`Layer "${sourceJSON["name"]}" has no fullExtent`);
+    
+    // Use extent from sourceJSON (the layer's metadata from ArcGIS REST API)
+    const extentData = sourceJSON?.extent;
+    if (!extentData) {
+      console.warn(`Layer "${sourceJSON["name"]}" has no extent in sourceJSON`);
       return;
     }
     
+    // Create an Extent object from the sourceJSON extent
+    const extent = new Extent({
+      xmin: extentData.xmin,
+      ymin: extentData.ymin,
+      xmax: extentData.xmax,
+      ymax: extentData.ymax,
+      spatialReference: extentData.spatialReference
+    });
+    
     mapView.when(() => {
-      mapView.goTo(layer.esri.fullExtent).catch((err) => {
+      mapView.goTo(extent).catch((err) => {
         console.error(`Error zooming to layer "${sourceJSON["name"]}" (${realUrl}):`, err);
       });
     }).catch((err) => {
       console.error("MapView not ready:", err);
     });
-  }, [mapView, layer.esri.fullExtent, sourceJSON, realUrl]);
+  }, [mapView, sourceJSON, realUrl]);
 
   return <li key={url} className="flex flex-row items-center p-2 bg-white dark:bg-dark-bg">
     <div className="flex-1 min-w-0 max-w-xs">
