@@ -92,6 +92,14 @@ export async function queryLayer(layer, filterExtent?: Geometry) {
     chunkedIds.push(currentChunk);
   }
 
+  // Determine which fields to fetch based on column_mapping
+  let outFields: string[] = ["*"];
+  if (layer?.config?.column_mapping && typeof layer.config.column_mapping === 'object') {
+    const columnMapping = layer.config.column_mapping as Record<string, string>;
+    // Only fetch the original field names that are in the mapping (i.e., selected)
+    outFields = Object.keys(columnMapping);
+  }
+
   return {
     getPage: async (page: number) => {
       // Find the object id field, default to OBJECTID
@@ -100,7 +108,7 @@ export async function queryLayer(layer, filterExtent?: Geometry) {
 
       return await layer.esri.queryFeatures({
         where: `${objectIdField} IN (${chunkedIds[page].join(",")})`,
-        outFields: ["*"],
+        outFields: outFields,
         returnGeometry: true,
         outSpatialReference: {
           // geojson is always in 4326

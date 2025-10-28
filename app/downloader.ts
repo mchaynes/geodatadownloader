@@ -118,6 +118,10 @@ export class GdalDownloader {
         throw new Error("layer not defined");
       }
       const numPages = result.numPages;
+      
+      // Get column mapping if it exists
+      const columnMapping = layer?.config?.column_mapping as Record<string, string> | null | undefined;
+      
       writer.write(header);
       // Create callable functions that fetch results for each page
       let firstPage = true;
@@ -131,6 +135,24 @@ export class GdalDownloader {
         json.features = json.features.filter(containsValidGeometry)
 
         const geojson = arcgisToGeoJSON(json) as unknown as GeoJSON.FeatureCollection;
+        
+        // Apply column renaming if column mapping is defined
+        if (columnMapping && Object.keys(columnMapping).length > 0) {
+          geojson.features = geojson.features.map(feature => {
+            if (feature.properties) {
+              const newProperties: Record<string, any> = {};
+              // Only include properties that are in the column mapping
+              for (const [oldName, newName] of Object.entries(columnMapping)) {
+                if (oldName in feature.properties) {
+                  newProperties[newName] = feature.properties[oldName];
+                }
+              }
+              feature.properties = newProperties;
+            }
+            return feature;
+          });
+        }
+        
         let stringified = geojson.features
           .map((f) => JSON.stringify(f))
           .join(",");
