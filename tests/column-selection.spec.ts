@@ -1,12 +1,14 @@
 import { test, expect } from '@playwright/test';
 import { parse } from 'csv-parse/sync';
+import JSZip from 'jszip';
+import fs from 'fs';
 
-// Using King County Wetlands layer as specified in the issue
-const layerUrl = "https://gismaps.kingcounty.gov/arcgis/rest/services/Environment/KingCo_SensitiveAreas/MapServer/22";
+// Using King County layer as specified in the issue
+const layerUrl = "https://gismaps.kingcounty.gov/arcgis/rest/services/Census/KingCo_Demographics/MapServer/4";
 const layerUrlFieldId = "#default-search";
 
 test.describe('Column Selection and Renaming', () => {
-    test('can configure columns and download CSV with renamed columns', async ({ page, context }) => {
+    test('can configure 2 columns and CSV contains only renamed columns', async ({ page, context }) => {
         // Navigate to the app
         await page.goto('/');
         await page.waitForLoadState('networkidle');
@@ -15,12 +17,9 @@ test.describe('Column Selection and Renaming', () => {
         await page.locator(layerUrlFieldId).fill(layerUrl);
         await page.getByRole('button', { name: 'Add' }).click();
         
-        // Wait for layer to be added (give it more time as this is a real service)
-        await page.waitForTimeout(5000);
-        
-        // Click the three-dot menu button to open dropdown
+        // Wait until the layer's menu button is visible, then open dropdown
         const menuButton = page.locator('button:has(svg[viewBox="0 0 4 15"])').first();
-        await menuButton.waitFor({ state: 'visible', timeout: 10000 });
+        await menuButton.waitFor({ state: 'visible' });
         await menuButton.click();
         
         // Click "Filters & Attributes..." menu item
@@ -40,20 +39,19 @@ test.describe('Column Selection and Renaming', () => {
         await expect(thead.locator('text=New Name')).toBeVisible();
         await expect(thead.locator('text=Sample Value')).toBeVisible();
         
-        // Get the first few checkboxes and find specific fields to test with
-        // We'll select only 3 columns and rename them
-        const checkboxes = page.locator('input[type="checkbox"]');
+        // We'll select only 2 columns and rename them, leaving all others unselected
+        const checkboxes = page.locator('input[type="checkbox"][name$="-enabled"]');
         const checkboxCount = await checkboxes.count();
-        
-        // Uncheck all checkboxes first
-        for (let i = 0; i < Math.min(checkboxCount, 10); i++) {
+
+        // Uncheck all checkboxes first (ensure a clean slate)
+        for (let i = 0; i < checkboxCount; i++) {
             const checkbox = checkboxes.nth(i);
             if (await checkbox.isChecked()) {
                 await checkbox.uncheck();
             }
         }
-        
-        // Now check and rename the first 3 columns
+
+        // Now check and rename the first 2 columns
         // Get the first field name to use for selection
         const firstFieldName = await page.locator('input[name$="-enabled"]').first().getAttribute('name');
         if (firstFieldName) {
@@ -77,22 +75,12 @@ test.describe('Column Selection and Renaming', () => {
             await renameInput.clear();
             await renameInput.fill('Renamed_Field_2');
         }
-        
-        // Get third field
-        const thirdFieldName = await page.locator('input[name$="-enabled"]').nth(2).getAttribute('name');
-        if (thirdFieldName) {
-            const fieldBaseName = thirdFieldName.replace('-enabled', '');
-            await page.locator(`input[name="${fieldBaseName}-enabled"]`).check();
-            const renameInput = page.locator(`input[name="${fieldBaseName}-new"]`);
-            await renameInput.clear();
-            await renameInput.fill('Renamed_Field_3');
-        }
-        
+
         // Click Save button
         await page.getByRole('button', { name: 'Save' }).click();
         
-        // Wait for modal to close
-        await page.waitForTimeout(2000);
+        // Wait for modal to close by asserting the table disappears
+        await expect(table).toBeHidden();
         
         // Select CSV format from dropdown
         await page.locator('select#format').selectOption('CSV');
@@ -112,8 +100,23 @@ test.describe('Column Selection and Renaming', () => {
         
         // Verify the file was downloaded
         expect(download.suggestedFilename()).toContain('.zip');
-        
-        console.log('Download completed:', download.suggestedFilename());
+
+        // Unzip and verify CSV contents include ONLY the two renamed columns
+        const zipBuffer = fs.readFileSync(downloadPath);
+        const zip = await JSZip.loadAsync(zipBuffer as unknown as Uint8Array);
+        const csvEntryName = Object.keys(zip.files).find(k => k.toLowerCase().endsWith('.csv'));
+        expect(csvEntryName, 'CSV file should exist within the ZIP').toBeTruthy();
+        const csvText = await zip.file(csvEntryName!)!.async('string');
+
+        // Parse CSV header
+        const records = parse(csvText, { columns: true });
+        expect(records.length).toBeGreaterThan(0);
+        const headerColumns = Object.keys(records[0]);
+
+        // Validate only the two renamed columns are present
+        expect(headerColumns).toEqual(['Renamed_Field_1', 'Renamed_Field_2']);
+        // Also assert that no extra columns slipped in
+        expect(headerColumns.length).toBe(2);
     });
     
     test('modal displays columns vertically for layers with many columns', async ({ page }) => {
@@ -125,19 +128,16 @@ test.describe('Column Selection and Renaming', () => {
         await page.locator(layerUrlFieldId).fill(layerUrl);
         await page.getByRole('button', { name: 'Add' }).click();
         
-        // Wait for layer to be added
-        await page.waitForTimeout(5000);
-        
-        // Click the three-dot menu button
+        // Wait for the layer's menu button and open it
         const menuButton = page.locator('button:has(svg[viewBox="0 0 4 15"])').first();
-        await menuButton.waitFor({ state: 'visible', timeout: 10000 });
+        await menuButton.waitFor({ state: 'visible' });
         await menuButton.click();
         
         // Click "Filters & Attributes..."
         await page.getByText('Filters & Attributes...').click();
         
-        // Wait for modal
-        await page.waitForTimeout(2000);
+        // Wait for the configuration table to be visible in the modal
+        await expect(page.locator('table').first()).toBeVisible();
         
         // Verify the table is scrollable and has reasonable width
         const table = page.locator('table').first();
@@ -157,47 +157,5 @@ test.describe('Column Selection and Renaming', () => {
         
         // Take a screenshot to verify the layout
         await page.screenshot({ path: '/tmp/column-modal-layout.png', fullPage: true });
-    });
-    
-    test('unselected columns are not included in download', async ({ page }) => {
-        await page.goto('/');
-        await page.waitForLoadState('networkidle');
-        
-        // Add the layer
-        await page.locator(layerUrlFieldId).fill(layerUrl);
-        await page.getByRole('button', { name: 'Add' }).click();
-        await page.waitForTimeout(5000);
-        
-        // Open the configuration modal
-        const menuButton = page.locator('button:has(svg[viewBox="0 0 4 15"])').first();
-        await menuButton.waitFor({ state: 'visible', timeout: 10000 });
-        await menuButton.click();
-        await page.getByText('Filters & Attributes...').click();
-        await page.waitForTimeout(2000);
-        
-        // Uncheck all but the first 2 columns
-        const checkboxes = page.locator('input[type="checkbox"][name$="-enabled"]');
-        const totalCheckboxes = await checkboxes.count();
-        console.log(`Total checkboxes: ${totalCheckboxes}`);
-        
-        // Uncheck all
-        for (let i = 0; i < totalCheckboxes; i++) {
-            const checkbox = checkboxes.nth(i);
-            if (await checkbox.isChecked()) {
-                await checkbox.uncheck();
-            }
-        }
-        
-        // Check only first 2
-        await checkboxes.nth(0).check();
-        await checkboxes.nth(1).check();
-        
-        // Click Save
-        await page.getByRole('button', { name: 'Save' }).click();
-        await page.waitForTimeout(1000);
-        
-        // Verify that only 2 columns are selected
-        // This is a basic check - the actual CSV validation would require extracting and parsing the zip
-        console.log('Configuration saved with 2 columns selected');
     });
 });

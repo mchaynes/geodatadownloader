@@ -160,29 +160,35 @@ export default function MapCreator() {
   const loaderData = useLoaderData() as Awaited<ReturnType<typeof mapCreatorLoader>>
   const [showBrokenModal, setShowBrokenModal] = useState((loaderData?.brokenLayers?.length ?? 0) > 0)
   const [broken, setBroken] = useState<Array<{ url: string; name?: string; reason: string }>>(loaderData?.brokenLayers ?? [])
+  const [retryingBrokenCheck, setRetryingBrokenCheck] = useState(false)
 
   const handleRetryBrokenCheck = useCallback(async () => {
     if (!broken?.length) {
       setShowBrokenModal(false)
       return;
     }
-    const checks = await Promise.allSettled(
-      broken.map(b => {
-        const lyr = new FeatureLayer({ url: b.url })
-        return lyr.load()
+    setRetryingBrokenCheck(true)
+    try {
+      const checks = await Promise.allSettled(
+        broken.map(b => {
+          const lyr = new FeatureLayer({ url: b.url })
+          return lyr.load()
+        })
+      )
+      const stillBroken: Array<{ url: string; name?: string; reason: string }> = []
+      checks.forEach((res, idx) => {
+        if (res.status === "rejected") {
+          const err = res.reason as Error
+          const prev = broken[idx]
+          stillBroken.push({ ...prev, reason: err?.message ?? prev.reason })
+        }
       })
-    )
-    const stillBroken: Array<{ url: string; name?: string; reason: string }> = []
-    checks.forEach((res, idx) => {
-      if (res.status === "rejected") {
-        const err = res.reason as Error
-        const prev = broken[idx]
-        stillBroken.push({ ...prev, reason: err?.message ?? prev.reason })
+      setBroken(stillBroken)
+      if (stillBroken.length === 0) {
+        setShowBrokenModal(false)
       }
-    })
-    setBroken(stillBroken)
-    if (stillBroken.length === 0) {
-      setShowBrokenModal(false)
+    } finally {
+      setRetryingBrokenCheck(false)
     }
   }, [broken])
 
@@ -614,15 +620,15 @@ export default function MapCreator() {
                   </Table>
                 </div>
                 <div className="flex justify-end gap-2">
-                  <Button color="gray" onClick={handleRetryBrokenCheck}>
-                    Retry check
+                  <Button color="gray" onClick={handleRetryBrokenCheck} disabled={retryingBrokenCheck}>
+                    {retryingBrokenCheck ? "Retrying…" : "Retry check"}
                   </Button>
                   <Button color="failure" onClick={() => {
                     const brokenUrls = new Set(broken.map(b => b.url))
                     const next = { ...loaderData.mapConfig, layers: loaderData.mapConfig.layers.filter(l => !brokenUrls.has(l.url)) }
                     saveMapConfigLocal(next)
                     window.location.reload()
-                  }}>
+                  }} disabled={retryingBrokenCheck}>
                     Remove all broken layers
                   </Button>
                 </div>
