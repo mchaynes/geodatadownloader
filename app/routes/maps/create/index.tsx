@@ -541,11 +541,22 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
   const mapView = useMapView()
 
   const handleZoomToLayer = useCallback(() => {
-    if (mapView && layer.esri.fullExtent) {
+    if (!mapView) {
+      console.warn("MapView not available");
+      return;
+    }
+    if (!layer.esri.fullExtent) {
+      console.warn(`Layer "${sourceJSON["name"]}" has no fullExtent`);
+      return;
+    }
+    
+    mapView.when(() => {
       mapView.goTo(layer.esri.fullExtent).catch((err) => {
         console.error(`Error zooming to layer "${sourceJSON["name"]}" (${realUrl}):`, err);
       });
-    }
+    }).catch((err) => {
+      console.error("MapView not ready:", err);
+    });
   }, [mapView, layer.esri.fullExtent, sourceJSON, realUrl]);
 
   return <li key={url} className="flex flex-row items-center p-2 bg-white dark:bg-dark-bg">
@@ -582,9 +593,8 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
       </Dropdown.Item>
       <Dropdown.Item
         icon={() =>
-          <svg className="w-5 h-5 pr-2 text-gray-800 dark:text-white" aria-hidden="true" fill="none" viewBox="0 0 20 18" aria-label="Zoom to layer extent">
-            <title>Zoom to layer extent</title>
-            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 3a3 3 0 1 1-1.614 5.53M15 12a4 4 0 0 1 4 4v1h-3m-4.553-10.97 4.553 4.553M10 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Zm0 0v-6m3-3H7" />
+          <svg className="w-5 h-5 pr-2 text-gray-800 dark:text-white" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>}
         onClick={handleZoomToLayer}
       >
