@@ -26,19 +26,19 @@ test.describe('Column Selection and Renaming', () => {
         // Click "Filters & Attributes..." menu item
         await page.getByText('Filters & Attributes...').click();
         
-        // Wait for the modal to appear
-        await page.waitForTimeout(2000);
-        
-        // Verify the modal has the vertical table layout
-        const table = page.locator('table');
+        // Wait for the modal to appear and the table to be fully loaded
+        const table = page.locator('table').first();
         await expect(table).toBeVisible();
         
-        // Verify table headers
-        // Note: Flowbite's Table.HeadCell renders as a cell role, not columnheader
-        await expect(page.locator('thead').getByRole('cell', { name: 'Include' })).toBeVisible();
-        await expect(page.locator('thead').getByRole('cell', { name: 'Original Name' })).toBeVisible();
-        await expect(page.locator('thead').getByRole('cell', { name: 'New Name' })).toBeVisible();
-        await expect(page.locator('thead').getByRole('cell', { name: 'Sample Value' })).toBeVisible();
+        // Wait for the table head to be present
+        const thead = table.locator('thead');
+        await expect(thead).toBeVisible();
+        
+        // Verify table headers - using direct text locators within thead
+        await expect(thead.locator('text=Include')).toBeVisible();
+        await expect(thead.locator('text=Original Name')).toBeVisible();
+        await expect(thead.locator('text=New Name')).toBeVisible();
+        await expect(thead.locator('text=Sample Value')).toBeVisible();
         
         // Get the first few checkboxes and find specific fields to test with
         // We'll select only 3 columns and rename them
