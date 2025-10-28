@@ -34,10 +34,11 @@ test.describe('Column Selection and Renaming', () => {
         await expect(table).toBeVisible();
         
         // Verify table headers
-        await expect(page.getByRole('columnheader', { name: 'Include' })).toBeVisible();
-        await expect(page.getByRole('columnheader', { name: 'Original Name' })).toBeVisible();
-        await expect(page.getByRole('columnheader', { name: 'New Name' })).toBeVisible();
-        await expect(page.getByRole('columnheader', { name: 'Sample Value' })).toBeVisible();
+        // Note: Flowbite's Table.HeadCell renders as a cell role, not columnheader
+        await expect(page.locator('thead').getByRole('cell', { name: 'Include' })).toBeVisible();
+        await expect(page.locator('thead').getByRole('cell', { name: 'Original Name' })).toBeVisible();
+        await expect(page.locator('thead').getByRole('cell', { name: 'New Name' })).toBeVisible();
+        await expect(page.locator('thead').getByRole('cell', { name: 'Sample Value' })).toBeVisible();
         
         // Get the first few checkboxes and find specific fields to test with
         // We'll select only 3 columns and rename them
