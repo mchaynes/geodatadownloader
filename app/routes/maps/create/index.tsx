@@ -9,8 +9,8 @@ import { getRealUrl, queryLayer, QueryResult } from "../../../arcgis";
 import Geometry from "@arcgis/core/geometry/Geometry";
 import Extent from "@arcgis/core/geometry/Extent";
 import { ActionFunctionArgs, Form, Link, Outlet, useFetcher, useLoaderData } from "react-router-dom";
-import { Alert, Button, Checkbox, Dropdown, Modal, Progress, Table, TextInput } from "flowbite-react";
-import { Drivers, GdalDownloader } from "../../../downloader";
+import { Button, Checkbox, Dropdown, Modal, Table, TextInput } from "flowbite-react";
+import { Drivers } from "../../../downloader";
 import { StatusAlert, useStatusAlert } from "../../../StatusAlert";
 import { getMapConfigLocal, saveMapConfigLocal } from "../../../database";
 
@@ -206,19 +206,6 @@ export default function MapCreator() {
   const [concurrent, setConcurrent] = useState(1)
 
   const [results, setResults] = useState<QueryResult[]>([])
-  const [featDld, setFeatDld] = useState(0)
-
-  const [downloader] = useState(new GdalDownloader((num) => setFeatDld(num)))
-  // StatusAlert is no longer used for errors here; show a compact inline alert
-  // with a modal for details to match the Downloader UX.
-  const [, setMapAlertProps] = useStatusAlert("", undefined);
-  const [mapDetailsOpen, setMapDetailsOpen] = useState(false);
-  const [mapCompactVisible, setMapCompactVisible] = useState(false);
-  const [mapPrettyMsg, setMapPrettyMsg] = useState<string | undefined>(undefined);
-  const [mapDetailsText, setMapDetailsText] = useState<string | undefined>(undefined);
-  const [totalFeatures, setTotalFeatures] = useState(0)
-  const [percent, setPercent] = useState(0)
-
 
   const [showLoadingModal, setShowLoadingModal] = useState(false)
   const fetcher = useFetcher()
@@ -337,19 +324,6 @@ export default function MapCreator() {
     }
     f()
   }, [loaderData, filterExtent])
-
-  useEffect(() => {
-    let newTotal = 0
-    for (const r of results) {
-      newTotal += r.totalCount
-    }
-    setTotalFeatures(newTotal)
-  }, [results])
-
-  useEffect(() => {
-    setPercent(Math.floor((featDld / totalFeatures) * 100))
-  }, [totalFeatures, featDld])
-
 
   const [showRemoveModal, setShowRemoveModal] = useState(false)
   const [isLayersPanelCollapsed, setIsLayersPanelCollapsed] = useState(false)
@@ -508,80 +482,27 @@ export default function MapCreator() {
             </button>*/}
             <button
               className="w-full ml-2 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-              onClick={async () => {
-                try {
-                  // clear previous alerts
-                  setMapAlertProps("", undefined);
-                  await downloader.download(results, concurrent, format as string);
-                  setMapAlertProps("Download completed", "success");
-                } catch (e) {
-                  const err = e as Error;
-                  console.error(err);
-                  // Prepare pretty and technical messages and show compact alert
-                  const msg = err.message ?? "An unknown error occurred while downloading.";
-                  if (msg.includes("No output files were generated")) {
-                    setMapPrettyMsg(
-                      "No files were generated for this download. This may mean the ArcGIS server returned an error, or no features matched your query. Check the layer URL and try again."
-                    );
-                  } else if (msg.includes("ArcGIS server error")) {
-                    const parts = msg.split(":");
-                    const serverMsg = parts.slice(1).join(":").trim() || msg;
-                    setMapPrettyMsg(`Server error when fetching layer: ${serverMsg}. Try again later or check the layer's service URL.`);
-                  } else {
-                    setMapPrettyMsg(msg);
-                  }
-                  setMapDetailsText(err.message);
-                  // clear any long status alert and show compact inline alert
-                  setMapAlertProps("", undefined);
-                  setMapCompactVisible(true);
-                }
+              onClick={() => {
+                // Prepare layer configurations for the download page
+                const layerConfigs = loaderData.layers.map(layer => ({
+                  url: layer.config?.url || layer.esri.url,
+                  where: layer.config?.where_clause || "1=1",
+                  columnMapping: layer.config?.column_mapping as Record<string, string> | undefined,
+                }));
+
+                // Create URL with parameters
+                const params = new URLSearchParams({
+                  format: format,
+                  concurrent: concurrent.toString(),
+                  layers: JSON.stringify(layerConfigs),
+                });
+
+                // Open download page in new tab
+                window.open(`/download?${params.toString()}`, '_blank');
               }}
             >
               Download
             </button>
-            {mapCompactVisible && (
-              <div style={{ marginTop: 12 }}>
-                <Alert color="failure" onDismiss={() => setMapCompactVisible(false)}>
-                  <div className="flex flex-col">
-                    <span className="font-medium">Download failed.</span>
-                    <button
-                      type="button"
-                      className="underline text-left mt-1"
-                      style={{ padding: 0 }}
-                      onClick={() => setMapDetailsOpen(true)}
-                    >
-                      See why
-                    </button>
-                  </div>
-                </Alert>
-              </div>
-            )}
-            <Modal show={mapDetailsOpen} onClose={() => setMapDetailsOpen(false)} size="xl" popup>
-              <Modal.Header />
-              <Modal.Body>
-                <div className="text-left">
-                  <h3 className="mb-4 text-lg font-medium">Download details</h3>
-                  <div className="mb-4">
-                    <p className="whitespace-normal break-words">{mapPrettyMsg}</p>
-                  </div>
-                  <div>
-                    <strong>Technical details</strong>
-                    <pre className="text-sm overflow-x-auto whitespace-pre" style={{ background: '#f5f5f5', padding: 12, borderRadius: 4 }}>{mapDetailsText}</pre>
-                  </div>
-                </div>
-              </Modal.Body>
-            </Modal>
-            {percent === 100 &&
-              <Alert color="success">
-                <span>
-                  <p>
-                    <span className="font-medium">
-                      Done 🙌
-                    </span>
-                  </p>
-                </span>
-              </Alert>}
-            {percent < 100 && percent > 0 && <Progress progress={percent} />}
           </Form>
         </div>
       </div>
