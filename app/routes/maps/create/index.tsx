@@ -541,11 +541,14 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
   const realUrl = getRealUrl(layer.esri)
   const [showRemoveModal, setShowRemoveModal] = useState(false)
   const [showConfigureModal, setShowConfigureModal] = useState(false)
-  const [dropdownOpen, setDropdownOpen] = useState(false)
   const mapView = useMapView()
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+
+  function closeDropdown() {
+    triggerRef.current?.click()
+  }
 
   const handleZoomToLayer = useCallback(() => {
-    setDropdownOpen(false); // Close dropdown when zoom is clicked
     
     if (!mapView) {
       console.warn("MapView not available");
@@ -602,10 +605,10 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
     <Dropdown
       className="dark:text-white dark:bg-dark-bg"
       inline
-      arrowIcon={false}
       dismissOnClick={true}
+      arrowIcon={false}
       label={
-        <button className="hover:bg-gray-100 dark:bg-dark-bg dark:hover:bg-gray-700 p-2 rounded-lg">
+        <button ref={triggerRef} className="hover:bg-gray-100 dark:bg-dark-bg dark:hover:bg-gray-700 p-2 rounded-lg">
           <svg className="w-4 h-4 text-gray-800 dark:text-white " aria-hidden="true" fill="currentColor" viewBox="0 0 4 15">
             <path d="M3.5 1.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm0 6.041a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm0 5.959a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
           </svg>
@@ -618,7 +621,7 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
             <path d="M18 0H2a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2ZM2 6h7v6H2V6Zm9 6V6h7v6h-7Z" />
           </svg>}
         onClick={() => {
-          setDropdownOpen(false);
+          closeDropdown()
           setShowConfigureModal(true);
         }}
       >
@@ -629,7 +632,10 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
           <svg className="w-5 h-5 pr-2 text-gray-800 dark:text-white" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>}
-        onClick={handleZoomToLayer}
+        onClick={() => {
+          closeDropdown()
+          handleZoomToLayer()
+        }}
       >
         Zoom to Layer
       </Dropdown.Item>
@@ -640,7 +646,7 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
           </svg>
         }
         onClick={() => {
-          setDropdownOpen(false);
+          closeDropdown()
           window.open(realUrl, "_blank");
         }}
       >
@@ -657,7 +663,7 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
           </svg>
         }
         onClick={() => {
-          setDropdownOpen(false);
+          closeDropdown()
           setShowRemoveModal(true);
         }}
       >
