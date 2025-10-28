@@ -17,7 +17,7 @@ module.exports = {
     "node_modules/(?!(@arcgis|@esri|@stencil)/)"
   ],
   testEnvironment: "jsdom",
-  testPathIgnorePatterns: ["<rootDir>/cypress/"],
+  testPathIgnorePatterns: ["<rootDir>/cypress/", "<rootDir>/tests/"],
   setupFilesAfterEnv: ["<rootDir>/src/setupJest.js"],
 
   collectCoverage: true,

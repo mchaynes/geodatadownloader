@@ -19,12 +19,9 @@ test.describe('Main Workflow', () => {
         
         // Click Add button (submit button with text "Add")
         await page.getByRole('button', { name: 'Add' }).click();
-        
-        // Wait for the layer to be loaded - check for success indication
-        await page.waitForTimeout(3000);
-        
+
         // Verify layer was added by checking if boundary field is now visible
-        await expect(page.locator(boundaryFieldId)).toBeVisible({ timeout: 10000 });
+        await expect(page.locator(boundaryFieldId)).toBeVisible();
     });
     
     test('can set boundary text', async ({ page }) => {
@@ -34,7 +31,7 @@ test.describe('Main Workflow', () => {
         // Add layer first
         await page.locator(layerUrlFieldId).fill(layerUrl);
         await page.getByRole('button', { name: 'Add' }).click();
-        await page.waitForTimeout(3000);
+        await expect(page.locator(boundaryFieldId)).toBeVisible();
         
         // Type in boundary text
         await page.locator(boundaryFieldId).fill(boundaryText);

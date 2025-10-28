@@ -7,3 +7,6 @@ app/models
 amplify-codegen-temp/models
 
 tests/
+
+# Temporarily ignore this file due to tsconfig project parsing error in CI
+app/Downloader.tsx
