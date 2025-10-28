@@ -18,6 +18,17 @@ interface DownloadProgress {
   message: string;
 }
 
+// Progress percentages for each phase
+const PHASE_PROGRESS = {
+  idle: 0,
+  "querying-ids": 10,
+  "fetching-features": { start: 20, end: 80 },
+  converting: 85,
+  zipping: 95,
+  complete: 100,
+  error: 0,
+} as const;
+
 export default function DownloadPage() {
   const [searchParams] = useSearchParams();
   
@@ -45,11 +56,17 @@ export default function DownloadPage() {
           throw new Error("No layers specified for download");
         }
 
-        const layerConfigs = JSON.parse(layersJson) as Array<{
+        let layerConfigs: Array<{
           url: string;
           where?: string;
           columnMapping?: Record<string, string>;
         }>;
+        
+        try {
+          layerConfigs = JSON.parse(layersJson);
+        } catch (parseError) {
+          throw new Error("Invalid layer configuration: malformed JSON");
+        }
 
         // Phase 1: Load layers and query for ObjectIDs
         setProgress(prev => ({
@@ -156,19 +173,22 @@ export default function DownloadPage() {
   const getPhaseProgress = (phase: DownloadPhase): number => {
     switch (phase) {
       case "idle":
-        return 0;
+        return PHASE_PROGRESS.idle;
       case "querying-ids":
-        return 10;
-      case "fetching-features":
-        return 20 + (progress.totalFeatures > 0 ? (progress.fetchedFeatures / progress.totalFeatures) * 60 : 0);
+        return PHASE_PROGRESS["querying-ids"];
+      case "fetching-features": {
+        const { start, end } = PHASE_PROGRESS["fetching-features"];
+        const range = end - start;
+        return start + (progress.totalFeatures > 0 ? (progress.fetchedFeatures / progress.totalFeatures) * range : 0);
+      }
       case "converting":
-        return 85;
+        return PHASE_PROGRESS.converting;
       case "zipping":
-        return 95;
+        return PHASE_PROGRESS.zipping;
       case "complete":
-        return 100;
+        return PHASE_PROGRESS.complete;
       case "error":
-        return 0;
+        return PHASE_PROGRESS.error;
       default:
         return 0;
     }
@@ -193,6 +213,28 @@ export default function DownloadPage() {
       default:
         return "Unknown";
     }
+  };
+
+  const getStepIndicatorClass = (currentPhase: DownloadPhase, stepPhases: DownloadPhase[]): string => {
+    // Check if this step is complete
+    if (stepPhases.includes(currentPhase)) {
+      return "bg-green-500";
+    }
+    // Check if this step is in progress
+    if (currentPhase === "idle" && stepPhases.includes("querying-ids")) {
+      return "bg-blue-500 animate-pulse";
+    }
+    if (currentPhase === "fetching-features" && stepPhases.includes("fetching-features")) {
+      return "bg-blue-500 animate-pulse";
+    }
+    if (currentPhase === "converting" && stepPhases.includes("converting")) {
+      return "bg-blue-500 animate-pulse";
+    }
+    if (currentPhase === "zipping" && stepPhases.includes("zipping")) {
+      return "bg-blue-500 animate-pulse";
+    }
+    // Default: not started yet
+    return "bg-gray-300";
   };
 
   return (
@@ -248,11 +290,7 @@ export default function DownloadPage() {
               <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <div className="flex items-center space-x-3">
                   <div className={`w-3 h-3 rounded-full ${
-                    progress.phase === "querying-ids" || progress.phase === "fetching-features" || progress.phase === "converting" || progress.phase === "zipping" || progress.phase === "complete"
-                      ? "bg-green-500" 
-                      : progress.phase === "idle"
-                      ? "bg-blue-500 animate-pulse"
-                      : "bg-gray-300"
+                    getStepIndicatorClass(progress.phase, ["querying-ids", "fetching-features", "converting", "zipping", "complete"])
                   }`} />
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
                     1. Query ObjectIDs
@@ -268,11 +306,7 @@ export default function DownloadPage() {
               <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <div className="flex items-center space-x-3">
                   <div className={`w-3 h-3 rounded-full ${
-                    progress.phase === "fetching-features"
-                      ? "bg-blue-500 animate-pulse"
-                      : ["converting", "zipping", "complete"].includes(progress.phase)
-                      ? "bg-green-500"
-                      : "bg-gray-300"
+                    getStepIndicatorClass(progress.phase, ["converting", "zipping", "complete"])
                   }`} />
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
                     2. Fetch Features
@@ -286,11 +320,7 @@ export default function DownloadPage() {
               <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <div className="flex items-center space-x-3">
                   <div className={`w-3 h-3 rounded-full ${
-                    progress.phase === "converting"
-                      ? "bg-blue-500 animate-pulse"
-                      : ["zipping", "complete"].includes(progress.phase)
-                      ? "bg-green-500"
-                      : "bg-gray-300"
+                    getStepIndicatorClass(progress.phase, ["zipping", "complete"])
                   }`} />
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
                     3. Convert Format
@@ -301,11 +331,7 @@ export default function DownloadPage() {
               <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <div className="flex items-center space-x-3">
                   <div className={`w-3 h-3 rounded-full ${
-                    progress.phase === "zipping"
-                      ? "bg-blue-500 animate-pulse"
-                      : progress.phase === "complete"
-                      ? "bg-green-500"
-                      : "bg-gray-300"
+                    getStepIndicatorClass(progress.phase, ["complete"])
                   }`} />
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
                     4. Create ZIP
