@@ -15,7 +15,7 @@ import type { CustomFlowbiteTheme } from "flowbite-react";
 import { removeLayerAction } from "./routes/maps/create/remove-layer";
 import { getQueryResultsLoader } from "./routes/maps/create/layers/results";
 import { ExtentPicker, extentPickerAction } from "./ExtentPicker";
-import ConfigureLayerModal from "./routes/maps/create/layers/configure";
+import ConfigureLayerModal, { configureLayerAction } from "./routes/maps/create/layers/configure";
 
 
 const rootEl = document.getElementById("root");
@@ -81,6 +81,7 @@ const router = createBrowserRouter([
           {
             path: "/maps/create/layers/configure",
             element: <ConfigureLayerModal open={true} />,
+            action: configureLayerAction,
           }
         ]
       },
