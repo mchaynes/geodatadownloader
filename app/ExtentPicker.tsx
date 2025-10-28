@@ -27,6 +27,7 @@ import { mapCreatorLoader } from "./routes/maps/create";
 import { ActionFunctionArgs, useFetcher, useLoaderData, useSearchParams } from "react-router-dom";
 import { getMapConfigLocal, saveMapConfigLocal } from "./database";
 import { Button, Tooltip } from "flowbite-react";
+import { useMapViewContext } from "./MapViewContext";
 
 const GEOMETRY_LINK =
   "https://developers.arcgis.com/documentation/common-data-types/geometry-objects.htm";
@@ -54,6 +55,8 @@ export function ExtentPicker() {
   const data = useLoaderData() as Awaited<ReturnType<typeof mapCreatorLoader>>
   const fetcher = useFetcher()
   const { layers, mapConfig } = data
+  const { setMapView } = useMapViewContext();
+  
   // Form State variables
   const [loading, setLoading] = useState(false);
   const [boundaryErrMsg, setBoundaryErrMsg] = useState("");
@@ -140,6 +143,11 @@ export function ExtentPicker() {
     })
   }, [data])
 
+  // Set the mapView in context when it's created
+  useEffect(() => {
+    setMapView(mapView);
+    return () => setMapView(undefined);
+  }, [mapView, setMapView]);
 
   // Attaches map to ref
   useEffect(() => {

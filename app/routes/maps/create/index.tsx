@@ -7,6 +7,7 @@ import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getRealUrl, queryLayer, QueryResult } from "../../../arcgis";
 import Geometry from "@arcgis/core/geometry/Geometry";
+import Extent from "@arcgis/core/geometry/Extent";
 import { ActionFunctionArgs, Form, Link, Outlet, useFetcher, useLoaderData } from "react-router-dom";
 import { Alert, Button, Checkbox, Dropdown, Modal, Progress, Table, TextInput } from "flowbite-react";
 import { Drivers, GdalDownloader } from "../../../downloader";
@@ -25,6 +26,7 @@ import {
   ArcGISFeatureLayerNode,
 } from "../../../traverse";
 import { Dialog, Transition } from "@headlessui/react";
+import { useMapView, MapViewProvider } from "../../../MapViewContext";
 
 type SupportedExportType = string;
 
@@ -44,15 +46,28 @@ export const mapCreatorAction = async ({ request }: ActionFunctionArgs) => {
   let errMsg = ""
   if (formData.get("intent") === "add-layer") {
     const layerUrl = formData.get("layer-url") as string
+    const normalizeUrl = (u: string) => (u ?? "").trim().replace(/\/+$/, "")
+    const normalizedInput = normalizeUrl(layerUrl)
+    const looksLikeFeatureLayer = /(MapServer|FeatureServer)\/\d+$/.test(normalizedInput)
+    if (!looksLikeFeatureLayer) {
+      // Block adding service roots or non-feature-layer endpoints via direct submit
+      return {
+        layers: [],
+        mapConfig,
+        err: "Please select a specific Feature Layer (e.g., …/MapServer/11). Service roots cannot be added.",
+      }
+    }
     let layer: FeatureLayer | undefined = undefined
-    if (!mapConfig.layers.find(l => l.url === layerUrl)) {
+    if (!mapConfig.layers.find(l => normalizeUrl(l.url) === normalizedInput)) {
       try {
         layer = new FeatureLayer({
           url: layerUrl,
         });
         await layer.load();
+        // Ensure we persist the canonical layer URL (with layerId, no trailing slash)
+        const realUrl = normalizeUrl(getRealUrl(layer))
         mapConfig.layers.push({
-          url: layerUrl,
+          url: realUrl,
           name: layer.sourceJSON["name"],
           description: layer.sourceJSON["description"],
           extent: layer.fullExtent,
@@ -85,9 +100,10 @@ export const mapCreatorAction = async ({ request }: ActionFunctionArgs) => {
     const err = e as Error;
     errMsg = err.message
   }
+  const normalizeUrl = (u: string) => (u ?? "").replace(/\/+$/, "");
   const esriWithConfig = layers.map(esri => ({
     esri: esri,
-    config: mapConfig.layers.find(l => l.url === getRealUrl(esri)) 
+    config: mapConfig.layers.find(l => normalizeUrl(l.url) === normalizeUrl(getRealUrl(esri))) 
   }))
 
 
@@ -110,19 +126,29 @@ export const mapCreatorLoader = async () => {
     layers.push(layer)
     promises.push(layer.load())
   }
-  try {
-    await Promise.all(promises)
-  } catch (e) {
-    const err = e as Error;
-    errMsg = err.message
+  const results = await Promise.allSettled(promises)
+  const brokenLayers: Array<{ url: string; name?: string; reason: string }> = []
+  results.forEach((res, idx) => {
+    if (res.status === "rejected") {
+      const saved = mapConfig.layers[idx]
+      const reason = (res.reason as Error)?.message ?? "Failed to load layer"
+      brokenLayers.push({ url: saved.url, name: (saved as any)?.name, reason })
+    }
+  })
+  if (brokenLayers.length && !errMsg) {
+    errMsg = "One or more layers failed to load."
   }
-  const esriWithConfig = layers.map(esri => ({
+  const normalizeUrl = (u: string) => (u ?? "").replace(/\/+$/, "");
+  // Only include successfully loaded layers in UI
+  const okLayers = layers.filter((_, idx) => results[idx]?.status === "fulfilled")
+  const esriWithConfig = okLayers.map(esri => ({
     esri: esri,
-    config: mapConfig.layers.find(l => l.url === getRealUrl(esri))
+    config: mapConfig.layers.find(l => normalizeUrl(l.url) === normalizeUrl(getRealUrl(esri)))
   }))
   return {
     mapConfig: mapConfig,
     layers: esriWithConfig,
+    brokenLayers,
     err: errMsg,
   }
 }
@@ -132,6 +158,33 @@ export default function MapCreator() {
   const queryParam = useMemo(() => getQueryParameter("format"), []);
 
   const loaderData = useLoaderData() as Awaited<ReturnType<typeof mapCreatorLoader>>
+  const [showBrokenModal, setShowBrokenModal] = useState((loaderData?.brokenLayers?.length ?? 0) > 0)
+  const [broken, setBroken] = useState<Array<{ url: string; name?: string; reason: string }>>(loaderData?.brokenLayers ?? [])
+
+  const handleRetryBrokenCheck = useCallback(async () => {
+    if (!broken?.length) {
+      setShowBrokenModal(false)
+      return;
+    }
+    const checks = await Promise.allSettled(
+      broken.map(b => {
+        const lyr = new FeatureLayer({ url: b.url })
+        return lyr.load()
+      })
+    )
+    const stillBroken: Array<{ url: string; name?: string; reason: string }> = []
+    checks.forEach((res, idx) => {
+      if (res.status === "rejected") {
+        const err = res.reason as Error
+        const prev = broken[idx]
+        stillBroken.push({ ...prev, reason: err?.message ?? prev.reason })
+      }
+    })
+    setBroken(stillBroken)
+    if (stillBroken.length === 0) {
+      setShowBrokenModal(false)
+    }
+  }, [broken])
 
   const [layerUrlInput, setLayerUrlInput] = useState("");
   const [layerAlert, setLayerAlert] = useStatusAlert("", undefined);
@@ -304,9 +357,10 @@ export default function MapCreator() {
   ].join(' ')
 
   return (
-    <div className="p-2">
-      <div className="flex flex-row gap-1">
-        <div className={layersPanelClasses}>
+    <MapViewProvider>
+      <div className="p-2">
+        <div className="flex flex-row gap-1">
+          <div className={layersPanelClasses}>
           <div className="flex items-center justify-between mb-4">
             {!isLayersPanelCollapsed && (
               <>
@@ -340,6 +394,8 @@ export default function MapCreator() {
               setShow={setShowRemoveModal}
             />
           </div>
+
+            {/* Broken layers are handled via modal now */}
 
           {!isLayersPanelCollapsed && (
             <div className="flow-root">
@@ -523,7 +579,59 @@ export default function MapCreator() {
           </Form>
         </div>
       </div>
+        {/* Modal explaining broken layers with a single "Remove all" action */}
+        {broken?.length > 0 && (
+          <Modal show={showBrokenModal} size="xl" popup onClose={() => {/* block closing to avoid invalid state */ }}>
+            <Modal.Header>Some layers couldn’t be loaded</Modal.Header>
+            <Modal.Body>
+              <div className="space-y-3">
+                <p className="text-sm text-gray-700 dark:text-gray-300">
+                  One or more saved layers failed to load. They may have been removed, moved, or require authentication now.
+                  To keep your map stable, remove these broken layers.
+                </p>
+                <div className="max-h-64 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-md">
+                  <Table hoverable>
+                    <Table.Head>
+                      <Table.HeadCell>Name</Table.HeadCell>
+                      <Table.HeadCell>URL</Table.HeadCell>
+                      <Table.HeadCell>Reason</Table.HeadCell>
+                    </Table.Head>
+                    <Table.Body className="divide-y">
+                      {broken.map((b) => (
+                        <Table.Row key={b.url} className="bg-white dark:bg-dark-text-bg">
+                          <Table.Cell className="font-medium text-gray-900 dark:text-white truncate max-w-[200px]">
+                            {b.name ?? "—"}
+                          </Table.Cell>
+                          <Table.Cell className="text-xs text-gray-600 dark:text-gray-300 break-all max-w-[360px]">
+                            {b.url}
+                          </Table.Cell>
+                          <Table.Cell className="text-xs text-gray-600 dark:text-gray-300 truncate max-w-[260px]" title={b.reason}>
+                            {b.reason}
+                          </Table.Cell>
+                        </Table.Row>
+                      ))}
+                    </Table.Body>
+                  </Table>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button color="gray" onClick={handleRetryBrokenCheck}>
+                    Retry check
+                  </Button>
+                  <Button color="failure" onClick={() => {
+                    const brokenUrls = new Set(broken.map(b => b.url))
+                    const next = { ...loaderData.mapConfig, layers: loaderData.mapConfig.layers.filter(l => !brokenUrls.has(l.url)) }
+                    saveMapConfigLocal(next)
+                    window.location.reload()
+                  }}>
+                    Remove all broken layers
+                  </Button>
+                </div>
+              </div>
+            </Modal.Body>
+          </Modal>
+        )}
     </div>
+    </MapViewProvider>
   );
 }
 
@@ -537,8 +645,81 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
   const realUrl = getRealUrl(layer.esri)
   const [showRemoveModal, setShowRemoveModal] = useState(false)
   const [showConfigureModal, setShowConfigureModal] = useState(false)
+  const mapView = useMapView()
+  const [isDropDownOpen, setIsDropDownOpen] = useState(false);
+  const containerRef = useRef<HTMLLIElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
 
-  return <li key={url} className="flex flex-row items-center p-2 bg-white dark:bg-dark-bg">
+  function closeDropdown() {
+    if (isDropDownOpen) {
+      triggerRef.current?.click()
+      setIsDropDownOpen(false)
+    }
+  }
+  useEffect(() => {
+    function handleOutsideClick(e: MouseEvent | TouchEvent) {
+      // Only attempt to close if currently open; prevents opening on outside clicks
+      if (!isDropDownOpen) return;
+      const target = e.target as Node | null;
+      if (!containerRef.current || !target) return;
+      // if clicked inside the component, do nothing
+      if (containerRef.current.contains(target)) return;
+      // otherwise, close the dropdown
+      closeDropdown()
+    }
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("touchstart", handleOutsideClick);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("touchstart", handleOutsideClick);
+    };
+  }, [isDropDownOpen])
+
+  const handleZoomToLayer = useCallback(() => {
+    
+    if (!mapView) {
+      console.warn("MapView not available");
+      return;
+    }
+    
+    // Use extent from sourceJSON (the layer's metadata from ArcGIS REST API)
+    const extentData = sourceJSON?.extent;
+    if (!extentData) {
+      console.warn(`Layer "${sourceJSON["name"]}" has no extent in sourceJSON`);
+      return;
+    }
+    
+    console.log("Zooming to extent:", extentData);
+    console.log("MapView spatial reference:", mapView.spatialReference);
+    
+    // Create an Extent object from the sourceJSON extent
+    const extent = new Extent({
+      xmin: extentData.xmin,
+      ymin: extentData.ymin,
+      xmax: extentData.xmax,
+      ymax: extentData.ymax,
+      spatialReference: extentData.spatialReference
+    });
+    
+    console.log("Created extent object:", extent);
+    
+    mapView.when(() => {
+      console.log("MapView is ready, calling goTo...");
+      mapView.goTo(extent, {
+        animate: true,
+        duration: 1000
+      }).then(() => {
+        console.log("Successfully zoomed to layer extent");
+      }).catch((err) => {
+        console.error(`Error zooming to layer "${sourceJSON["name"]}" (${realUrl}):`, err);
+      });
+    }).catch((err) => {
+      console.error("MapView not ready:", err);
+    });
+  }, [mapView, sourceJSON, realUrl]);
+
+  return <li ref={containerRef} key={url} className="flex flex-row items-center p-2 bg-white dark:bg-dark-bg">
     <div className="flex-1 min-w-0 max-w-xs">
       <p className="text-sm font-medium text-gray-900 truncate dark:text-white">
         <Link to={realUrl} target="_blank">
@@ -552,9 +733,14 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
     <Dropdown
       className="dark:text-white dark:bg-dark-bg"
       inline
+      dismissOnClick={true}
       arrowIcon={false}
       label={
-        <button className="hover:bg-gray-100 dark:bg-dark-bg dark:hover:bg-gray-700 p-2 rounded-lg">
+        <button
+          ref={triggerRef}
+          onClick={() => setIsDropDownOpen(prev => !prev)}
+          className="hover:bg-gray-100 dark:bg-dark-bg dark:hover:bg-gray-700 p-2 rounded-lg"
+        >
           <svg className="w-4 h-4 text-gray-800 dark:text-white " aria-hidden="true" fill="currentColor" viewBox="0 0 4 15">
             <path d="M3.5 1.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm0 6.041a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm0 5.959a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
           </svg>
@@ -566,9 +752,24 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
           <svg className="w-5 h-5 pr-2 text-gray-800 dark:text-white" aria-hidden fill="currentColor" viewBox="0 0 20 14">
             <path d="M18 0H2a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2ZM2 6h7v6H2V6Zm9 6V6h7v6h-7Z" />
           </svg>}
-        onClick={() => setShowConfigureModal(true)}
+        onClick={() => {
+          closeDropdown()
+          setShowConfigureModal(true);
+        }}
       >
         Filters & Attributes...
+      </Dropdown.Item>
+      <Dropdown.Item
+        icon={() =>
+          <svg className="w-5 h-5 pr-2 text-gray-800 dark:text-white" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>}
+        onClick={() => {
+          closeDropdown()
+          handleZoomToLayer()
+        }}
+      >
+        Zoom to Layer
       </Dropdown.Item>
       <Dropdown.Item
         icon={() =>
@@ -576,7 +777,10 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
             <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11v4.833A1.166 1.166 0 0 1 13.833 17H2.167A1.167 1.167 0 0 1 1 15.833V4.167A1.166 1.166 0 0 1 2.167 3h4.618m4.447-2H17v5.768M9.111 8.889l7.778-7.778" />
           </svg>
         }
-        onClick={() => window.open(realUrl, "_blank")}
+        onClick={() => {
+          closeDropdown()
+          window.open(realUrl, "_blank");
+        }}
       >
         <Link to={realUrl} target="_blank">
           View
@@ -590,7 +794,10 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
             <path d="M17 4h-4V2a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v2H1a1 1 0 0 0 0 2h1v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6h1a1 1 0 1 0 0-2ZM7 2h4v2H7V2Zm1 14a1 1 0 1 1-2 0V8a1 1 0 0 1 2 0v8Zm4 0a1 1 0 0 1-2 0V8a1 1 0 0 1 2 0v8Z" />
           </svg>
         }
-        onClick={() => setShowRemoveModal(true)}
+        onClick={() => {
+          closeDropdown()
+          setShowRemoveModal(true);
+        }}
       >
         Remove
       </Dropdown.Item>
