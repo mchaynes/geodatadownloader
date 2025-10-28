@@ -541,9 +541,12 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
   const realUrl = getRealUrl(layer.esri)
   const [showRemoveModal, setShowRemoveModal] = useState(false)
   const [showConfigureModal, setShowConfigureModal] = useState(false)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
   const mapView = useMapView()
 
   const handleZoomToLayer = useCallback(() => {
+    setDropdownOpen(false); // Close dropdown when zoom is clicked
+    
     if (!mapView) {
       console.warn("MapView not available");
       return;
@@ -600,6 +603,7 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
       className="dark:text-white dark:bg-dark-bg"
       inline
       arrowIcon={false}
+      dismissOnClick={true}
       label={
         <button className="hover:bg-gray-100 dark:bg-dark-bg dark:hover:bg-gray-700 p-2 rounded-lg">
           <svg className="w-4 h-4 text-gray-800 dark:text-white " aria-hidden="true" fill="currentColor" viewBox="0 0 4 15">
@@ -613,7 +617,10 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
           <svg className="w-5 h-5 pr-2 text-gray-800 dark:text-white" aria-hidden fill="currentColor" viewBox="0 0 20 14">
             <path d="M18 0H2a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2ZM2 6h7v6H2V6Zm9 6V6h7v6h-7Z" />
           </svg>}
-        onClick={() => setShowConfigureModal(true)}
+        onClick={() => {
+          setDropdownOpen(false);
+          setShowConfigureModal(true);
+        }}
       >
         Filters & Attributes...
       </Dropdown.Item>
@@ -632,7 +639,10 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
             <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11v4.833A1.166 1.166 0 0 1 13.833 17H2.167A1.167 1.167 0 0 1 1 15.833V4.167A1.166 1.166 0 0 1 2.167 3h4.618m4.447-2H17v5.768M9.111 8.889l7.778-7.778" />
           </svg>
         }
-        onClick={() => window.open(realUrl, "_blank")}
+        onClick={() => {
+          setDropdownOpen(false);
+          window.open(realUrl, "_blank");
+        }}
       >
         <Link to={realUrl} target="_blank">
           View
@@ -646,7 +656,10 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
             <path d="M17 4h-4V2a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v2H1a1 1 0 0 0 0 2h1v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6h1a1 1 0 1 0 0-2ZM7 2h4v2H7V2Zm1 14a1 1 0 1 1-2 0V8a1 1 0 0 1 2 0v8Zm4 0a1 1 0 0 1-2 0V8a1 1 0 0 1 2 0v8Z" />
           </svg>
         }
-        onClick={() => setShowRemoveModal(true)}
+        onClick={() => {
+          setDropdownOpen(false);
+          setShowRemoveModal(true);
+        }}
       >
         Remove
       </Dropdown.Item>
