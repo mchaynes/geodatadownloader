@@ -223,14 +223,13 @@ export default function MapCreator() {
       }
       closeExplorer();
       setLayerAlert("", undefined);
-      setLayerUrlInput(normalized);
       setLoadingMessage(`Loading layer ${normalized}`);
       const data = new FormData();
       data.set("layer-url", normalized);
       data.set("intent", "add-layer");
       fetcher.submit(data, { method: "post" });
     },
-    [closeExplorer, fetcher, setLayerAlert, setLayerUrlInput, setLoadingMessage]
+    [closeExplorer, fetcher, setLayerAlert, setLoadingMessage]
   );
 
   const handleExplorerClose = useCallback(() => {
@@ -264,7 +263,6 @@ export default function MapCreator() {
       try {
         const analysis = await analyzeArcGISEndpoint(rawUrl);
         const normalized = analysis.normalizedUrl;
-        setLayerUrlInput(normalized);
 
         if (analysis.endpointType === "feature-layer") {
           setAnalyzingUrl(false);
@@ -492,8 +490,8 @@ export default function MapCreator() {
 
                 // Create URL with parameters
                 const params = new URLSearchParams({
-                  format: format,
-                  concurrent: concurrent.toString(),
+                  format: String(format),
+                  concurrent: String(concurrent),
                   layers: JSON.stringify(layerConfigs),
                 });
 
