@@ -155,6 +155,7 @@ If you need to work with Supabase features locally:
 ### Project Structure
 
 - `app/` - Main application code
+- `src/` - Legacy test setup files
 - `public/` - Static assets
 - `supabase/` - Database migrations and configuration
 - `tests/` - Test files
