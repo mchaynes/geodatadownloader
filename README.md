@@ -45,3 +45,129 @@ You may be asking yourself "Why even ask for the objectIds and instead just grab
 If GDD could, it would. ArcGIS REST services are typically are limited by a specific number of features they can return (usually around 1000, but it depends).
 Some endpoints are "paginated", meaning that you can fetch features one page at a time. Not all services support this, though.
 So instead, we use the objectIds method because it works a lot more consistently.
+
+## Developer Setup
+
+### Prerequisites
+
+- **Node.js**: Version specified in `.nvmrc` (v20.19.5)
+  - We recommend using [nvm](https://github.com/nvm-sh/nvm) to manage Node.js versions
+- **npm**: Comes with Node.js
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/mchaynes/geodatadownloader.git
+   cd geodatadownloader
+   ```
+
+2. Install Node.js (if using nvm):
+   ```bash
+   nvm install
+   nvm use
+   ```
+
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+### Running the Development Server
+
+Start the development server on port 3000:
+
+```bash
+npm start
+```
+
+The application will be available at `http://localhost:3000`
+
+### Building for Production
+
+Build the application for production:
+
+```bash
+npm run build
+```
+
+The built files will be in the `dist/` directory.
+
+### Testing
+
+#### Unit Tests
+
+Run Jest unit tests:
+
+```bash
+npm test
+```
+
+#### End-to-End Tests
+
+Run Playwright E2E tests:
+
+```bash
+npm run test:e2e
+```
+
+For interactive E2E testing:
+
+```bash
+npm run test:e2e:ui
+```
+
+For headed browser mode:
+
+```bash
+npm run test:e2e:headed
+```
+
+### Linting
+
+Run ESLint to check code quality:
+
+```bash
+npm run lint
+```
+
+### Optional: Local Supabase Development
+
+If you need to work with Supabase features locally:
+
+1. Install the [Supabase CLI](https://supabase.com/docs/guides/cli)
+
+2. Start the local Supabase instance:
+   ```bash
+   supabase start
+   ```
+
+3. The local Supabase services will be available at:
+   - API: `http://localhost:54321`
+   - Studio: `http://localhost:54323`
+   - Inbucket (Email testing): `http://localhost:54324`
+
+4. Stop Supabase when done:
+   ```bash
+   supabase stop
+   ```
+
+### Project Structure
+
+- `app/` - Main application code
+- `public/` - Static assets
+- `supabase/` - Database migrations and configuration
+- `tests/` - Test files
+
+### Technology Stack
+
+- **Framework**: React 18 with TypeScript
+- **Build Tool**: Vite
+- **Styling**: Tailwind CSS, Material-UI, Flowbite
+- **Maps**: ArcGIS API for JavaScript
+- **Data Processing**: GDAL WebAssembly (gdal3.js)
+- **Testing**: Jest (unit), Playwright (E2E)
+
+### Contributing
+
+Please ensure your code passes linting and all tests before submitting a pull request.
