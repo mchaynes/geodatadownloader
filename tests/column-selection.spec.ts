@@ -85,10 +85,17 @@ test.describe('Column Selection and Renaming', () => {
         // Select CSV format from dropdown
         await page.locator('select#format').selectOption('CSV');
         
-        // Set up download listener before clicking download
-        const downloadPromise = page.waitForEvent('download', { timeout: 60000 });
+        // Set up listeners for new tab and download
+        const downloadPromise = context.waitForEvent('page').then(async (newPage) => {
+            // Wait for the download page to load
+            await newPage.waitForLoadState('networkidle');
+            
+            // Wait for download event on the new page
+            const download = await newPage.waitForEvent('download', { timeout: 60000 });
+            return download;
+        });
         
-        // Click Download button
+        // Click Download button (opens new tab)
         await page.getByRole('button', { name: 'Download' }).click();
         
         // Wait for download to complete
