@@ -44,9 +44,9 @@
     "build": "vite build",
     "start": "vite --port 3000 --host",
     "test": "jest",
-  "test:e2e": "playwright install && playwright test",
-  "test:e2e:ui": "playwright install && playwright test --ui",
-  "test:e2e:headed": "playwright install && playwright test --headed",
+    "test:e2e": "playwright install && playwright test",
+    "test:e2e:ui": "playwright install && playwright test --ui",
+    "test:e2e:headed": "playwright install && playwright test --headed",
     "lint": "eslint --ignore-path .eslintignore --ext .ts,.tsx ."
   },
   "browserslist": {
@@ -62,7 +62,6 @@
     ]
   },
   "devDependencies": {
-    "csv-parse": "^5.5.6",
     "@playwright/test": "^1.56.1",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
@@ -70,7 +69,7 @@
     "@types/arcgis-js-api": "^4.25.0",
     "@types/file-saver": "^2.0.5",
     "@types/jest": "^29.2.5",
-    "@types/node": "^18.11.18",
+    "@types/node": "^20.19.24",
     "@types/react": "^18.0.26",
     "@types/react-dom": "^18.0.10",
     "@types/sql.js": "^1.4.4",
@@ -79,8 +78,9 @@
     "@types/testing-library__react": "^10.2.0",
     "@typescript-eslint/eslint-plugin": "^5.48.1",
     "@typescript-eslint/parser": "^5.48.1",
-    "@vitejs/plugin-react": "^3.0.0",
+    "@vitejs/plugin-react": "^5.1.0",
     "autoprefixer": "^10.4.14",
+    "csv-parse": "^5.5.6",
     "eslint": "^8.31.0",
     "eslint-plugin-react": "^7.32.0",
     "eslint-plugin-react-hooks": "^4.6.0",
@@ -96,8 +96,8 @@
     "tailwindcss": "^3.3.2",
     "ts-jest": "^29.0.3",
     "typescript": "^4.9.4",
-    "vite": "^4.5.14",
-    "vite-plugin-static-copy": "^0.13.1",
-    "vite-plugin-wasm": "^3.2.2"
+    "vite": "^7.1.12",
+    "vite-plugin-static-copy": "^3.1.4",
+    "vite-plugin-wasm": "^3.5.0"
   }
 }
