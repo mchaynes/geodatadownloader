@@ -480,8 +480,13 @@ export default function MapCreator() {
               Schedule
             </button>*/}
             <button
+                type="button"
               className="w-full ml-2 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-              onClick={() => {
+                onClick={(e) => {
+                  // Prevent any parent <Form> submission in production environments/browsers
+                  e.preventDefault();
+                  e.stopPropagation();
+
                 // Read current visibility state from localStorage
                 const mapJson = localStorage.getItem("map");
                 let visibleLayerUrls = new Set<string>();
@@ -512,8 +517,12 @@ export default function MapCreator() {
                   layers: JSON.stringify(layerConfigs),
                 });
 
-                // Open download page in new tab
-                window.open(`/download?${params.toString()}`, '_blank');
+                const href = `/download?${params.toString()}`;
+                // Try to open in a new tab, fall back to same-tab navigation if popups are blocked
+                const w = window.open(href, '_blank', 'noopener');
+                if (!w) {
+                  window.location.href = href;
+                }
               }}
             >
               Download
