@@ -74,6 +74,7 @@ export const mapCreatorAction = async ({ request }: ActionFunctionArgs) => {
           fields: JSON.stringify(layer.fields),
           geometry_type: layer.geometryType,
           spatial_ref: `${layer.spatialReference.wkid}`,
+          visible: true,
         })
         saveMapConfigLocal(mapConfig)
       } catch (e) {
@@ -481,12 +482,28 @@ export default function MapCreator() {
             <button
               className="w-full ml-2 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
               onClick={() => {
-                // Prepare layer configurations for the download page
-                const layerConfigs = loaderData.layers.map(layer => ({
-                  url: layer.config?.url || layer.esri.url,
-                  where: layer.config?.where_clause || "1=1",
-                  columnMapping: layer.config?.column_mapping as Record<string, string> | undefined,
-                }));
+                // Read current visibility state from localStorage
+                const mapJson = localStorage.getItem("map");
+                let visibleLayerUrls = new Set<string>();
+
+                if (mapJson) {
+                  const mapConfig = JSON.parse(mapJson);
+                  // Get URLs of visible layers
+                  visibleLayerUrls = new Set(
+                    mapConfig.layers
+                      .filter((l: any) => l.visible !== false)
+                      .map((l: any) => l.url)
+                  );
+                }
+
+                // Prepare layer configurations for the download page, filtering by current visibility
+                const layerConfigs = loaderData.layers
+                  .filter(layer => visibleLayerUrls.has(layer.config?.url || layer.esri.url))
+                  .map(layer => ({
+                    url: layer.config?.url || layer.esri.url,
+                    where: layer.config?.where_clause || "1=1",
+                    columnMapping: layer.config?.column_mapping as Record<string, string> | undefined,
+                  }));
 
                 // Create URL with parameters
                 const params = new URLSearchParams({
@@ -574,6 +591,33 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const containerRef = useRef<HTMLLIElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const [isVisible, setIsVisible] = useState(layer.config?.visible !== false);
+
+  // Manage layer visibility on the map
+  useEffect(() => {
+    if (!mapView || !mapView.map) {
+      return;
+    }
+
+    if (isVisible) {
+      // Add layer to map if not already present
+      if (!mapView.map.layers.includes(layer.esri)) {
+        mapView.map.add(layer.esri);
+      }
+    } else {
+      // Remove layer from map if present
+      if (mapView.map.layers.includes(layer.esri)) {
+        mapView.map.remove(layer.esri);
+      }
+    }
+
+    // Cleanup: remove layer when component unmounts
+    return () => {
+      if (mapView.map && mapView.map.layers.includes(layer.esri)) {
+        mapView.map.remove(layer.esri);
+      }
+    };
+  }, [isVisible, mapView, layer.esri]);
 
   function closeDropdown() {
     if (isDropDownOpen) {
@@ -645,6 +689,25 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
   }, [mapView, sourceJSON, realUrl]);
 
   return <li ref={containerRef} key={url} className="flex flex-row items-center p-2 bg-white dark:bg-dark-bg">
+    <Checkbox
+      checked={isVisible}
+      onChange={(e) => {
+        const newVisibility = e.target.checked;
+        setIsVisible(newVisibility);
+
+        // Update localStorage
+        const mapJson = localStorage.getItem("map");
+        if (mapJson) {
+          const mapConfig = JSON.parse(mapJson);
+          const layerIndex = mapConfig.layers.findIndex((l: any) => l.url === layer.config?.url);
+          if (layerIndex !== -1) {
+            mapConfig.layers[layerIndex].visible = newVisibility;
+            localStorage.setItem("map", JSON.stringify(mapConfig));
+          }
+        }
+      }}
+      className="mr-2"
+    />
     <div className="flex-1 min-w-0 max-w-xs">
       <p className="text-sm font-medium text-gray-900 truncate dark:text-white">
         <Link to={realUrl} target="_blank">

@@ -19,7 +19,9 @@ export type LayerConfig = Database["public"]["Tables"]["layer_download_config"][
 export type Layer = Database["public"]["Tables"]["layer"]["Insert"]
 
 
-export interface LayerWithConfig extends Layer, LayerConfig { }
+export interface LayerWithConfig extends Layer, LayerConfig {
+  visible?: boolean
+}
 
 export interface EsriLayerWithConfig {
   esri: FeatureLayer

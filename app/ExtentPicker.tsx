@@ -177,19 +177,8 @@ export function ExtentPicker() {
     map.add(sketchLayer);
   }, [map, sketchLayer]);
 
-  useEffect(() => {
-    if (!layers) {
-      return;
-    }
-    for (const layer of layers) {
-      map.add(layer.esri);
-    }
-    return () => {
-      for (const layer of layers) {
-        map.remove(layer.esri);
-      }
-    };
-  }, [map, layers]);
+  // Layer visibility is now managed by individual LayerDropdownMenu components
+  // This ensures dynamic toggling works correctly without conflicts
 
   useEffect(() => {
     mapView.ui.add(basemapToggle, "bottom-left");
