@@ -131,33 +131,11 @@ Run ESLint to check code quality:
 npm run lint
 ```
 
-### Optional: Local Supabase Development
-
-If you need to work with Supabase features locally:
-
-1. Install the [Supabase CLI](https://supabase.com/docs/guides/cli)
-
-2. Start the local Supabase instance:
-   ```bash
-   supabase start
-   ```
-
-3. The local Supabase services will be available at:
-   - API: `http://localhost:54321`
-   - Studio: `http://localhost:54323`
-   - Inbucket (Email testing): `http://localhost:54324`
-
-4. Stop Supabase when done:
-   ```bash
-   supabase stop
-   ```
-
 ### Project Structure
 
 - `app/` - Main application code
 - `src/` - Legacy test setup files
 - `public/` - Static assets
-- `supabase/` - Database migrations and configuration
 - `tests/` - Test files
 
 ### Technology Stack
