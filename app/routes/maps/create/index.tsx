@@ -327,8 +327,8 @@ export default function MapCreator() {
   const [isLayersPanelCollapsed, setIsLayersPanelCollapsed] = useState(false)
 
   const layersPanelClasses = [
-    isLayersPanelCollapsed ? 'w-12' : 'w-3/12',
-    'min-w-fit overflow-y-auto max-w-xs p-4',
+    isLayersPanelCollapsed ? 'w-12' : 'w-80', // fixed width when expanded
+    'overflow-y-auto overflow-x-hidden p-4 flex-none',
     'bg-white border border-gray-200 rounded-lg shadow sm:p-8',
     'dark:bg-dark-bg dark:border-gray-700',
     'transition-all duration-300'
