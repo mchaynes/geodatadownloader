@@ -99,9 +99,17 @@ export const Drivers: { [key: string]: string[] } = {
 export class GdalDownloader {
   featuresWritten = 0;
   onWrite: (featuresWritten: number) => void;
+  onConverting?: () => void;
+  onZipping?: () => void;
   zipper: JSZip;
-  constructor(onWrite: (_: number) => void) {
+  constructor(
+    onWrite: (_: number) => void,
+    onConverting?: () => void,
+    onZipping?: () => void
+  ) {
     this.onWrite = onWrite;
+    this.onConverting = onConverting;
+    this.onZipping = onZipping;
     this.zipper = new JSZip();
   }
   download = async (
@@ -111,8 +119,12 @@ export class GdalDownloader {
   ) => {
     const Gdal = await getGdalJs();
     const outputPaths: string[] = [];
+    const writers = new Map<QueryResult, Writer>();
+    
+    // Process all layers - fetch features first
     for (const result of results) {
       const writer = new Writer();
+      writers.set(result, writer);
       const layer = result.layer;
       if (!layer) {
         throw new Error("layer not defined");
@@ -182,6 +194,19 @@ export class GdalDownloader {
       }
       await Promise.all(promises);
       writer.write(footer);
+    }
+    
+    // All features fetched, now convert all layers
+    // Notify that we're starting conversion
+    if (this.onConverting) {
+      this.onConverting();
+    }
+    
+    for (const result of results) {
+      const writer = writers.get(result);
+      if (!writer) {
+        throw new Error("Writer not found for result");
+      }
       const layerName = result.layer.esri.title;
       const srcDataset = await Gdal.open(
         new File(writer.data, `${layerName}.json`)
@@ -215,6 +240,11 @@ export class GdalDownloader {
       throw new Error(
         "No output files were generated. The layer produced no outputs — this may indicate a server error or that no features matched the query."
       );
+    }
+
+    // Notify that we're starting zipping
+    if (this.onZipping) {
+      this.onZipping();
     }
 
     const zip = new JSZip();

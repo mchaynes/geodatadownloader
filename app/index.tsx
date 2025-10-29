@@ -16,6 +16,7 @@ import { removeLayerAction } from "./routes/maps/create/remove-layer";
 import { getQueryResultsLoader } from "./routes/maps/create/layers/results";
 import { ExtentPicker, extentPickerAction } from "./ExtentPicker";
 import ConfigureLayerModal, { configureLayerAction } from "./routes/maps/create/layers/configure";
+import DownloadPage from "./routes/download";
 
 
 const rootEl = document.getElementById("root");
@@ -84,6 +85,11 @@ const router = createBrowserRouter([
             action: configureLayerAction,
           }
         ]
+      },
+      {
+        path: "/download",
+        element: <DownloadPage />,
+        errorElement: <ErrorPage />,
       },
     ]
   },
