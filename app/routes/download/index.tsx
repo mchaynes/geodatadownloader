@@ -280,6 +280,7 @@ export default function DownloadPage() {
                 progress={getPhaseProgress(progress.phase)}
                 size="lg"
                 color={progress.phase === "complete" ? "green" : "blue"}
+                key={`${progress.phase}-${progress.fetchedFeatures}`}
               />
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
                 {progress.message}

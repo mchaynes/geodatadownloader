@@ -119,8 +119,12 @@ export class GdalDownloader {
   ) => {
     const Gdal = await getGdalJs();
     const outputPaths: string[] = [];
+    const writers = new Map<QueryResult, Writer>();
+    
+    // Process all layers - fetch features first
     for (const result of results) {
       const writer = new Writer();
+      writers.set(result, writer);
       const layer = result.layer;
       if (!layer) {
         throw new Error("layer not defined");
@@ -190,12 +194,19 @@ export class GdalDownloader {
       }
       await Promise.all(promises);
       writer.write(footer);
-      
-      // Notify that we're starting conversion
-      if (this.onConverting) {
-        this.onConverting();
+    }
+    
+    // All features fetched, now convert all layers
+    // Notify that we're starting conversion
+    if (this.onConverting) {
+      this.onConverting();
+    }
+    
+    for (const result of results) {
+      const writer = writers.get(result);
+      if (!writer) {
+        throw new Error("Writer not found for result");
       }
-      
       const layerName = result.layer.esri.title;
       const srcDataset = await Gdal.open(
         new File(writer.data, `${layerName}.json`)
