@@ -326,6 +326,35 @@ export default function MapCreator() {
 
   const [showRemoveModal, setShowRemoveModal] = useState(false)
   const [isLayersPanelCollapsed, setIsLayersPanelCollapsed] = useState(false)
+  const [visibleLayerCount, setVisibleLayerCount] = useState(0)
+
+  // Track visible layer count from localStorage
+  useEffect(() => {
+    const updateVisibleCount = () => {
+      const mapJson = localStorage.getItem("map");
+      if (mapJson) {
+        const mapConfig = JSON.parse(mapJson);
+        const visibleCount = mapConfig.layers.filter((l: any) => l.visible !== false).length;
+        setVisibleLayerCount(visibleCount);
+      } else {
+        setVisibleLayerCount(0);
+      }
+    };
+
+    // Initial count
+    updateVisibleCount();
+
+    // Listen for storage changes (in case other tabs modify it)
+    window.addEventListener('storage', updateVisibleCount);
+
+    // Custom event for same-tab updates
+    window.addEventListener('layerVisibilityChanged', updateVisibleCount);
+
+    return () => {
+      window.removeEventListener('storage', updateVisibleCount);
+      window.removeEventListener('layerVisibilityChanged', updateVisibleCount);
+    };
+  }, [loaderData.layers]);
 
   const layersPanelClasses = [
     isLayersPanelCollapsed ? 'w-12' : 'w-80', // fixed width when expanded
@@ -377,8 +406,14 @@ export default function MapCreator() {
             {/* Broken layers are handled via modal now */}
 
           {!isLayersPanelCollapsed && (
-            <div className="flow-root">
-              <ul role="list" className="divide-y divide-gray-200 dark:divide-gray-700">
+            <>
+              {loaderData.layers.length > 0 && (
+                <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
+                  Only checked layers will be downloaded
+                </p>
+              )}
+              <div className="flow-root">
+                <ul role="list" className="divide-y divide-gray-200 dark:divide-gray-700">
                 {loaderData.layers.length > 0 ? loaderData.layers.map((layer) =>
                   <LayerDropdownMenu
                     key={layer?.config?.url}
@@ -394,7 +429,8 @@ export default function MapCreator() {
                   </li>
                 }
               </ul>
-            </div>
+              </div>
+            </>
           )}
         </div>
         <div className="flex flex-col gap-2 w-full flex-grow p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-8 dark:bg-dark-bg dark:border-gray-700">
@@ -481,7 +517,15 @@ export default function MapCreator() {
             </button>*/}
             <button
                 type="button"
-              className="w-full ml-2 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+              className="w-full ml-2 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loaderData.layers.length === 0 || visibleLayerCount === 0}
+              title={
+                loaderData.layers.length === 0
+                  ? "Add at least one layer to enable download"
+                  : visibleLayerCount === 0
+                    ? "Select at least one layer to enable download"
+                    : "Download layers"
+              }
                 onClick={(e) => {
                   // Prevent any parent <Form> submission in production environments/browsers
                   e.preventDefault();
@@ -739,6 +783,9 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
           if (layerIndex !== -1) {
             mapConfig.layers[layerIndex].visible = newVisibility;
             localStorage.setItem("map", JSON.stringify(mapConfig));
+
+            // Dispatch custom event to notify parent component
+            window.dispatchEvent(new Event('layerVisibilityChanged'));
           }
         }
       }}
