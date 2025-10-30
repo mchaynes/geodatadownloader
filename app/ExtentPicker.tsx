@@ -84,6 +84,13 @@ export function ExtentPicker() {
         map: map,
         center: [-97.498699, 39.079974],
         zoom: 3,
+        popup: {
+          dockEnabled: true,
+          dockOptions: {
+            buttonEnabled: false,
+            breakpoint: false
+          }
+        }
       })
   );
   const [sketchLayer] = useState(() => new GraphicsLayer());
@@ -95,18 +102,23 @@ export function ExtentPicker() {
         creationMode: "update",
         availableCreateTools: ["polygon", "rectangle", "circle"],
         layout: "vertical",
+        defaultUpdateOptions: {
+          enableRotation: false,
+          enableScaling: false,
+          toggleToolOnClick: false
+        }
       })
   );
+
+  const prefersDark = useMediaQuery("(prefers-color-scheme: dark)")
 
   const [basemapToggle] = useState<BasemapToggle>(
     () =>
       new BasemapToggle({
         view: mapView,
-        nextBasemap: "dark-gray-vector",
+        nextBasemap: "hybrid",
       })
   );
-
-  const prefersDark = useMediaQuery("(prefers-color-scheme: dark)")
 
   // Updates filterGeometry and textBoxValue when sketchLayer is updated
   const onSketchUpdate = useCallback(() => {
@@ -136,12 +148,31 @@ export function ExtentPicker() {
     }
   }, [fetcher, textBoxValue])
 
+  // Ensure MapView popup is always enabled
   useEffect(() => {
-    data.layers.forEach((l) => {
-      const template = l.esri.createPopupTemplate();
-      l.esri.popupTemplate = template;  // Set the popup template on the layer
-    })
-  }, [data])
+    if (mapView && mapView.popup) {
+      mapView.popup.autoOpenEnabled = true;
+    }
+  }, [mapView])
+
+  // Dynamically load ArcGIS theme based on dark mode preference
+  useEffect(() => {
+    const themeLink = document.getElementById('arcgis-theme') as HTMLLinkElement;
+    const themePath = prefersDark
+      ? "https://js.arcgis.com/4.22/@arcgis/core/assets/esri/themes/dark/main.css"
+      : "https://js.arcgis.com/4.22/@arcgis/core/assets/esri/themes/light/main.css";
+
+    if (themeLink) {
+      themeLink.href = themePath;
+    } else {
+      // Create the theme link if it doesn't exist
+      const link = document.createElement('link');
+      link.id = 'arcgis-theme';
+      link.rel = 'stylesheet';
+      link.href = themePath;
+      document.head.appendChild(link);
+    }
+  }, [prefersDark])
 
   // Set the mapView in context when it's created
   useEffect(() => {
@@ -182,8 +213,24 @@ export function ExtentPicker() {
 
   useEffect(() => {
     mapView.ui.add(basemapToggle, "bottom-left");
-    return () => mapView.ui.remove(basemapToggle);
-  }, [mapView, basemapToggle]);
+
+    // Listen for basemap toggle changes to update nextBasemap
+    const handle = basemapToggle.watch("activeBasemap", () => {
+      const themeBasemap = prefersDark ? "dark-gray-vector" : "topo-vector";
+      const currentBasemapId = map.basemap.id;
+
+      if (currentBasemapId === "hybrid") {
+        basemapToggle.set("nextBasemap", themeBasemap);
+      } else {
+        basemapToggle.set("nextBasemap", "hybrid");
+      }
+    });
+
+    return () => {
+      mapView.ui.remove(basemapToggle);
+      handle.remove();
+    };
+  }, [mapView, basemapToggle, map, prefersDark]);
 
   useEffect(() => {
     const modeToId = (prefersDark: boolean) => {
@@ -192,16 +239,24 @@ export function ExtentPicker() {
       }
       return "topo-vector"
     };
-    // toggle basemap depending on dark vs light mode in the theme
-    if (modeToId(prefersDark) !== map.basemap.id) {
-      const prevMap = map.basemap.id;
-      map.set("basemap", Basemap.fromId(modeToId(prefersDark)));
-      basemapToggle
-        .toggle()
-        .then(() => {
-          basemapToggle.set("nextBasemap", prevMap);
-        })
-        .catch((err) => console.error(err));
+    const themeBasemap = modeToId(prefersDark);
+    const currentBasemapId = map.basemap.id;
+
+    // Only switch basemap if we're on a theme-based basemap (not satellite)
+    // This preserves satellite view when theme changes
+    if (currentBasemapId === "topo-vector" || currentBasemapId === "dark-gray-vector") {
+      if (themeBasemap !== currentBasemapId) {
+        map.set("basemap", Basemap.fromId(themeBasemap));
+      }
+    }
+
+    // Update the toggle's next basemap based on current state
+    if (currentBasemapId === "hybrid") {
+      // If on satellite, next should be the theme-appropriate basemap
+      basemapToggle.set("nextBasemap", themeBasemap);
+    } else {
+      // If on theme basemap, next should be satellite
+      basemapToggle.set("nextBasemap", "hybrid");
     }
   }, [map, prefersDark, basemapToggle]);
 

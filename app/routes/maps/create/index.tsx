@@ -613,17 +613,31 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
       return;
     }
 
-    if (isVisible) {
-      // Add layer to map if not already present
-      if (!mapView.map.layers.includes(layer.esri)) {
-        mapView.map.add(layer.esri);
+    const setupLayer = async () => {
+      if (isVisible) {
+        // Ensure layer is loaded before setting popup template
+        await layer.esri.load();
+
+        // Ensure popup template is set before adding to map
+        if (!layer.esri.popupTemplate) {
+          const template = layer.esri.createPopupTemplate();
+          layer.esri.popupTemplate = template;
+        }
+        layer.esri.popupEnabled = true;
+
+        // Add layer to map if not already present
+        if (!mapView.map.layers.includes(layer.esri)) {
+          mapView.map.add(layer.esri);
+        }
+      } else {
+        // Remove layer from map if present
+        if (mapView.map.layers.includes(layer.esri)) {
+          mapView.map.remove(layer.esri);
+        }
       }
-    } else {
-      // Remove layer from map if present
-      if (mapView.map.layers.includes(layer.esri)) {
-        mapView.map.remove(layer.esri);
-      }
-    }
+    };
+
+    setupLayer().catch(err => console.error("Error setting up layer:", err));
 
     // Cleanup: remove layer when component unmounts
     return () => {
