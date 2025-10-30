@@ -490,6 +490,7 @@ export default function MapCreator() {
                 // Read current visibility state from localStorage
                 const mapJson = localStorage.getItem("map");
                 let visibleLayerUrls = new Set<string>();
+                let boundary = "";
 
                 if (mapJson) {
                   const mapConfig = JSON.parse(mapJson);
@@ -499,6 +500,8 @@ export default function MapCreator() {
                       .filter((l: any) => l.visible !== false)
                       .map((l: any) => l.url)
                   );
+                  // Get the boundary if it exists
+                  boundary = mapConfig.map?.boundary || "";
                 }
 
                 // Prepare layer configurations for the download page, filtering by current visibility
@@ -516,6 +519,11 @@ export default function MapCreator() {
                   concurrent: String(concurrent),
                   layers: JSON.stringify(layerConfigs),
                 });
+
+                // Add boundary if it exists
+                if (boundary) {
+                  params.set('boundary', boundary);
+                }
 
                 const href = `/download?${params.toString()}`;
                   // Safari-safe: open a blank tab first, then navigate and sever opener.
