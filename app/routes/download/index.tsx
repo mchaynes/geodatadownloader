@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { GdalDownloader } from "../../downloader";
-import { QueryResult, queryLayer } from "../../arcgis";
+import { QueryResult, queryLayer, parseGeometryFromString } from "../../arcgis";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import { Progress, Alert } from "flowbite-react";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
+import Geometry from "@arcgis/core/geometry/Geometry";
 
 type DownloadPhase = "idle" | "querying-ids" | "fetching-features" | "converting" | "zipping" | "complete" | "error";
 
@@ -51,7 +52,8 @@ export default function DownloadPage() {
         const format = searchParams.get("format") || "GPKG";
         const concurrent = parseInt(searchParams.get("concurrent") || "1", 10);
         const layersJson = searchParams.get("layers");
-        
+        const boundaryJson = searchParams.get("boundary");
+
         if (!layersJson) {
           throw new Error("No layers specified for download");
         }
@@ -61,18 +63,30 @@ export default function DownloadPage() {
           where?: string;
           columnMapping?: Record<string, string>;
         }>;
-        
+
         try {
           layerConfigs = JSON.parse(layersJson);
         } catch (parseError) {
           throw new Error("Invalid layer configuration: malformed JSON");
         }
 
+        // Parse boundary geometry if provided
+        let filterGeometry: Geometry | undefined;
+        if (boundaryJson) {
+          try {
+            filterGeometry = parseGeometryFromString(boundaryJson);
+          } catch (parseError) {
+            console.warn("Failed to parse boundary geometry, proceeding without spatial filter:", parseError);
+          }
+        }
+
         // Phase 1: Load layers and query for ObjectIDs
         setProgress(prev => ({
           ...prev,
           phase: "querying-ids",
-          message: "Loading layers and querying for ObjectIDs...",
+          message: filterGeometry
+            ? "Loading layers and querying for ObjectIDs (with spatial filter)..."
+            : "Loading layers and querying for ObjectIDs...",
         }));
 
         const layers: FeatureLayer[] = [];
@@ -89,7 +103,7 @@ export default function DownloadPage() {
         for (let i = 0; i < layers.length; i++) {
           const layer = layers[i];
           const config = layerConfigs[i];
-          
+
           // Create layer with config
           const layerWithConfig = {
             esri: layer,
@@ -99,8 +113,8 @@ export default function DownloadPage() {
               column_mapping: config.columnMapping,
             }
           };
-          
-          const result = await queryLayer(layerWithConfig);
+
+          const result = await queryLayer(layerWithConfig, filterGeometry);
           results.push(result);
           totalFeatures += result.totalCount;
         }
