@@ -518,9 +518,14 @@ export default function MapCreator() {
                 });
 
                 const href = `/download?${params.toString()}`;
-                // Try to open in a new tab, fall back to same-tab navigation if popups are blocked
-                const w = window.open(href, '_blank', 'noopener');
-                if (!w) {
+                  // Safari-safe: open a blank tab first, then navigate and sever opener.
+                  // This avoids WebKit occasionally using same-tab for window.open(url, '_blank', 'noopener').
+                  const newWin = window.open('', '_blank');
+                  if (newWin) {
+                    try { newWin.opener = null; } catch { }
+                    newWin.location.href = href;
+                  } else {
+                  // Popup blocked: fall back to same-tab navigation
                   window.location.href = href;
                 }
               }}
