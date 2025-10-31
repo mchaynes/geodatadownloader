@@ -104,7 +104,7 @@ export const mapCreatorAction = async ({ request }: ActionFunctionArgs) => {
   const normalizeUrl = (u: string) => (u ?? "").replace(/\/+$/, "");
   const esriWithConfig = layers.map(esri => ({
     esri: esri,
-    config: mapConfig.layers.find(l => normalizeUrl(l.url) === normalizeUrl(getRealUrl(esri))) 
+    config: mapConfig.layers.find(l => normalizeUrl(l.url) === normalizeUrl(getRealUrl(esri)))
   }))
 
 
@@ -216,7 +216,6 @@ export default function MapCreator() {
   const [rightPanelWidth, setRightPanelWidth] = useState(280) // Default width for download panel
   const [isResizingLeft, setIsResizingLeft] = useState(false)
   const [isResizingRight, setIsResizingRight] = useState(false)
-  const [visibleLayerCount, setVisibleLayerCount] = useState(0)
 
   // Handle panel resizing
   const handleMouseMoveLeft = useCallback((e: MouseEvent) => {
@@ -401,6 +400,35 @@ export default function MapCreator() {
 
   const [showRemoveModal, setShowRemoveModal] = useState(false)
   const [isLayersPanelCollapsed, setIsLayersPanelCollapsed] = useState(false)
+  const [visibleLayerCount, setVisibleLayerCount] = useState(0)
+
+  // Track visible layer count from localStorage
+  useEffect(() => {
+    const updateVisibleCount = () => {
+      const mapJson = localStorage.getItem("map");
+      if (mapJson) {
+        const mapConfig = JSON.parse(mapJson);
+        const visibleCount = mapConfig.layers.filter((l: any) => l.visible !== false).length;
+        setVisibleLayerCount(visibleCount);
+      } else {
+        setVisibleLayerCount(0);
+      }
+    };
+
+    // Initial count
+    updateVisibleCount();
+
+    // Listen for storage changes (in case other tabs modify it)
+    window.addEventListener('storage', updateVisibleCount);
+
+    // Custom event for same-tab updates
+    window.addEventListener('layerVisibilityChanged', updateVisibleCount);
+
+    return () => {
+      window.removeEventListener('storage', updateVisibleCount);
+      window.removeEventListener('layerVisibilityChanged', updateVisibleCount);
+    };
+  }, [loaderData.layers]);
 
   return (
     <MapViewProvider>
@@ -411,49 +439,43 @@ export default function MapCreator() {
             style={{ width: isLayersPanelCollapsed ? '48px' : `${leftPanelWidth}px` }}
             className="overflow-y-auto overflow-x-hidden p-4 flex-none bg-white dark:bg-dark-bg transition-all duration-300"
           >
-          <div className="flex items-center justify-between mb-4">
-            {!isLayersPanelCollapsed && (
-              <>
-                <h5 className="text-xl font-bold leading-none text-gray-900 dark:text-white">Layers</h5>
+            <div className="flex items-center justify-between mb-4">
+              {!isLayersPanelCollapsed && (
+                <>
+                  <h5 className="text-xl font-bold leading-none text-gray-900 dark:text-white">Layers</h5>
 
-                <button
-                  onClick={() => setShowRemoveModal(srm => !srm)}
-                  className="inline-flex items-center p-2 text-sm font-medium rounded-lg text-primary-700 hover:bg-gray-100 dark:text-primary-500 dark:hover:bg-gray-700">
-                  Remove All
-                </button>
-              </>
-            )}
-            <button
-              onClick={() => setIsLayersPanelCollapsed(!isLayersPanelCollapsed)}
-              className="inline-flex items-center p-2 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
-              title={isLayersPanelCollapsed ? "Expand layers panel" : "Collapse layers panel"}
-            >
-              {isLayersPanelCollapsed ? (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
+                  <button
+                    onClick={() => setShowRemoveModal(srm => !srm)}
+                    className="inline-flex items-center p-2 text-sm font-medium rounded-lg text-primary-700 hover:bg-gray-100 dark:text-primary-500 dark:hover:bg-gray-700">
+                    Remove All
+                  </button>
+                </>
               )}
-            </button>
-            <RemoveLayerModal
-              url=""
-              show={showRemoveModal}
-              setShow={setShowRemoveModal}
-            />
-          </div>
+              <button
+                onClick={() => setIsLayersPanelCollapsed(!isLayersPanelCollapsed)}
+                className="inline-flex items-center p-2 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                title={isLayersPanelCollapsed ? "Expand layers panel" : "Collapse layers panel"}
+              >
+                {isLayersPanelCollapsed ? (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                )}
+              </button>
+              <RemoveLayerModal
+                url=""
+                show={showRemoveModal}
+                setShow={setShowRemoveModal}
+              />
+            </div>
 
             {/* Broken layers are handled via modal now */}
 
-          {!isLayersPanelCollapsed && (
-            <>
-              {loaderData.layers.length > 0 && (
-                <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
-                  Only checked layers will be downloaded
-                </p>
-              )}
+            {!isLayersPanelCollapsed && (
               <div className="flow-root">
                 <ul role="list" className="divide-y divide-gray-200 dark:divide-gray-700">
                   {loaderData.layers.length > 0 ? loaderData.layers.map((layer) =>
@@ -472,8 +494,7 @@ export default function MapCreator() {
                   }
                 </ul>
               </div>
-            </>
-          )}
+            )}
           </div>
 
           {/* Resize handle for left panel */}
@@ -561,90 +582,90 @@ export default function MapCreator() {
             style={{ width: `${rightPanelWidth}px` }}
             className="overflow-y-auto p-4 flex-none bg-white dark:bg-dark-bg"
           >
-          <Form className="space-y-6" method="post">
-            <div>
-              <label htmlFor="format" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Format</label>
-              <select id="format" name="format" value={format} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-dark-text-bg dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                onChange={e => setFormat(e.currentTarget.value)}
-              >
-                {Object.keys(Drivers).map(format =>
-                  <option key={format} value={format}>{format}</option>
-                )}
-              </select>
-            </div>
+            <Form className="space-y-6" method="post">
+              <div>
+                <label htmlFor="format" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Format</label>
+                <select id="format" name="format" value={format} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-dark-text-bg dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                  onChange={e => setFormat(e.currentTarget.value)}
+                >
+                  {Object.keys(Drivers).map(format =>
+                    <option key={format} value={format}>{format}</option>
+                  )}
+                </select>
+              </div>
 
-            <div>
-              <label htmlFor="steps-range" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Concurrent Requests ({concurrent})</label>
-              <input
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-                id="steps-range"
-                type="range"
-                min="1"
-                max="9"
-                step="1"
-                value={concurrent}
-                onChange={e => setConcurrent(parseInt(e.currentTarget.value))}
-              />
-            </div>
-            {/*<button className="w-full ml-2 text-white bg-orange-700 hover:bg-orange-800 focus:ring-4 focus:outline-none focus:ring-orange-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-orange-600 dark:hover:bg-orange-700 dark:focus:ring-orange-800"
+              <div>
+                <label htmlFor="steps-range" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Concurrent Requests ({concurrent})</label>
+                <input
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                  id="steps-range"
+                  type="range"
+                  min="1"
+                  max="9"
+                  step="1"
+                  value={concurrent}
+                  onChange={e => setConcurrent(parseInt(e.currentTarget.value))}
+                />
+              </div>
+              {/*<button className="w-full ml-2 text-white bg-orange-700 hover:bg-orange-800 focus:ring-4 focus:outline-none focus:ring-orange-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-orange-600 dark:hover:bg-orange-700 dark:focus:ring-orange-800"
             >
               Schedule
             </button>*/}
-            <button
+              <button
                 type="button"
-              className="w-full ml-2 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={loaderData.layers.length === 0 || visibleLayerCount === 0}
-              title={
-                loaderData.layers.length === 0
-                  ? "Add at least one layer to enable download"
-                  : visibleLayerCount === 0
-                    ? "Select at least one layer to enable download"
-                    : "Download layers"
-              }
+                className="w-full ml-2 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={loaderData.layers.length === 0 || visibleLayerCount === 0}
+                title={
+                  loaderData.layers.length === 0
+                    ? "Add at least one layer to enable download"
+                    : visibleLayerCount === 0
+                      ? "Select at least one layer to enable download"
+                      : "Download layers"
+                }
                 onClick={(e) => {
                   // Prevent any parent <Form> submission in production environments/browsers
                   e.preventDefault();
                   e.stopPropagation();
 
-                // Read current visibility state from localStorage
-                const mapJson = localStorage.getItem("map");
-                let visibleLayerUrls = new Set<string>();
-                let boundary = "";
+                  // Read current visibility state from localStorage
+                  const mapJson = localStorage.getItem("map");
+                  let visibleLayerUrls = new Set<string>();
+                  let boundary = "";
 
-                if (mapJson) {
-                  const mapConfig = JSON.parse(mapJson);
-                  // Get URLs of visible layers
-                  visibleLayerUrls = new Set(
-                    mapConfig.layers
-                      .filter((l: any) => l.visible !== false)
-                      .map((l: any) => l.url)
-                  );
-                  // Get the boundary if it exists
-                  boundary = mapConfig.map?.boundary || "";
-                }
+                  if (mapJson) {
+                    const mapConfig = JSON.parse(mapJson);
+                    // Get URLs of visible layers
+                    visibleLayerUrls = new Set(
+                      mapConfig.layers
+                        .filter((l: any) => l.visible !== false)
+                        .map((l: any) => l.url)
+                    );
+                    // Get the boundary if it exists
+                    boundary = mapConfig.map?.boundary || "";
+                  }
 
-                // Prepare layer configurations for the download page, filtering by current visibility
-                const layerConfigs = loaderData.layers
-                  .filter(layer => visibleLayerUrls.has(layer.config?.url || layer.esri.url))
-                  .map(layer => ({
-                    url: layer.config?.url || layer.esri.url,
-                    where: layer.config?.where_clause || "1=1",
-                    columnMapping: layer.config?.column_mapping as Record<string, string> | undefined,
-                  }));
+                  // Prepare layer configurations for the download page, filtering by current visibility
+                  const layerConfigs = loaderData.layers
+                    .filter(layer => visibleLayerUrls.has(layer.config?.url || layer.esri.url))
+                    .map(layer => ({
+                      url: layer.config?.url || layer.esri.url,
+                      where: layer.config?.where_clause || "1=1",
+                      columnMapping: layer.config?.column_mapping as Record<string, string> | undefined,
+                    }));
 
-                // Create URL with parameters
-                const params = new URLSearchParams({
-                  format: String(format),
-                  concurrent: String(concurrent),
-                  layers: JSON.stringify(layerConfigs),
-                });
+                  // Create URL with parameters
+                  const params = new URLSearchParams({
+                    format: String(format),
+                    concurrent: String(concurrent),
+                    layers: JSON.stringify(layerConfigs),
+                  });
 
-                // Add boundary if it exists
-                if (boundary) {
-                  params.set('boundary', boundary);
-                }
+                  // Add boundary if it exists
+                  if (boundary) {
+                    params.set('boundary', boundary);
+                  }
 
-                const href = `/download?${params.toString()}`;
+                  const href = `/download?${params.toString()}`;
                   // Safari-safe: open a blank tab first, then navigate and sever opener.
                   // This avoids WebKit occasionally using same-tab for window.open(url, '_blank', 'noopener').
                   const newWin = window.open('', '_blank');
@@ -652,14 +673,14 @@ export default function MapCreator() {
                     try { newWin.opener = null; } catch { }
                     newWin.location.href = href;
                   } else {
-                  // Popup blocked: fall back to same-tab navigation
-                  window.location.href = href;
-                }
-              }}
-            >
-              Download
-            </button>
-          </Form>
+                    // Popup blocked: fall back to same-tab navigation
+                    window.location.href = href;
+                  }
+                }}
+              >
+                Download
+              </button>
+            </Form>
           </div>
         </div>
 
@@ -802,22 +823,22 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
   }, [isDropDownOpen])
 
   const handleZoomToLayer = useCallback(() => {
-    
+
     if (!mapView) {
       console.warn("MapView not available");
       return;
     }
-    
+
     // Use extent from sourceJSON (the layer's metadata from ArcGIS REST API)
     const extentData = sourceJSON?.extent;
     if (!extentData) {
       console.warn(`Layer "${sourceJSON["name"]}" has no extent in sourceJSON`);
       return;
     }
-    
+
     console.log("Zooming to extent:", extentData);
     console.log("MapView spatial reference:", mapView.spatialReference);
-    
+
     // Create an Extent object from the sourceJSON extent
     const extent = new Extent({
       xmin: extentData.xmin,
@@ -826,9 +847,9 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
       ymax: extentData.ymax,
       spatialReference: extentData.spatialReference
     });
-    
+
     console.log("Created extent object:", extent);
-    
+
     mapView.when(() => {
       console.log("MapView is ready, calling goTo...");
       mapView.goTo(extent, {
@@ -859,6 +880,9 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
           if (layerIndex !== -1) {
             mapConfig.layers[layerIndex].visible = newVisibility;
             localStorage.setItem("map", JSON.stringify(mapConfig));
+
+            // Dispatch custom event to notify parent component
+            window.dispatchEvent(new Event('layerVisibilityChanged'));
           }
         }
       }}
@@ -1104,16 +1128,16 @@ function ModifyLayerConfig({ show, setShow, boundary, layer }: ModifyLayerConfig
                                 return (
                                   <Table.Row key={field.name} className="bg-white dark:border-gray-700 dark:bg-gray-800">
                                     <Table.Cell>
-                                      <Checkbox 
-                                        defaultChecked={isSelected} 
-                                        name={`${field.name}-enabled`} 
+                                      <Checkbox
+                                        defaultChecked={isSelected}
+                                        name={`${field.name}-enabled`}
                                       />
                                     </Table.Cell>
                                     <Table.Cell className="font-medium text-gray-900 dark:text-white">
                                       {field.name}
                                     </Table.Cell>
                                     <Table.Cell>
-                                      <TextInput 
+                                      <TextInput
                                         sizing="sm"
                                         id={field.name}
                                         name={`${field.name}-new`}
