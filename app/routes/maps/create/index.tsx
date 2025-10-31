@@ -65,7 +65,7 @@ export const mapCreatorAction = async ({ request }: ActionFunctionArgs) => {
         });
         await layer.load();
         // Ensure we persist the canonical layer URL (with layerId, no trailing slash)
-        const realUrl = normalizeUrl(getRealUrl(layer))
+        const realUrl = cleanArcGISUrl(getRealUrl(layer))
         mapConfig.layers.push({
           url: realUrl,
           name: layer.sourceJSON["name"],
@@ -440,9 +440,9 @@ export default function MapCreator() {
           {/* Left Panel - Layers */}
           <div
             style={{ width: isLayersPanelCollapsed ? '48px' : `${leftPanelWidth}px` }}
-            className="overflow-y-auto overflow-x-hidden p-4 flex-none bg-white dark:bg-dark-bg transition-all duration-300"
+            className="h-full overflow-hidden p-4 flex-none bg-white dark:bg-dark-bg transition-all duration-300 flex flex-col"
           >
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4 flex-none">
               {!isLayersPanelCollapsed && (
                 <>
                   <h5 className="text-xl font-bold leading-none text-gray-900 dark:text-white">Layers</h5>
@@ -479,24 +479,31 @@ export default function MapCreator() {
             {/* Broken layers are handled via modal now */}
 
             {!isLayersPanelCollapsed && (
-              <div className="flow-root">
-                <ul role="list" className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {loaderData.layers.length > 0 ? loaderData.layers.map((layer) =>
-                    <LayerDropdownMenu
-                      key={layer?.config?.url}
-                      layer={layer}
-                      boundary={filterExtent}
-                    />
-                  )
-                    :
-                    <li className="h-full flex flex-col items-center justify-items-center">
-                      <p className="text-gray-400">
-                        Add some layers :)
-                      </p>
-                    </li>
-                  }
-                </ul>
-              </div>
+              <>
+                <div className="flow-root flex-1 overflow-y-auto overflow-x-hidden">
+                  <ul role="list" className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {loaderData.layers.length > 0 ? loaderData.layers.map((layer) =>
+                      <LayerDropdownMenu
+                        key={layer?.config?.url}
+                        layer={layer}
+                        boundary={filterExtent}
+                      />
+                    )
+                      :
+                      <li className="h-full flex flex-col items-center justify-items-center">
+                        <p className="text-gray-400">
+                          Add some layers :)
+                        </p>
+                      </li>
+                    }
+                  </ul>
+                </div>
+                {loaderData.layers.length > 0 && (
+                  <p className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 text-center flex-none">
+                    Only checked layers are downloaded
+                  </p>
+                )}
+              </>
             )}
           </div>
 
