@@ -355,12 +355,28 @@ export function ExtentPicker() {
   }
 
   return (
-    <div className="dark:bg-dark-bg" style={{ display: "flex", flexDirection: "column", gap: ".5rem .5rem" }}>
-      <div ref={elRef} className="w-full h-[63vh]" />
-      <div className="flex flex-row gap-1">
-
+    <div
+      className="dark:bg-dark-bg p-2"
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.5rem',
+        overflow: 'hidden'
+      }}
+    >
+      <div
+        ref={elRef}
+        className="w-full"
+        style={{
+          height: 'calc(100% - 105px)', // Subtract space for boundary input (~48px) + gap + margin
+          minHeight: 0,
+          overflow: 'hidden'
+        }}
+      />
+      <div className="flex flex-row gap-1" style={{ flex: '0 0 auto' }}>
         <input
-
           className="w-full text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-dark-text-bg dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
           type="search"
           name="layer-url"
@@ -373,22 +389,26 @@ export function ExtentPicker() {
         />
         <BoundaryAdornment content={textBoxValue} />
       </div>
-      <StatusAlert
-        msg={
-          <div>
-            Error parsing your boundary, you probably mistyped. Supported
-            Formats: <a {...esriDocLinkProps("POLYGON")}>Polygon</a>,{" "}
-            <a {...esriDocLinkProps("ENVELOPE")}>Envelope</a>
-            <p />
-            <code>
-              {"    "}
-              {boundaryErrMsg}
-            </code>
-          </div>
-        }
-        alertType={boundaryAlertType}
-        loading={loading}
-      />
+      {(boundaryAlertType || loading) && (
+        <div style={{ flex: '0 0 auto' }}>
+          <StatusAlert
+            msg={
+              <div>
+                Error parsing your boundary, you probably mistyped. Supported
+                Formats: <a {...esriDocLinkProps("POLYGON")}>Polygon</a>,{" "}
+                <a {...esriDocLinkProps("ENVELOPE")}>Envelope</a>
+                <p />
+                <code>
+                  {"    "}
+                  {boundaryErrMsg}
+                </code>
+              </div>
+            }
+            alertType={boundaryAlertType}
+            loading={loading}
+          />
+        </div>
+      )}
     </div>
   );
 }
