@@ -435,7 +435,7 @@ export default function MapCreator() {
 
   return (
     <MapViewProvider>
-      <div className="h-screen flex flex-col p-2">
+      <div style={{ height: 'calc(100vh - 64px)' }} className="flex flex-col p-2">
         <div className="flex flex-row flex-1 overflow-hidden gap-2">
           {/* Left Panel - Layers */}
           <div
@@ -480,7 +480,7 @@ export default function MapCreator() {
 
             {!isLayersPanelCollapsed && (
               <>
-                <div className="flow-root flex-1 overflow-y-auto overflow-x-hidden">
+                <div className="flow-root flex-1 overflow-y-auto overflow-x-hidden min-h-0">
                   <ul role="list" className="divide-y divide-gray-200 dark:divide-gray-700">
                     {loaderData.layers.length > 0 ? loaderData.layers.map((layer) =>
                       <LayerDropdownMenu
@@ -499,9 +499,9 @@ export default function MapCreator() {
                   </ul>
                 </div>
                 {loaderData.layers.length > 0 && (
-                  <p className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 text-center flex-none">
+                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 text-center flex-none">
                     Only checked layers are downloaded
-                  </p>
+                  </div>
                 )}
               </>
             )}
