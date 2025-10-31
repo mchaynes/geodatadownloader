@@ -104,7 +104,7 @@ export const mapCreatorAction = async ({ request }: ActionFunctionArgs) => {
   const normalizeUrl = (u: string) => (u ?? "").replace(/\/+$/, "");
   const esriWithConfig = layers.map(esri => ({
     esri: esri,
-    config: mapConfig.layers.find(l => normalizeUrl(l.url) === normalizeUrl(getRealUrl(esri))) 
+    config: mapConfig.layers.find(l => normalizeUrl(l.url) === normalizeUrl(getRealUrl(esri)))
   }))
 
 
@@ -210,6 +210,80 @@ export default function MapCreator() {
 
   const [showLoadingModal, setShowLoadingModal] = useState(false)
   const fetcher = useFetcher()
+
+  // Panel resize state
+  const [leftPanelWidth, setLeftPanelWidth] = useState(320) // 320px = w-80
+  const [rightPanelWidth, setRightPanelWidth] = useState(280) // Default width for download panel
+  const [isResizingLeft, setIsResizingLeft] = useState(false)
+  const [isResizingRight, setIsResizingRight] = useState(false)
+
+  // Handle panel resizing
+  const handleMouseMoveLeft = useCallback((e: MouseEvent) => {
+    if (isResizingLeft) {
+      e.preventDefault();
+      const newWidth = Math.max(200, Math.min(600, e.clientX));
+      setLeftPanelWidth(newWidth);
+    }
+  }, [isResizingLeft]);
+
+  const handleMouseMoveRight = useCallback((e: MouseEvent) => {
+    if (isResizingRight) {
+      e.preventDefault();
+      const newWidth = Math.max(200, Math.min(600, window.innerWidth - e.clientX));
+      setRightPanelWidth(newWidth);
+    }
+  }, [isResizingRight]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsResizingLeft(false);
+    setIsResizingRight(false);
+  }, []);
+
+  useEffect(() => {
+    if (isResizingLeft || isResizingRight) {
+      document.addEventListener('mousemove', handleMouseMoveLeft as any);
+      document.addEventListener('mousemove', handleMouseMoveRight as any);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMoveLeft as any);
+        document.removeEventListener('mousemove', handleMouseMoveRight as any);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      };
+    }
+  }, [isResizingLeft, isResizingRight, handleMouseMoveLeft, handleMouseMoveRight, handleMouseUp]);
+
+  // Track visible layer count from localStorage
+  useEffect(() => {
+    const updateVisibleCount = () => {
+      const mapJson = localStorage.getItem("map");
+      if (mapJson) {
+        const mapConfig = JSON.parse(mapJson);
+        const visibleCount = mapConfig.layers.filter((l: any) => l.visible !== false).length;
+        setVisibleLayerCount(visibleCount);
+      } else {
+        setVisibleLayerCount(0);
+      }
+    };
+
+    // Initial count
+    updateVisibleCount();
+
+    // Listen for storage changes (in case other tabs modify it)
+    window.addEventListener('storage', updateVisibleCount);
+
+    // Custom event for same-tab updates
+    window.addEventListener('layerVisibilityChanged', updateVisibleCount);
+
+    return () => {
+      window.removeEventListener('storage', updateVisibleCount);
+      window.removeEventListener('layerVisibilityChanged', updateVisibleCount);
+    };
+  }, [loaderData.layers]);
 
   const closeExplorer = useCallback(() => {
     setLayerExplorerVisible(false);
@@ -356,220 +430,242 @@ export default function MapCreator() {
     };
   }, [loaderData.layers]);
 
-  const layersPanelClasses = [
-    isLayersPanelCollapsed ? 'w-12' : 'w-80', // fixed width when expanded
-    'overflow-y-auto overflow-x-hidden p-4 flex-none',
-    'bg-white border border-gray-200 rounded-lg shadow sm:p-8',
-    'dark:bg-dark-bg dark:border-gray-700',
-    'transition-all duration-300'
-  ].join(' ')
-
   return (
     <MapViewProvider>
-      <div className="p-2">
-        <div className="flex flex-row gap-1">
-          <div className={layersPanelClasses}>
-          <div className="flex items-center justify-between mb-4">
-            {!isLayersPanelCollapsed && (
-              <>
-                <h5 className="text-xl font-bold leading-none text-gray-900 dark:text-white">Layers</h5>
+      <div className="h-screen flex flex-col p-2">
+        <div className="flex flex-row flex-1 overflow-hidden gap-2">
+          {/* Left Panel - Layers */}
+          <div
+            style={{ width: isLayersPanelCollapsed ? '48px' : `${leftPanelWidth}px` }}
+            className="overflow-y-auto overflow-x-hidden p-4 flex-none bg-white dark:bg-dark-bg transition-all duration-300"
+          >
+            <div className="flex items-center justify-between mb-4">
+              {!isLayersPanelCollapsed && (
+                <>
+                  <h5 className="text-xl font-bold leading-none text-gray-900 dark:text-white">Layers</h5>
 
-                <button
-                  onClick={() => setShowRemoveModal(srm => !srm)}
-                  className="inline-flex items-center p-2 text-sm font-medium rounded-lg text-primary-700 hover:bg-gray-100 dark:text-primary-500 dark:hover:bg-gray-700">
-                  Remove All
-                </button>
-              </>
-            )}
-            <button
-              onClick={() => setIsLayersPanelCollapsed(!isLayersPanelCollapsed)}
-              className="inline-flex items-center p-2 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
-              title={isLayersPanelCollapsed ? "Expand layers panel" : "Collapse layers panel"}
-            >
-              {isLayersPanelCollapsed ? (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
+                  <button
+                    onClick={() => setShowRemoveModal(srm => !srm)}
+                    className="inline-flex items-center p-2 text-sm font-medium rounded-lg text-primary-700 hover:bg-gray-100 dark:text-primary-500 dark:hover:bg-gray-700">
+                    Remove All
+                  </button>
+                </>
               )}
-            </button>
-            <RemoveLayerModal
-              url=""
-              show={showRemoveModal}
-              setShow={setShowRemoveModal}
-            />
-          </div>
+              <button
+                onClick={() => setIsLayersPanelCollapsed(!isLayersPanelCollapsed)}
+                className="inline-flex items-center p-2 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                title={isLayersPanelCollapsed ? "Expand layers panel" : "Collapse layers panel"}
+              >
+                {isLayersPanelCollapsed ? (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                )}
+              </button>
+              <RemoveLayerModal
+                url=""
+                show={showRemoveModal}
+                setShow={setShowRemoveModal}
+              />
+            </div>
 
             {/* Broken layers are handled via modal now */}
 
-          {!isLayersPanelCollapsed && (
-            <>
-              {loaderData.layers.length > 0 && (
-                <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
-                  Only checked layers will be downloaded
-                </p>
-              )}
+            {!isLayersPanelCollapsed && (
               <div className="flow-root">
                 <ul role="list" className="divide-y divide-gray-200 dark:divide-gray-700">
-                {loaderData.layers.length > 0 ? loaderData.layers.map((layer) =>
-                  <LayerDropdownMenu
-                    key={layer?.config?.url}
-                    layer={layer}
-                    boundary={filterExtent}
-                  />
-                )
-                  :
-                  <li className="h-full flex flex-col items-center justify-items-center">
-                    <p className="text-gray-400">
-                      Add some layers :)
-                    </p>
-                  </li>
-                }
-              </ul>
+                  {loaderData.layers.length > 0 ? loaderData.layers.map((layer) =>
+                    <LayerDropdownMenu
+                      key={layer?.config?.url}
+                      layer={layer}
+                      boundary={filterExtent}
+                    />
+                  )
+                    :
+                    <li className="h-full flex flex-col items-center justify-items-center">
+                      <p className="text-gray-400">
+                        Add some layers :)
+                      </p>
+                    </li>
+                  }
+                </ul>
               </div>
-            </>
-          )}
-        </div>
-        <div className="flex flex-col gap-2 w-full flex-grow p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-8 dark:bg-dark-bg dark:border-gray-700">
-          <fetcher.Form method="post" onSubmit={handleLayerSubmit}>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <svg aria-hidden="true" className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-              </div>
-              <input
-                type="search"
-                name="layer-url"
-                id="default-search"
-                className="block w-full p-4 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-dark-text-bg dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                placeholder="Add Layer Url Here (Like: https://gismaps.kingcounty.gov/arcgis/rest/services/Environment/KingCo_SensitiveAreas/MapServer/11)"
-                value={layerUrlInput}
-                onChange={(event) => setLayerUrlInput(event.currentTarget.value)}
-                autoComplete="off"
-                required
-              />
-              <button type="submit" name="intent" value="add-layer" className="text-white text-sm absolute right-2.5 bottom-2.5 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-                Add
-              </button>
-            </div>
-            <Modal show={showLoadingModal} onClose={() => setShowLoadingModal(false)} size="md" popup dismissible>
-              <Modal.Header />
-              <Modal.Body>
-                <div className="text-center">
-                  <HiOutlineArrowCircleDown className="mx-auto mb-4 h-14 w-14 text-gray-400 dark:text-gray-200" />
-                  <h3 className="mb-5 text-lg font-normal text-black dark:text-white truncate max-w-[400px]">
-                    {loadingMessage
-                      ? loadingMessage
-                      : fetcher.formData?.get("layer-url")
-                        ? `Loading layer ${fetcher.formData?.get("layer-url") as string}`
-                        : "Loading layer..."}
-                  </h3>
-                </div>
-              </Modal.Body>
-            </Modal>
-          </fetcher.Form>
-          {(analyzingUrl || layerAlert.alertType) && (
-            <div className="mt-3">
-              <StatusAlert loading={analyzingUrl} {...layerAlert} />
-            </div>
-          )}
-          {layerExplorerResult && (
-            <FeatureLayerExplorerModal
-              visible={layerExplorerVisible}
-              traversal={layerExplorerResult}
-              onClose={handleExplorerClose}
-              onAddLayer={handleExplorerAdd}
+            )}
+          </div>
+
+          {/* Resize handle for left panel */}
+          {!isLayersPanelCollapsed && (
+            <div
+              className="w-px cursor-col-resize bg-gray-300 hover:bg-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                setIsResizingLeft(true);
+              }}
             />
           )}
-          <Outlet />
-        </div>
-        <div className="w-2/12 max-w-sm p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-6 md:p-8 dark:bg-dark-bg dark:border-gray-700">
-          <Form className="space-y-6" method="post">
-            <div>
-              <label htmlFor="format" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Format</label>
-              <select id="format" name="format" value={format} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-dark-text-bg dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                onChange={e => setFormat(e.currentTarget.value)}
-              >
-                {Object.keys(Drivers).map(format =>
-                  <option key={format} value={format}>{format}</option>
-                )}
-              </select>
-            </div>
 
-            <div>
-              <label htmlFor="steps-range" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Concurrent Requests ({concurrent})</label>
-              <input
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-                id="steps-range"
-                type="range"
-                min="1"
-                max="9"
-                step="1"
-                value={concurrent}
-                onChange={e => setConcurrent(parseInt(e.currentTarget.value))}
-              />
+          {/* Main content area */}
+          <div className="flex flex-col flex-1 overflow-hidden bg-white dark:bg-dark-bg">
+            {/* Top bar with search form */}
+            <div className="flex-none p-2">
+              <fetcher.Form method="post" onSubmit={handleLayerSubmit}>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <svg aria-hidden="true" className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                  </div>
+                  <input
+                    type="search"
+                    name="layer-url"
+                    id="default-search"
+                    className="block w-full p-4 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-dark-text-bg dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    placeholder="Add Layer Url Here (Like: https://gismaps.kingcounty.gov/arcgis/rest/services/Environment/KingCo_SensitiveAreas/MapServer/11)"
+                    value={layerUrlInput}
+                    onChange={(event) => setLayerUrlInput(event.currentTarget.value)}
+                    autoComplete="off"
+                    required
+                  />
+                  <button type="submit" name="intent" value="add-layer" className="text-white text-sm absolute right-2.5 bottom-2.5 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                    Add
+                  </button>
+                </div>
+                <Modal show={showLoadingModal} onClose={() => setShowLoadingModal(false)} size="md" popup dismissible>
+                  <Modal.Header />
+                  <Modal.Body>
+                    <div className="text-center">
+                      <HiOutlineArrowCircleDown className="mx-auto mb-4 h-14 w-14 text-gray-400 dark:text-gray-200" />
+                      <h3 className="mb-5 text-lg font-normal text-black dark:text-white truncate max-w-[400px]">
+                        {loadingMessage
+                          ? loadingMessage
+                          : fetcher.formData?.get("layer-url")
+                            ? `Loading layer ${fetcher.formData?.get("layer-url") as string}`
+                            : "Loading layer..."}
+                      </h3>
+                    </div>
+                  </Modal.Body>
+                </Modal>
+              </fetcher.Form>
+              {(analyzingUrl || layerAlert.alertType) && (
+                <div className="mt-2">
+                  <StatusAlert loading={analyzingUrl} {...layerAlert} />
+                </div>
+              )}
+              {layerExplorerResult && (
+                <FeatureLayerExplorerModal
+                  visible={layerExplorerVisible}
+                  traversal={layerExplorerResult}
+                  onClose={handleExplorerClose}
+                  onAddLayer={handleExplorerAdd}
+                />
+              )}
             </div>
-            {/*<button className="w-full ml-2 text-white bg-orange-700 hover:bg-orange-800 focus:ring-4 focus:outline-none focus:ring-orange-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-orange-600 dark:hover:bg-orange-700 dark:focus:ring-orange-800"
+            {/* Map area - takes remaining space */}
+            <div style={{ flex: '1 1 0', minHeight: 0, height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <Outlet />
+            </div>
+          </div>
+
+          {/* Resize handle for right panel */}
+          <div
+            className="w-px cursor-col-resize bg-gray-300 hover:bg-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              setIsResizingRight(true);
+            }}
+          />
+
+          {/* Right Panel - Download Settings */}
+          <div
+            style={{ width: `${rightPanelWidth}px` }}
+            className="overflow-y-auto p-4 flex-none bg-white dark:bg-dark-bg"
+          >
+            <Form className="space-y-6" method="post">
+              <div>
+                <label htmlFor="format" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Format</label>
+                <select id="format" name="format" value={format} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-dark-text-bg dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                  onChange={e => setFormat(e.currentTarget.value)}
+                >
+                  {Object.keys(Drivers).map(format =>
+                    <option key={format} value={format}>{format}</option>
+                  )}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="steps-range" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Concurrent Requests ({concurrent})</label>
+                <input
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                  id="steps-range"
+                  type="range"
+                  min="1"
+                  max="9"
+                  step="1"
+                  value={concurrent}
+                  onChange={e => setConcurrent(parseInt(e.currentTarget.value))}
+                />
+              </div>
+              {/*<button className="w-full ml-2 text-white bg-orange-700 hover:bg-orange-800 focus:ring-4 focus:outline-none focus:ring-orange-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-orange-600 dark:hover:bg-orange-700 dark:focus:ring-orange-800"
             >
               Schedule
             </button>*/}
-            <button
+              <button
                 type="button"
-              className="w-full ml-2 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={loaderData.layers.length === 0 || visibleLayerCount === 0}
-              title={
-                loaderData.layers.length === 0
-                  ? "Add at least one layer to enable download"
-                  : visibleLayerCount === 0
-                    ? "Select at least one layer to enable download"
-                    : "Download layers"
-              }
+                className="w-full ml-2 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={loaderData.layers.length === 0 || visibleLayerCount === 0}
+                title={
+                  loaderData.layers.length === 0
+                    ? "Add at least one layer to enable download"
+                    : visibleLayerCount === 0
+                      ? "Select at least one layer to enable download"
+                      : "Download layers"
+                }
                 onClick={(e) => {
                   // Prevent any parent <Form> submission in production environments/browsers
                   e.preventDefault();
                   e.stopPropagation();
 
-                // Read current visibility state from localStorage
-                const mapJson = localStorage.getItem("map");
-                let visibleLayerUrls = new Set<string>();
-                let boundary = "";
+                  // Read current visibility state from localStorage
+                  const mapJson = localStorage.getItem("map");
+                  let visibleLayerUrls = new Set<string>();
+                  let boundary = "";
 
-                if (mapJson) {
-                  const mapConfig = JSON.parse(mapJson);
-                  // Get URLs of visible layers
-                  visibleLayerUrls = new Set(
-                    mapConfig.layers
-                      .filter((l: any) => l.visible !== false)
-                      .map((l: any) => l.url)
-                  );
-                  // Get the boundary if it exists
-                  boundary = mapConfig.map?.boundary || "";
-                }
+                  if (mapJson) {
+                    const mapConfig = JSON.parse(mapJson);
+                    // Get URLs of visible layers
+                    visibleLayerUrls = new Set(
+                      mapConfig.layers
+                        .filter((l: any) => l.visible !== false)
+                        .map((l: any) => l.url)
+                    );
+                    // Get the boundary if it exists
+                    boundary = mapConfig.map?.boundary || "";
+                  }
 
-                // Prepare layer configurations for the download page, filtering by current visibility
-                const layerConfigs = loaderData.layers
-                  .filter(layer => visibleLayerUrls.has(layer.config?.url || layer.esri.url))
-                  .map(layer => ({
-                    url: layer.config?.url || layer.esri.url,
-                    where: layer.config?.where_clause || "1=1",
-                    columnMapping: layer.config?.column_mapping as Record<string, string> | undefined,
-                  }));
+                  // Prepare layer configurations for the download page, filtering by current visibility
+                  const layerConfigs = loaderData.layers
+                    .filter(layer => visibleLayerUrls.has(layer.config?.url || layer.esri.url))
+                    .map(layer => ({
+                      url: layer.config?.url || layer.esri.url,
+                      where: layer.config?.where_clause || "1=1",
+                      columnMapping: layer.config?.column_mapping as Record<string, string> | undefined,
+                    }));
 
-                // Create URL with parameters
-                const params = new URLSearchParams({
-                  format: String(format),
-                  concurrent: String(concurrent),
-                  layers: JSON.stringify(layerConfigs),
-                });
+                  // Create URL with parameters
+                  const params = new URLSearchParams({
+                    format: String(format),
+                    concurrent: String(concurrent),
+                    layers: JSON.stringify(layerConfigs),
+                  });
 
-                // Add boundary if it exists
-                if (boundary) {
-                  params.set('boundary', boundary);
-                }
+                  // Add boundary if it exists
+                  if (boundary) {
+                    params.set('boundary', boundary);
+                  }
 
-                const href = `/download?${params.toString()}`;
+                  const href = `/download?${params.toString()}`;
                   // Safari-safe: open a blank tab first, then navigate and sever opener.
                   // This avoids WebKit occasionally using same-tab for window.open(url, '_blank', 'noopener').
                   const newWin = window.open('', '_blank');
@@ -577,16 +673,17 @@ export default function MapCreator() {
                     try { newWin.opener = null; } catch { }
                     newWin.location.href = href;
                   } else {
-                  // Popup blocked: fall back to same-tab navigation
-                  window.location.href = href;
-                }
-              }}
-            >
-              Download
-            </button>
-          </Form>
+                    // Popup blocked: fall back to same-tab navigation
+                    window.location.href = href;
+                  }
+                }}
+              >
+                Download
+              </button>
+            </Form>
+          </div>
         </div>
-      </div>
+
         {/* Modal explaining broken layers with a single "Remove all" action */}
         {broken?.length > 0 && (
           <Modal show={showBrokenModal} size="xl" popup onClose={() => {/* block closing to avoid invalid state */ }}>
@@ -638,7 +735,7 @@ export default function MapCreator() {
             </Modal.Body>
           </Modal>
         )}
-    </div>
+      </div>
     </MapViewProvider>
   );
 }
@@ -726,22 +823,22 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
   }, [isDropDownOpen])
 
   const handleZoomToLayer = useCallback(() => {
-    
+
     if (!mapView) {
       console.warn("MapView not available");
       return;
     }
-    
+
     // Use extent from sourceJSON (the layer's metadata from ArcGIS REST API)
     const extentData = sourceJSON?.extent;
     if (!extentData) {
       console.warn(`Layer "${sourceJSON["name"]}" has no extent in sourceJSON`);
       return;
     }
-    
+
     console.log("Zooming to extent:", extentData);
     console.log("MapView spatial reference:", mapView.spatialReference);
-    
+
     // Create an Extent object from the sourceJSON extent
     const extent = new Extent({
       xmin: extentData.xmin,
@@ -750,9 +847,9 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
       ymax: extentData.ymax,
       spatialReference: extentData.spatialReference
     });
-    
+
     console.log("Created extent object:", extent);
-    
+
     mapView.when(() => {
       console.log("MapView is ready, calling goTo...");
       mapView.goTo(extent, {
@@ -1031,16 +1128,16 @@ function ModifyLayerConfig({ show, setShow, boundary, layer }: ModifyLayerConfig
                                 return (
                                   <Table.Row key={field.name} className="bg-white dark:border-gray-700 dark:bg-gray-800">
                                     <Table.Cell>
-                                      <Checkbox 
-                                        defaultChecked={isSelected} 
-                                        name={`${field.name}-enabled`} 
+                                      <Checkbox
+                                        defaultChecked={isSelected}
+                                        name={`${field.name}-enabled`}
                                       />
                                     </Table.Cell>
                                     <Table.Cell className="font-medium text-gray-900 dark:text-white">
                                       {field.name}
                                     </Table.Cell>
                                     <Table.Cell>
-                                      <TextInput 
+                                      <TextInput
                                         sizing="sm"
                                         id={field.name}
                                         name={`${field.name}-new`}
