@@ -13,6 +13,7 @@ import { Button, Checkbox, Dropdown, Modal, Table, TextInput } from "flowbite-re
 import { Drivers } from "../../../downloader";
 import { StatusAlert, useStatusAlert } from "../../../StatusAlert";
 import { getMapConfigLocal, saveMapConfigLocal } from "../../../database";
+import { cleanArcGISUrl } from "../../../utils/urlCleaning";
 
 import { HiOutlineExclamationCircle, HiOutlineArrowCircleDown } from "react-icons/hi";
 import FeatureSet from "@arcgis/core/rest/support/FeatureSet";
@@ -46,8 +47,7 @@ export const mapCreatorAction = async ({ request }: ActionFunctionArgs) => {
   let errMsg = ""
   if (formData.get("intent") === "add-layer") {
     const layerUrl = formData.get("layer-url") as string
-    const normalizeUrl = (u: string) => (u ?? "").trim().replace(/\/+$/, "")
-    const normalizedInput = normalizeUrl(layerUrl)
+    const normalizedInput = cleanArcGISUrl(layerUrl)
     const looksLikeFeatureLayer = /(MapServer|FeatureServer)\/\d+$/.test(normalizedInput)
     if (!looksLikeFeatureLayer) {
       // Block adding service roots or non-feature-layer endpoints via direct submit
@@ -58,10 +58,10 @@ export const mapCreatorAction = async ({ request }: ActionFunctionArgs) => {
       }
     }
     let layer: FeatureLayer | undefined = undefined
-    if (!mapConfig.layers.find(l => normalizeUrl(l.url) === normalizedInput)) {
+    if (!mapConfig.layers.find(l => cleanArcGISUrl(l.url) === normalizedInput)) {
       try {
         layer = new FeatureLayer({
-          url: layerUrl,
+          url: normalizedInput,
         });
         await layer.load();
         // Ensure we persist the canonical layer URL (with layerId, no trailing slash)
@@ -329,14 +329,17 @@ export default function MapCreator() {
         return;
       }
 
+      // Clean the URL before analysis
+      const cleanedUrl = cleanArcGISUrl(rawUrl);
+
       closeExplorer();
       setLayerAlert("", undefined);
-      setLayerUrlInput(rawUrl);
+      setLayerUrlInput(cleanedUrl);
       setAnalyzingUrl(true);
-      setLoadingMessage(`Analyzing ${rawUrl}`);
+      setLoadingMessage(`Analyzing ${cleanedUrl}`);
 
       try {
-        const analysis = await analyzeArcGISEndpoint(rawUrl);
+        const analysis = await analyzeArcGISEndpoint(cleanedUrl);
         const normalized = analysis.normalizedUrl;
 
         if (analysis.endpointType === "feature-layer") {
