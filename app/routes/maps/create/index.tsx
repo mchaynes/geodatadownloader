@@ -12,7 +12,7 @@ import { ActionFunctionArgs, Form, Link, Outlet, useFetcher, useLoaderData } fro
 import { Button, Checkbox, Dropdown, Modal, Table, TextInput } from "flowbite-react";
 import { Drivers } from "../../../downloader";
 import { StatusAlert, useStatusAlert } from "../../../StatusAlert";
-import { getMapConfigLocal, saveMapConfigLocal } from "../../../database";
+import { getMapConfigLocal, getMapConfigSync, saveMapConfigLocal } from "../../../database";
 import { cleanArcGISUrl } from "../../../utils/urlCleaning";
 
 import { HiOutlineExclamationCircle, HiOutlineArrowCircleDown } from "react-icons/hi";
@@ -262,30 +262,19 @@ export default function MapCreator() {
     return () => { /* noop cleanup */ };
   }, [isResizingLeft, isResizingRight, handleMouseMoveLeft, handleMouseMoveRight, handleMouseUp]);
 
-  // Track visible layer count from localStorage
+  // Track visible layer count
   useEffect(() => {
     const updateVisibleCount = () => {
-      const mapJson = localStorage.getItem("map");
-      if (mapJson) {
-        const mapConfig = JSON.parse(mapJson);
-        const visibleCount = mapConfig.layers.filter((l: any) => l.visible !== false).length;
-        setVisibleLayerCount(visibleCount);
-      } else {
-        setVisibleLayerCount(0);
-      }
+      const mapConfig = getMapConfigSync();
+      const visibleCount = mapConfig.layers.filter((l: any) => l.visible !== false).length;
+      setVisibleLayerCount(visibleCount);
     };
 
-    // Initial count
     updateVisibleCount();
 
-    // Listen for storage changes (in case other tabs modify it)
-    window.addEventListener('storage', updateVisibleCount);
-
-    // Custom event for same-tab updates
     window.addEventListener('layerVisibilityChanged', updateVisibleCount);
 
     return () => {
-      window.removeEventListener('storage', updateVisibleCount);
       window.removeEventListener('layerVisibilityChanged', updateVisibleCount);
     };
   }, [loaderData.layers]);
@@ -409,34 +398,6 @@ export default function MapCreator() {
   const [showRemoveModal, setShowRemoveModal] = useState(false)
   const [isLayersPanelCollapsed, setIsLayersPanelCollapsed] = useState(false)
   const [visibleLayerCount, setVisibleLayerCount] = useState(0)
-
-  // Track visible layer count from localStorage
-  useEffect(() => {
-    const updateVisibleCount = () => {
-      const mapJson = localStorage.getItem("map");
-      if (mapJson) {
-        const mapConfig = JSON.parse(mapJson);
-        const visibleCount = mapConfig.layers.filter((l: any) => l.visible !== false).length;
-        setVisibleLayerCount(visibleCount);
-      } else {
-        setVisibleLayerCount(0);
-      }
-    };
-
-    // Initial count
-    updateVisibleCount();
-
-    // Listen for storage changes (in case other tabs modify it)
-    window.addEventListener('storage', updateVisibleCount);
-
-    // Custom event for same-tab updates
-    window.addEventListener('layerVisibilityChanged', updateVisibleCount);
-
-    return () => {
-      window.removeEventListener('storage', updateVisibleCount);
-      window.removeEventListener('layerVisibilityChanged', updateVisibleCount);
-    };
-  }, [loaderData.layers]);
 
   return (
     <MapViewProvider>
@@ -685,22 +646,13 @@ export default function MapCreator() {
                   e.preventDefault();
                   e.stopPropagation();
 
-                  // Read current visibility state from localStorage
-                  const mapJson = localStorage.getItem("map");
-                  let visibleLayerUrls = new Set<string>();
-                  let boundary = "";
-
-                  if (mapJson) {
-                    const mapConfig = JSON.parse(mapJson);
-                    // Get URLs of visible layers
-                    visibleLayerUrls = new Set(
-                      mapConfig.layers
-                        .filter((l: any) => l.visible !== false)
-                        .map((l: any) => l.url)
-                    );
-                    // Get the boundary if it exists
-                    boundary = mapConfig.map?.boundary || "";
-                  }
+                  const mapConfig = getMapConfigSync();
+                  const visibleLayerUrls = new Set(
+                    mapConfig.layers
+                      .filter((l: any) => l.visible !== false)
+                      .map((l: any) => l.url)
+                  );
+                  const boundary = mapConfig.map?.boundary || "";
 
                   // Prepare layer configurations for the download page, filtering by current visibility
                   const layerConfigs = loaderData.layers
@@ -935,18 +887,12 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
         const newVisibility = e.target.checked;
         setIsVisible(newVisibility);
 
-        // Update localStorage
-        const mapJson = localStorage.getItem("map");
-        if (mapJson) {
-          const mapConfig = JSON.parse(mapJson);
-          const layerIndex = mapConfig.layers.findIndex((l: any) => l.url === layer.config?.url);
-          if (layerIndex !== -1) {
-            mapConfig.layers[layerIndex].visible = newVisibility;
-            localStorage.setItem("map", JSON.stringify(mapConfig));
-
-            // Dispatch custom event to notify parent component
-            window.dispatchEvent(new Event('layerVisibilityChanged'));
-          }
+        const mapConfig = getMapConfigSync();
+        const layerIndex = mapConfig.layers.findIndex((l: any) => l.url === layer.config?.url);
+        if (layerIndex !== -1) {
+          mapConfig.layers[layerIndex].visible = newVisibility;
+          saveMapConfigLocal(mapConfig);
+          window.dispatchEvent(new Event('layerVisibilityChanged'));
         }
       }}
       className="mr-2"

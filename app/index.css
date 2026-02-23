@@ -15,3 +15,53 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* ── Esri Sketch widget ─────────────────────────────────────── */
+.esri-sketch {
+  border-radius: 8px !important;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35) !important;
+}
+
+.esri-sketch__panel {
+  border-radius: 8px !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .esri-sketch,
+  .esri-sketch__panel {
+    background: rgba(28, 25, 23, 0.88) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: blur(8px);
+  }
+
+  .esri-sketch .esri-widget--button {
+    background: transparent !important;
+    color: rgba(255, 255, 255, 0.72) !important;
+    border-color: transparent !important;
+  }
+
+  .esri-sketch .esri-widget--button:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #fff !important;
+  }
+
+  .esri-sketch .esri-widget--button.esri-widget--button-active {
+    background: rgba(59, 130, 246, 0.25) !important;
+    color: #93c5fd !important;
+  }
+
+  .esri-sketch__section--draw-btns .esri-icon-handle-horizontal,
+  .esri-sketch__drag-indicator {
+    color: rgba(255, 255, 255, 0.2) !important;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  .esri-sketch,
+  .esri-sketch__panel {
+    background: rgba(255, 255, 255, 0.92) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    backdrop-filter: blur(8px);
+  }
+}

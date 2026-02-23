@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { GdalDownloader } from "../../downloader";
 import { QueryResult, queryLayer, parseGeometryFromString } from "../../arcgis";
@@ -161,7 +161,7 @@ export default function DownloadPage() {
 
         const downloader = new GdalDownloader(onWrite, onConverting, onZipping);
         const extraOgrArgs = format === "PMTiles"
-          ? ["-dsco", `MINZOOM=${minZoom}`, "-dsco", `MAXZOOM=${maxZoom}`]
+          ? ["-dsco", `MINZOOM=${minZoom}`, "-dsco", `MAXZOOM=${maxZoom}`, "-simplify", "0.00001"]
           : [];
         await downloader.download(results, concurrent, format, extraOgrArgs);
 

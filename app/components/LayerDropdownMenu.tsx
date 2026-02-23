@@ -9,6 +9,7 @@ import { Dialog, Transition } from "@headlessui/react";
 import { useMapView } from "../MapViewContext";
 import { getRealUrl } from "../arcgis";
 import { EsriLayerWithConfig } from "../types";
+import { getMapConfigSync, saveMapConfigLocal } from "../database";
 
 type LayerDropdownMenuProps = {
   layer: any;
@@ -148,18 +149,12 @@ export function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
           const newVisibility = e.target.checked;
           setIsVisible(newVisibility);
 
-          // Update localStorage
-          const mapJson = localStorage.getItem("map");
-          if (mapJson) {
-            const mapConfig = JSON.parse(mapJson);
-            const layerIndex = mapConfig.layers.findIndex((l: any) => l.url === layer.config?.url);
-            if (layerIndex !== -1) {
-              mapConfig.layers[layerIndex].visible = newVisibility;
-              localStorage.setItem("map", JSON.stringify(mapConfig));
-
-              // Dispatch custom event to notify parent component
-              window.dispatchEvent(new Event("layerVisibilityChanged"));
-            }
+          const mapConfig = getMapConfigSync();
+          const layerIndex = mapConfig.layers.findIndex((l: any) => l.url === layer.config?.url);
+          if (layerIndex !== -1) {
+            mapConfig.layers[layerIndex].visible = newVisibility;
+            saveMapConfigLocal(mapConfig);
+            window.dispatchEvent(new Event("layerVisibilityChanged"));
           }
         }}
         className="mr-2"
