@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { GdalDownloader } from "../../downloader";
-import { PMTilesDownloader } from "../../pmtiles-downloader";
 import { QueryResult, queryLayer, parseGeometryFromString } from "../../arcgis";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import { Progress, Alert } from "flowbite-react";
@@ -148,7 +147,7 @@ export default function DownloadPage() {
             ...prev,
             phase: "converting",
             message: format === "PMTiles"
-              ? "Generating vector tiles with tippecanoe..."
+              ? "Converting to PMTiles format using GDAL..."
               : `Converting to ${format} format using GDAL...`,
           }));
         };
@@ -160,13 +159,11 @@ export default function DownloadPage() {
           }));
         };
 
-        if (format === "PMTiles") {
-          const downloader = new PMTilesDownloader(onWrite, onConverting, onZipping);
-          await downloader.download(results, concurrent, minZoom, maxZoom);
-        } else {
-          const downloader = new GdalDownloader(onWrite, onConverting, onZipping);
-          await downloader.download(results, concurrent, format);
-        }
+        const downloader = new GdalDownloader(onWrite, onConverting, onZipping);
+        const extraOgrArgs = format === "PMTiles"
+          ? ["-dsco", `MINZOOM=${minZoom}`, "-dsco", `MAXZOOM=${maxZoom}`]
+          : [];
+        await downloader.download(results, concurrent, format, extraOgrArgs);
 
         // Phase 5: Complete
         setProgress(prev => ({
@@ -236,25 +233,13 @@ export default function DownloadPage() {
     }
   };
 
-  const getStepIndicatorClass = (currentPhase: DownloadPhase, stepPhases: DownloadPhase[]): string => {
-    // Check if this step is complete
-    if (stepPhases.includes(currentPhase)) {
-      return "bg-green-500";
-    }
-    // Check if this step is in progress
-    if (currentPhase === "idle" && stepPhases.includes("querying-ids")) {
-      return "bg-blue-500 animate-pulse";
-    }
-    if (currentPhase === "fetching-features" && stepPhases.includes("fetching-features")) {
-      return "bg-blue-500 animate-pulse";
-    }
-    if (currentPhase === "converting" && stepPhases.includes("converting")) {
-      return "bg-blue-500 animate-pulse";
-    }
-    if (currentPhase === "zipping" && stepPhases.includes("zipping")) {
-      return "bg-blue-500 animate-pulse";
-    }
-    // Default: not started yet
+  const getStepIndicatorClass = (
+    currentPhase: DownloadPhase,
+    activePhases: DownloadPhase[],
+    completedPhases: DownloadPhase[]
+  ): string => {
+    if (completedPhases.includes(currentPhase)) return "bg-green-500";
+    if (activePhases.includes(currentPhase)) return "bg-green-500 animate-pulse";
     return "bg-gray-300";
   };
 
@@ -312,7 +297,7 @@ export default function DownloadPage() {
               <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <div className="flex items-center space-x-3">
                   <div className={`w-3 h-3 rounded-full ${
-                    getStepIndicatorClass(progress.phase, ["querying-ids", "fetching-features", "converting", "zipping", "complete"])
+                    getStepIndicatorClass(progress.phase, ["idle", "querying-ids"], ["fetching-features", "converting", "zipping", "complete"])
                   }`} />
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
                     1. Query ObjectIDs
@@ -328,7 +313,7 @@ export default function DownloadPage() {
               <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <div className="flex items-center space-x-3">
                   <div className={`w-3 h-3 rounded-full ${
-                    getStepIndicatorClass(progress.phase, ["converting", "zipping", "complete"])
+                    getStepIndicatorClass(progress.phase, ["fetching-features"], ["converting", "zipping", "complete"])
                   }`} />
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
                     2. Fetch Features
@@ -342,7 +327,7 @@ export default function DownloadPage() {
               <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <div className="flex items-center space-x-3">
                   <div className={`w-3 h-3 rounded-full ${
-                    getStepIndicatorClass(progress.phase, ["zipping", "complete"])
+                    getStepIndicatorClass(progress.phase, ["converting"], ["zipping", "complete"])
                   }`} />
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
                     3. Convert Format
@@ -353,7 +338,7 @@ export default function DownloadPage() {
               <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <div className="flex items-center space-x-3">
                   <div className={`w-3 h-3 rounded-full ${
-                    getStepIndicatorClass(progress.phase, ["complete"])
+                    getStepIndicatorClass(progress.phase, ["zipping"], ["complete"])
                   }`} />
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
                     4. Create ZIP

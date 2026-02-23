@@ -198,7 +198,8 @@ export class GdalDownloader {
   download = async (
     results: QueryResult[],
     numConcurrent: number,
-    format: string
+    format: string,
+    extraOgrArgs: string[] = [],
   ) => {
     const Gdal = await getGdalJs();
     const outputPaths: string[] = [];
@@ -215,7 +216,7 @@ export class GdalDownloader {
     if (this.onConverting) {
       this.onConverting();
     }
-    
+
     for (const result of results) {
       const geojson = geojsonMap.get(result);
       if (!geojson) {
@@ -229,6 +230,7 @@ export class GdalDownloader {
         "-f",
         format,
         "-skipfailures",
+        ...extraOgrArgs,
       ]);
 
       // Remove the extension from the output file path
