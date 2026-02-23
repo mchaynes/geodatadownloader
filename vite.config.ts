@@ -16,10 +16,8 @@ export default defineConfig({
         src: "node_modules/gdal3.js/dist/package/gdal3WebAssembly.data",
         dest: ".",
       },
-      {
-        src: "node_modules/gdal3.js/dist/package/gdal3WebAssembly.wasm",
-        dest: ".",
-      },
+      // gdal3WebAssembly.wasm (~27 MiB) exceeds Cloudflare Pages' 25 MiB limit;
+      // it is served from jsDelivr CDN instead (see app/gdal.ts).
     ],
   }),
   sentryVitePlugin({
