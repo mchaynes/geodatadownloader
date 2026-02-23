@@ -9,7 +9,7 @@ import { getRealUrl, queryLayer, QueryResult } from "../../../arcgis";
 import Geometry from "@arcgis/core/geometry/Geometry";
 import Extent from "@arcgis/core/geometry/Extent";
 import { ActionFunctionArgs, Form, Link, Outlet, useFetcher, useLoaderData } from "react-router-dom";
-import { Button, Checkbox, Dropdown, Modal, Table, TextInput } from "flowbite-react";
+import { Button, Checkbox, Dropdown, Table, TextInput } from "flowbite-react";
 import { Drivers } from "../../../downloader";
 import { StatusAlert, useStatusAlert } from "../../../StatusAlert";
 import { getMapConfigLocal, getMapConfigSync, saveMapConfigLocal } from "../../../database";
@@ -603,21 +603,22 @@ export default function MapCreator() {
                     Add
                   </button>
                 </div>
-                <Modal show={showLoadingModal} onClose={() => setShowLoadingModal(false)} size="md" popup dismissible>
-                  <Modal.Header />
-                  <Modal.Body>
-                    <div className="text-center">
-                      <HiOutlineArrowCircleDown className="mx-auto mb-4 h-14 w-14 text-gray-400 dark:text-gray-200" />
-                      <h3 className="mb-5 text-lg font-normal text-black dark:text-white truncate max-w-[400px]">
-                        {loadingMessage
-                          ? loadingMessage
-                          : fetcher.formData?.get("layer-url")
-                            ? `Loading layer ${fetcher.formData?.get("layer-url") as string}`
-                            : "Loading layer..."}
-                      </h3>
+                {showLoadingModal && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setShowLoadingModal(false)}>
+                    <div className="w-full max-w-md rounded-lg bg-white dark:bg-[#1c1917] border border-gray-200 dark:border-gray-700 shadow-xl p-6" onClick={e => e.stopPropagation()}>
+                      <div className="text-center">
+                        <HiOutlineArrowCircleDown className="mx-auto mb-4 h-14 w-14 text-gray-400 dark:text-gray-200" />
+                        <h3 className="mb-5 text-lg font-normal text-black dark:text-white truncate max-w-[400px]">
+                          {loadingMessage
+                            ? loadingMessage
+                            : fetcher.formData?.get("layer-url")
+                              ? `Loading layer ${fetcher.formData?.get("layer-url") as string}`
+                              : "Loading layer..."}
+                        </h3>
+                      </div>
                     </div>
-                  </Modal.Body>
-                </Modal>
+                  </div>
+                )}
               </fetcher.Form>
               {(analyzingUrl || layerAlert.alertType) && (
                 <div className="mt-2">
@@ -810,10 +811,12 @@ export default function MapCreator() {
 
         {/* Modal explaining broken layers with a single "Remove all" action */}
         {broken?.length > 0 && (
-          <Modal show={showBrokenModal} size="xl" popup onClose={() => {/* block closing to avoid invalid state */ }}>
-            <Modal.Header>Some layers couldn’t be loaded</Modal.Header>
-            <Modal.Body>
-              <div className="space-y-3">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+            <div className="relative w-full max-w-3xl rounded-lg bg-white dark:bg-[#1c1917] border border-gray-200 dark:border-gray-700 shadow-xl">
+              <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Some layers couldn’t be loaded</h3>
+              </div>
+              <div className="px-6 py-4 space-y-3">
                 <p className="text-sm text-gray-700 dark:text-gray-300">
                   One or more saved layers failed to load. They may have been removed, moved, or require authentication now.
                   To keep your map stable, remove these broken layers.
@@ -856,8 +859,8 @@ export default function MapCreator() {
                   </Button>
                 </div>
               </div>
-            </Modal.Body>
-          </Modal>
+            </div>
+          </div>
         )}
       </div>
     </MapViewProvider>
@@ -1122,10 +1125,10 @@ function RemoveLayerModal({ url, show, setShow }: RemoveLayerModalProps) {
     }
   }, [fetcher.data])
 
+  if (!show) return null;
   return (
-    <Modal show={show} size="md" onClose={() => setShow(false)} popup dismissible>
-      <Modal.Header />
-      <Modal.Body>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setShow(false)}>
+      <div className="w-full max-w-md rounded-lg bg-white dark:bg-[#1c1917] border border-gray-200 dark:border-gray-700 shadow-xl p-6" onClick={e => e.stopPropagation()}>
         <fetcher.Form action="/maps/create/remove-layer" method="post">
           <div className="text-center">
             <HiOutlineExclamationCircle className="mx-auto mb-4 h-14 w-14 text-gray-400 dark:text-gray-200" />
@@ -1144,8 +1147,8 @@ function RemoveLayerModal({ url, show, setShow }: RemoveLayerModalProps) {
             </div>
           </div>
         </fetcher.Form>
-      </Modal.Body>
-    </Modal>
+      </div>
+    </div>
   )
 }
 
@@ -1348,11 +1351,19 @@ type FeatureLayerExplorerModalProps = {
 };
 
 function FeatureLayerExplorerModal({ visible, traversal, onClose, onAddLayer }: FeatureLayerExplorerModalProps) {
+  if (!visible) return null;
   return (
-    <Modal show={visible} onClose={onClose} size="5xl" popup>
-      <Modal.Header>Select Feature Layer</Modal.Header>
-      <Modal.Body>
-        <div className="space-y-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+      <div className="relative w-full max-w-5xl rounded-lg bg-white dark:bg-[#1c1917] border border-gray-200 dark:border-gray-700 shadow-xl">
+        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Select Feature Layer</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="px-6 py-4 space-y-4">
           <p className="text-sm text-gray-600 dark:text-gray-300">
             Source: <span className="break-all font-mono text-xs">{traversal.analyzedUrl}</span>
           </p>
@@ -1363,8 +1374,8 @@ function FeatureLayerExplorerModal({ visible, traversal, onClose, onAddLayer }: 
             <FolderNodeView node={traversal.root} depth={0} onAddLayer={onAddLayer} />
           </div>
         </div>
-      </Modal.Body>
-    </Modal>
+      </div>
+    </div>
   );
 }
 
@@ -1452,7 +1463,7 @@ function LayerRow({ layer, service, depth, onAddLayer }: LayerRowProps) {
 
   return (
     <div
-      className="flex items-center justify-between gap-3 rounded-md border border-gray-200 bg-white px-3 py-2 shadow-sm hover:border-blue-200 hover:bg-blue-50 dark:border-gray-700 dark:bg-dark-text-bg dark:hover:border-blue-400"
+      className="flex items-center justify-between gap-3 rounded-md border border-gray-200 bg-white px-3 py-2 shadow-sm hover:border-blue-200 hover:bg-blue-50 dark:border-gray-700 dark:bg-dark-text-bg dark:hover:border-blue-400 dark:hover:bg-blue-900/30"
       style={{ marginLeft: indent }}
     >
       <div className="min-w-0 flex-1">
@@ -1481,10 +1492,17 @@ type WfsFeatureExplorerModalProps = {
 
 function WfsFeatureExplorerModal({ capabilities, baseUrl, onAdd, onClose }: WfsFeatureExplorerModalProps) {
   return (
-    <Modal show onClose={onClose} size="3xl" popup>
-      <Modal.Header>Select WFS Feature Type</Modal.Header>
-      <Modal.Body>
-        <div className="space-y-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+      <div className="relative w-full max-w-3xl rounded-lg bg-white dark:bg-[#1c1917] border border-gray-200 dark:border-gray-700 shadow-xl">
+        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Select WFS Feature Type</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="px-6 py-4 space-y-4">
           <p className="text-sm text-gray-600 dark:text-gray-300">
             Source: <span className="break-all font-mono text-xs">{baseUrl}</span>
           </p>
@@ -1522,7 +1540,7 @@ function WfsFeatureExplorerModal({ capabilities, baseUrl, onAdd, onClose }: WfsF
             ))}
           </div>
         </div>
-      </Modal.Body>
-    </Modal>
+      </div>
+    </div>
   );
 }
