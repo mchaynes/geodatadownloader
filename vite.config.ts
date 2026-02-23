@@ -1,12 +1,11 @@
 import { sentryVitePlugin } from "@sentry/vite-plugin";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import wasm from "vite-plugin-wasm";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react(), wasm(), viteStaticCopy({
+  plugins: [react(), viteStaticCopy({
     targets: [
       {
         src: "node_modules/gdal3.js/dist/package/gdal3.js",
@@ -20,10 +19,11 @@ export default defineConfig({
       // it is served from jsDelivr CDN instead (see app/gdal.ts).
     ],
   }),
-  sentryVitePlugin({
+  ...(process.env.SENTRY_AUTH_TOKEN ? [sentryVitePlugin({
     org: "geodatadownloader",
-    project: "geodatadownloader"
-  })],
+    project: "geodatadownloader",
+    include: "./dist",
+  })] : [])],
 
   build: {
     sourcemap: true
