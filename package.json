@@ -47,7 +47,7 @@
     "test:e2e": "playwright install && playwright test",
     "test:e2e:ui": "playwright install && playwright test --ui",
     "test:e2e:headed": "playwright install && playwright test --headed",
-    "lint": "ESLINT_USE_FLAT_CONFIG=false eslint --ignore-path .eslintignore --ext .ts,.tsx ."
+    "lint": "cross-env ESLINT_USE_FLAT_CONFIG=false eslint --ignore-path .eslintignore --ext .ts,.tsx ."
   },
   "browserslist": {
     "production": [
@@ -80,6 +80,7 @@
     "@typescript-eslint/parser": "^8.56.0",
     "@vitejs/plugin-react": "^5.1.0",
     "autoprefixer": "^10.4.14",
+    "cross-env": "^10.1.0",
     "csv-parse": "^5.5.6",
     "eslint": "^9.7.0",
     "eslint-plugin-react": "^7.37.3",
