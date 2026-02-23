@@ -93,6 +93,89 @@ export const Drivers: { [key: string]: string[] } = {
   "DXF": ["dxf"],
   "SQLite": ["sqlite"],
   // "XSLX": ["xlsx"],
+  "PMTiles": ["pmtiles"],
+}
+
+
+/**
+ * Fetch all layers as GeoJSON strings.
+ *
+ * @returns Map of QueryResult → complete GeoJSON FeatureCollection string,
+ *          and the total number of features written across all layers.
+ */
+export async function fetchLayersAsGeoJSON(
+  results: QueryResult[],
+  numConcurrent: number,
+  onWrite: (featuresWritten: number) => void,
+): Promise<{ geojsonMap: Map<QueryResult, string>; featuresWritten: number }> {
+  const writers = new Map<QueryResult, Writer>();
+  let featuresWritten = 0;
+
+  for (const result of results) {
+    const writer = new Writer();
+    writers.set(result, writer);
+    const layer = result.layer;
+    if (!layer) {
+      throw new Error("layer not defined");
+    }
+    const numPages = result.numPages;
+
+    const columnMapping = layer?.config?.column_mapping as Record<string, string> | null | undefined;
+
+    writer.write(header);
+    let firstPage = true;
+    const fetchResults = async (pageNum: number): Promise<void> => {
+      const features = await result.getPage(pageNum);
+      const json = features.toJSON() as ArcgisFeatureResp;
+      assertNoArcGISError(json, `layer ${result.layer.esri?.url ?? result.layer.url}`);
+      json.features = json.features.filter(containsValidGeometry);
+
+      const geojson = arcgisToGeoJSON(json) as unknown as GeoJSON.FeatureCollection;
+
+      if (columnMapping && Object.keys(columnMapping).length > 0) {
+        geojson.features = geojson.features.map(feature => {
+          if (feature.properties) {
+            const newProperties: Record<string, any> = {};
+            for (const [oldName, newName] of Object.entries(columnMapping)) {
+              if (oldName in feature.properties) {
+                newProperties[newName] = feature.properties[oldName];
+              }
+            }
+            feature.properties = newProperties;
+          }
+          return feature;
+        });
+      }
+
+      let stringified = geojson.features
+        .map((f) => JSON.stringify(f))
+        .join(",");
+      if (firstPage) {
+        firstPage = false;
+      } else {
+        stringified = `, ${stringified}`;
+      }
+      writer.write(stringified);
+      if (!json.features) {
+        console.log("json features empty");
+      }
+      featuresWritten += json.features.length;
+      onWrite(featuresWritten);
+    };
+    const promises: Promise<void>[] = [];
+    const q: queueAsPromised<number, void> = fastq.promise(fetchResults, numConcurrent);
+    for (let i = 0; i < numPages; i++) {
+      promises.push(q.push(i));
+    }
+    await Promise.all(promises);
+    writer.write(footer);
+  }
+
+  const geojsonMap = new Map<QueryResult, string>();
+  for (const [result, writer] of writers) {
+    geojsonMap.set(result, writer.data.join(""));
+  }
+  return { geojsonMap, featuresWritten };
 }
 
 
@@ -119,97 +202,28 @@ export class GdalDownloader {
   ) => {
     const Gdal = await getGdalJs();
     const outputPaths: string[] = [];
-    const writers = new Map<QueryResult, Writer>();
-    
-    // Process all layers - fetch features first
-    for (const result of results) {
-      const writer = new Writer();
-      writers.set(result, writer);
-      const layer = result.layer;
-      if (!layer) {
-        throw new Error("layer not defined");
-      }
-      const numPages = result.numPages;
-      
-      // Get column mapping if it exists
-      const columnMapping = layer?.config?.column_mapping as Record<string, string> | null | undefined;
-      
-      writer.write(header);
-      // Create callable functions that fetch results for each page
-      let firstPage = true;
-      const fetchResults = async (pageNum: number): Promise<void> => {
-        const features = await result.getPage(pageNum);
-        const json = features.toJSON() as ArcgisFeatureResp;
-        // Detect ArcGIS embedded error payloads and abort so the UI can
-        // surface the server message instead of producing an empty zip.
-        assertNoArcGISError(json, `layer ${result.layer.esri?.url ?? result.layer.url}`);
-        // strip features that contain no geometry
-        json.features = json.features.filter(containsValidGeometry)
 
-        const geojson = arcgisToGeoJSON(json) as unknown as GeoJSON.FeatureCollection;
-        
-        // Apply column renaming if column mapping is defined
-        if (columnMapping && Object.keys(columnMapping).length > 0) {
-          geojson.features = geojson.features.map(feature => {
-            if (feature.properties) {
-              const newProperties: Record<string, any> = {};
-              // Only include properties that are in the column mapping
-              for (const [oldName, newName] of Object.entries(columnMapping)) {
-                if (oldName in feature.properties) {
-                  newProperties[newName] = feature.properties[oldName];
-                }
-              }
-              feature.properties = newProperties;
-            }
-            return feature;
-          });
-        }
-        
-        let stringified = geojson.features
-          .map((f) => JSON.stringify(f))
-          .join(",");
-        if (firstPage) {
-          // we are the first page, so new pages are no longer first
-          firstPage = false;
-        } else {
-          // add a leading "," if this isn't the first page we fetched
-          stringified = `, ${stringified}`;
-        }
-        // Join features in chunk together, write to file
-        writer.write(stringified);
-        if (!json.features) {
-          console.log("json features empty")
-        }
-        this.featuresWritten += json.features.length;
-        // Notify listeners that we've written more features
-        this.onWrite(this.featuresWritten);
-      };
-      const promises: Promise<void>[] = [];
-      const q: queueAsPromised<number, void> = fastq.promise(
-        fetchResults,
-        numConcurrent
-      );
-      for (let i = 0; i < numPages; i++) {
-        promises.push(q.push(i));
-      }
-      await Promise.all(promises);
-      writer.write(footer);
-    }
-    
+    // Fetch all features as GeoJSON
+    const { geojsonMap, featuresWritten } = await fetchLayersAsGeoJSON(
+      results,
+      numConcurrent,
+      this.onWrite,
+    );
+    this.featuresWritten = featuresWritten;
+
     // All features fetched, now convert all layers
-    // Notify that we're starting conversion
     if (this.onConverting) {
       this.onConverting();
     }
     
     for (const result of results) {
-      const writer = writers.get(result);
-      if (!writer) {
-        throw new Error("Writer not found for result");
+      const geojson = geojsonMap.get(result);
+      if (!geojson) {
+        throw new Error("GeoJSON not found for result");
       }
       const layerName = result.layer.esri.title;
       const srcDataset = await Gdal.open(
-        new File(writer.data, `${layerName}.json`)
+        new File([geojson], `${layerName}.json`)
       );
       const outFilePath = await Gdal.ogr2ogr(srcDataset.datasets[0], [
         "-f",

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { GdalDownloader } from "../../downloader";
+import { PMTilesDownloader } from "../../pmtiles-downloader";
 import { QueryResult, queryLayer, parseGeometryFromString } from "../../arcgis";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import { Progress, Alert } from "flowbite-react";
@@ -51,6 +52,8 @@ export default function DownloadPage() {
         // Get parameters from URL
         const format = searchParams.get("format") || "GPKG";
         const concurrent = parseInt(searchParams.get("concurrent") || "1", 10);
+        const minZoom = parseInt(searchParams.get("minZoom") || "0", 10);
+        const maxZoom = parseInt(searchParams.get("maxZoom") || "14", 10);
         const layersJson = searchParams.get("layers");
         const boundaryJson = searchParams.get("boundary");
 
@@ -133,33 +136,37 @@ export default function DownloadPage() {
           message: "Fetching features from ArcGIS server...",
         }));
 
-        const downloader = new GdalDownloader(
-          (featuresWritten: number) => {
-            setProgress(prev => ({
-              ...prev,
-              fetchedFeatures: featuresWritten,
-              message: `Downloaded ${featuresWritten} of ${totalFeatures} features`,
-            }));
-          },
-          () => {
-            // Phase 3: Converting
-            setProgress(prev => ({
-              ...prev,
-              phase: "converting",
-              message: `Converting to ${format} format using GDAL...`,
-            }));
-          },
-          () => {
-            // Phase 4: Zipping
-            setProgress(prev => ({
-              ...prev,
-              phase: "zipping",
-              message: "Creating zip file...",
-            }));
-          }
-        );
+        const onWrite = (featuresWritten: number) => {
+          setProgress(prev => ({
+            ...prev,
+            fetchedFeatures: featuresWritten,
+            message: `Downloaded ${featuresWritten} of ${totalFeatures} features`,
+          }));
+        };
+        const onConverting = () => {
+          setProgress(prev => ({
+            ...prev,
+            phase: "converting",
+            message: format === "PMTiles"
+              ? "Generating vector tiles with tippecanoe..."
+              : `Converting to ${format} format using GDAL...`,
+          }));
+        };
+        const onZipping = () => {
+          setProgress(prev => ({
+            ...prev,
+            phase: "zipping",
+            message: "Creating zip file...",
+          }));
+        };
 
-        await downloader.download(results, concurrent, format);
+        if (format === "PMTiles") {
+          const downloader = new PMTilesDownloader(onWrite, onConverting, onZipping);
+          await downloader.download(results, concurrent, minZoom, maxZoom);
+        } else {
+          const downloader = new GdalDownloader(onWrite, onConverting, onZipping);
+          await downloader.download(results, concurrent, format);
+        }
 
         // Phase 5: Complete
         setProgress(prev => ({

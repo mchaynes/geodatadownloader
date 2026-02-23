@@ -205,6 +205,8 @@ export default function MapCreator() {
   );
   const [format, setFormat] = useState<keyof typeof Drivers>("GPKG")
   const [concurrent, setConcurrent] = useState(1)
+  const [minZoom, setMinZoom] = useState(0)
+  const [maxZoom, setMaxZoom] = useState(14)
 
   const [results, setResults] = useState<QueryResult[]>([])
 
@@ -255,6 +257,9 @@ export default function MapCreator() {
         document.body.style.userSelect = '';
       };
     }
+
+    // Ensure the effect callback always returns a cleanup function so all code paths return a value
+    return () => { /* noop cleanup */ };
   }, [isResizingLeft, isResizingRight, handleMouseMoveLeft, handleMouseMoveRight, handleMouseUp]);
 
   // Track visible layer count from localStorage
@@ -604,6 +609,49 @@ export default function MapCreator() {
                 </select>
               </div>
 
+              {format === "PMTiles" && (
+                <div className="space-y-3">
+                  <div>
+                    <label htmlFor="min-zoom" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                      Min Zoom ({minZoom})
+                    </label>
+                    <input
+                      id="min-zoom"
+                      type="range"
+                      min="0"
+                      max="22"
+                      step="1"
+                      value={minZoom}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                      onChange={e => {
+                        const val = parseInt(e.currentTarget.value);
+                        setMinZoom(val);
+                        if (val > maxZoom) setMaxZoom(val);
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="max-zoom" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                      Max Zoom ({maxZoom})
+                    </label>
+                    <input
+                      id="max-zoom"
+                      type="range"
+                      min="0"
+                      max="22"
+                      step="1"
+                      value={maxZoom}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                      onChange={e => {
+                        const val = parseInt(e.currentTarget.value);
+                        setMaxZoom(val);
+                        if (val < minZoom) setMinZoom(val);
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label htmlFor="steps-range" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Concurrent Requests ({concurrent})</label>
                 <input
@@ -669,6 +717,11 @@ export default function MapCreator() {
                     concurrent: String(concurrent),
                     layers: JSON.stringify(layerConfigs),
                   });
+
+                  if (format === "PMTiles") {
+                    params.set("minZoom", String(minZoom));
+                    params.set("maxZoom", String(maxZoom));
+                  }
 
                   // Add boundary if it exists
                   if (boundary) {
