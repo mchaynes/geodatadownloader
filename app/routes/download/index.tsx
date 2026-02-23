@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { GdalDownloader } from "../../downloader";
+import { GdalDownloader, fetchLayersAsGeoJSON } from "../../downloader";
 import { QueryResult, queryLayer, parseGeometryFromString } from "../../arcgis";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import { Progress, Alert } from "flowbite-react";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
 import Geometry from "@arcgis/core/geometry/Geometry";
+import { fetchAllWfsFeatures } from "../../wfs";
 
 type DownloadPhase = "idle" | "querying-ids" | "fetching-features" | "converting" | "zipping" | "complete" | "error";
 
@@ -60,17 +61,26 @@ export default function DownloadPage() {
           throw new Error("No layers specified for download");
         }
 
-        let layerConfigs: Array<{
+        interface LayerDownloadConfig {
           url: string;
           where?: string;
           columnMapping?: Record<string, string>;
-        }>;
+          service_type?: "arcgis" | "wfs";
+          wfs_type_name?: string;
+          wfs_version?: string;
+          wfs_title?: string;
+        }
+
+        let layerConfigs: LayerDownloadConfig[];
 
         try {
           layerConfigs = JSON.parse(layersJson);
         } catch (parseError) {
           throw new Error("Invalid layer configuration: malformed JSON");
         }
+
+        const arcgisConfigs = layerConfigs.filter(c => c.service_type !== "wfs");
+        const wfsConfigs = layerConfigs.filter(c => c.service_type === "wfs");
 
         // Parse boundary geometry if provided
         let filterGeometry: Geometry | undefined;
@@ -82,7 +92,7 @@ export default function DownloadPage() {
           }
         }
 
-        // Phase 1: Load layers and query for ObjectIDs
+        // Phase 1: Load ArcGIS layers and query for ObjectIDs
         setProgress(prev => ({
           ...prev,
           phase: "querying-ids",
@@ -92,21 +102,19 @@ export default function DownloadPage() {
         }));
 
         const layers: FeatureLayer[] = [];
-        for (const config of layerConfigs) {
+        for (const config of arcgisConfigs) {
           const layer = new FeatureLayer({ url: config.url });
           await layer.load();
           layers.push(layer);
         }
 
-        // Create query results with enhanced progress tracking
         const results: QueryResult[] = [];
         let totalFeatures = 0;
 
         for (let i = 0; i < layers.length; i++) {
           const layer = layers[i];
-          const config = layerConfigs[i];
+          const config = arcgisConfigs[i];
 
-          // Create layer with config
           const layerWithConfig = {
             esri: layer,
             config: {
@@ -125,21 +133,22 @@ export default function DownloadPage() {
           ...prev,
           totalFeatures,
           totalPages: results.reduce((sum, r) => sum + r.numPages, 0),
-          message: `Found ${totalFeatures} features across ${results.length} layer(s)`,
+          message: `Found ${totalFeatures} features across ${arcgisConfigs.length} ArcGIS layer(s)${wfsConfigs.length > 0 ? ` + ${wfsConfigs.length} WFS layer(s)` : ""}`,
         }));
 
-        // Phase 2: Start downloading features
+        // Phase 2: Fetch features
         setProgress(prev => ({
           ...prev,
           phase: "fetching-features",
-          message: "Fetching features from ArcGIS server...",
+          message: "Fetching features...",
         }));
 
+        let fetchedSoFar = 0;
         const onWrite = (featuresWritten: number) => {
           setProgress(prev => ({
             ...prev,
             fetchedFeatures: featuresWritten,
-            message: `Downloaded ${featuresWritten} of ${totalFeatures} features`,
+            message: `Downloaded ${featuresWritten} features`,
           }));
         };
         const onConverting = () => {
@@ -159,11 +168,38 @@ export default function DownloadPage() {
           }));
         };
 
+        // Fetch ArcGIS features as GeoJSON
+        const { geojsonMap: arcgisGeoJson, featuresWritten: arcgisFeatures } =
+          await fetchLayersAsGeoJSON(results, concurrent, onWrite);
+        fetchedSoFar += arcgisFeatures;
+
+        // Fetch WFS features as GeoJSON
+        const wfsGeoJson = new Map<string, string>();
+        for (const config of wfsConfigs) {
+          const typeName = config.wfs_type_name ?? config.url;
+          const version = config.wfs_version ?? "2.0.0";
+          const title = config.wfs_title || typeName;
+          const baseUrl = config.url;
+
+          const geojson = await fetchAllWfsFeatures(baseUrl, typeName, version, (fetched) => {
+            onWrite(fetchedSoFar + fetched);
+          });
+          const parsed = JSON.parse(geojson) as { features: unknown[] };
+          fetchedSoFar += parsed.features.length;
+          wfsGeoJson.set(title, geojson);
+        }
+
+        // Merge and convert
+        const mergedGeoJson = new Map([...arcgisGeoJson, ...wfsGeoJson]);
+
         const downloader = new GdalDownloader(onWrite, onConverting, onZipping);
+        downloader.featuresWritten = fetchedSoFar;
         const extraOgrArgs = format === "PMTiles"
           ? ["-dsco", `MINZOOM=${minZoom}`, "-dsco", `MAXZOOM=${maxZoom}`, "-simplify", "0.00001"]
           : [];
-        await downloader.download(results, concurrent, format, extraOgrArgs);
+
+        onConverting();
+        await downloader.convertAndZip(mergedGeoJson, format, extraOgrArgs);
 
         // Phase 5: Complete
         setProgress(prev => ({

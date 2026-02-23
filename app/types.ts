@@ -1,4 +1,5 @@
 import FeatureLayer from '@arcgis/core/layers/FeatureLayer'
+import WFSLayer from '@arcgis/core/layers/WFSLayer'
 import { Database } from './database.types'
 export type MapDlConfig = Database["public"]["Tables"]["map_dl_config"]["Row"]
 export interface MapDlConfigTableResp extends MapDlConfig {
@@ -20,12 +21,26 @@ export type Layer = Database["public"]["Tables"]["layer"]["Insert"]
 
 
 export interface LayerWithConfig extends Layer, LayerConfig {
-  visible?: boolean
+  visible?: boolean;
+  service_type?: "arcgis" | "wfs";
+  wfs_type_name?: string;
+  wfs_version?: string;
+  wfs_title?: string;
 }
 
 export interface EsriLayerWithConfig {
-  esri: FeatureLayer
+  esri: FeatureLayer | WFSLayer
   config: LayerWithConfig
+}
+
+/** Narrows an EsriLayerWithConfig to a WFSLayer. */
+export function isWfsLayer(l: EsriLayerWithConfig): l is EsriLayerWithConfig & { esri: WFSLayer } {
+  return l.config?.service_type === "wfs";
+}
+
+/** Narrows an EsriLayerWithConfig to a FeatureLayer. */
+export function isArcGisLayer(l: EsriLayerWithConfig): l is EsriLayerWithConfig & { esri: FeatureLayer } {
+  return l.config?.service_type !== "wfs";
 }
 
 

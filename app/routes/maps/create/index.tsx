@@ -17,7 +17,7 @@ import { cleanArcGISUrl } from "../../../utils/urlCleaning";
 
 import { HiOutlineExclamationCircle, HiOutlineArrowCircleDown } from "react-icons/hi";
 import FeatureSet from "@arcgis/core/rest/support/FeatureSet";
-import { EsriLayerWithConfig, raise } from "../../../types";
+import { EsriLayerWithConfig, raise, isWfsLayer, isArcGisLayer } from "../../../types";
 import {
   analyzeArcGISEndpoint,
   traverseFeatureLayers,
@@ -26,6 +26,14 @@ import {
   ArcGISFolderNode,
   ArcGISFeatureLayerNode,
 } from "../../../traverse";
+import WFSLayer from "@arcgis/core/layers/WFSLayer";
+import {
+  isWfsUrl,
+  normalizeWfsBaseUrl,
+  fetchWfsCapabilities,
+  WfsCapabilities,
+  WfsFeatureType,
+} from "../../../wfs";
 import { Dialog, Transition } from "@headlessui/react";
 import { useMapView, MapViewProvider } from "../../../MapViewContext";
 
@@ -83,29 +91,60 @@ export const mapCreatorAction = async ({ request }: ActionFunctionArgs) => {
       }
     }
   }
-  // if (formData.get("intent") === "save-map") {
-  //   await saveMap(mapConfig)
-  // }
-  const layers: Array<FeatureLayer> = []
-  const promises: Promise<void>[] = []
-  for (const savedLayers of mapConfig.layers) {
-    const layer = new FeatureLayer({
-      url: savedLayers.url
-    })
-    layers.push(layer)
-    promises.push(layer.load())
+  if (formData.get("intent") === "add-wfs-layer") {
+    const wfsUrl = formData.get("wfs-url") as string;
+    const typeName = formData.get("wfs-type-name") as string;
+    const version = formData.get("wfs-version") as string;
+    const title = formData.get("wfs-title") as string;
+    if (!mapConfig.layers.find(l => l.url === wfsUrl && l.wfs_type_name === typeName)) {
+      mapConfig.layers.push({
+        url: wfsUrl,
+        name: typeName,
+        description: "",
+        extent: null,
+        fields: "[]",
+        geometry_type: "",
+        spatial_ref: "",
+        service_type: "wfs",
+        wfs_type_name: typeName,
+        wfs_version: version,
+        wfs_title: title,
+        visible: true,
+      });
+      saveMapConfigLocal(mapConfig);
+    }
+  }
+
+  // Build esri layer objects for each saved layer
+  const esriLayers: Array<FeatureLayer | WFSLayer> = [];
+  const promises: Promise<void>[] = [];
+  for (const savedLayer of mapConfig.layers) {
+    if (savedLayer.service_type === "wfs") {
+      const wfsLayer = new WFSLayer({ url: savedLayer.url, name: savedLayer.wfs_type_name, title: savedLayer.wfs_title || savedLayer.name });
+      esriLayers.push(wfsLayer);
+      promises.push(wfsLayer.load().catch(() => { /* broken WFS layers are surfaced separately */ }));
+    } else {
+      const layer = new FeatureLayer({ url: savedLayer.url });
+      esriLayers.push(layer);
+      promises.push(layer.load());
+    }
   }
   try {
-    await Promise.all(promises)
+    await Promise.all(promises);
   } catch (e) {
     const err = e as Error;
-    errMsg = err.message
+    errMsg = err.message;
   }
   const normalizeUrl = (u: string) => (u ?? "").replace(/\/+$/, "");
-  const esriWithConfig = layers.map(esri => ({
-    esri: esri,
-    config: mapConfig.layers.find(l => normalizeUrl(l.url) === normalizeUrl(getRealUrl(esri)))
-  }))
+  const esriWithConfig = esriLayers.map((esri) => {
+    const config = mapConfig.layers.find((l) => {
+      if (l.service_type === "wfs") {
+        return l.url === esri.url;
+      }
+      return normalizeUrl(l.url) === normalizeUrl(getRealUrl(esri as FeatureLayer));
+    });
+    return { esri, config };
+  });
 
 
   return {
@@ -116,42 +155,50 @@ export const mapCreatorAction = async ({ request }: ActionFunctionArgs) => {
 }
 
 export const mapCreatorLoader = async () => {
-  const mapConfig = await getMapConfigLocal()
-  const layers: Array<FeatureLayer> = []
-  let errMsg = ""
-  const promises: Promise<void>[] = []
-  for (const savedLayers of mapConfig.layers) {
-    const layer = new FeatureLayer({
-      url: savedLayers.url
-    })
-    layers.push(layer)
-    promises.push(layer.load())
+  const mapConfig = await getMapConfigLocal();
+  const esriLayers: Array<FeatureLayer | WFSLayer> = [];
+  let errMsg = "";
+  const promises: Promise<void>[] = [];
+
+  for (const savedLayer of mapConfig.layers) {
+    if (savedLayer.service_type === "wfs") {
+      const wfsLayer = new WFSLayer({ url: savedLayer.url, name: savedLayer.wfs_type_name, title: savedLayer.wfs_title || savedLayer.name });
+      esriLayers.push(wfsLayer);
+      promises.push(wfsLayer.load());
+    } else {
+      const layer = new FeatureLayer({ url: savedLayer.url });
+      esriLayers.push(layer);
+      promises.push(layer.load());
+    }
   }
-  const results = await Promise.allSettled(promises)
-  const brokenLayers: Array<{ url: string; name?: string; reason: string }> = []
+
+  const results = await Promise.allSettled(promises);
+  const brokenLayers: Array<{ url: string; name?: string; reason: string }> = [];
   results.forEach((res, idx) => {
     if (res.status === "rejected") {
-      const saved = mapConfig.layers[idx]
-      const reason = (res.reason as Error)?.message ?? "Failed to load layer"
-      brokenLayers.push({ url: saved.url, name: (saved as any)?.name, reason })
+      const saved = mapConfig.layers[idx];
+      const reason = (res.reason as Error)?.message ?? "Failed to load layer";
+      brokenLayers.push({ url: saved.url, name: saved.wfs_title ?? saved.name, reason });
     }
-  })
+  });
   if (brokenLayers.length && !errMsg) {
-    errMsg = "One or more layers failed to load."
+    errMsg = "One or more layers failed to load.";
   }
   const normalizeUrl = (u: string) => (u ?? "").replace(/\/+$/, "");
-  // Only include successfully loaded layers in UI
-  const okLayers = layers.filter((_, idx) => results[idx]?.status === "fulfilled")
-  const esriWithConfig = okLayers.map(esri => ({
-    esri: esri,
-    config: mapConfig.layers.find(l => normalizeUrl(l.url) === normalizeUrl(getRealUrl(esri)))
-  }))
+  const okLayers = esriLayers.filter((_, idx) => results[idx]?.status === "fulfilled");
+  const esriWithConfig = okLayers.map((esri) => {
+    const config = mapConfig.layers.find((l) => {
+      if (l.service_type === "wfs") return l.url === esri.url;
+      return normalizeUrl(l.url) === normalizeUrl(getRealUrl(esri as FeatureLayer));
+    });
+    return { esri, config };
+  });
   return {
-    mapConfig: mapConfig,
+    mapConfig,
     layers: esriWithConfig,
     brokenLayers,
     err: errMsg,
-  }
+  };
 }
 
 export default function MapCreator() {
@@ -199,6 +246,11 @@ export default function MapCreator() {
   const [loadingMessage, setLoadingMessage] = useState<string>("");
   const [layerExplorerResult, setLayerExplorerResult] = useState<ArcGISTraversalResult | null>(null);
   const [layerExplorerVisible, setLayerExplorerVisible] = useState(false);
+
+  // WFS explorer state
+  const [wfsCapabilities, setWfsCapabilities] = useState<WfsCapabilities | null>(null);
+  const [wfsBaseUrl, setWfsBaseUrl] = useState<string>("");
+  const [wfsExplorerVisible, setWfsExplorerVisible] = useState(false);
 
   const [filterExtent, setFilterExtent] = useState<Geometry | undefined>(
     undefined
@@ -312,6 +364,27 @@ export default function MapCreator() {
     [submitAddLayer]
   );
 
+  const closeWfsExplorer = useCallback(() => {
+    setWfsExplorerVisible(false);
+    setWfsCapabilities(null);
+  }, []);
+
+  const handleExplorerAddWfs = useCallback(
+    (featureType: WfsFeatureType, baseUrl: string, version: string) => {
+      closeWfsExplorer();
+      setLayerAlert("", undefined);
+      setLoadingMessage(`Adding WFS layer ${featureType.title || featureType.name}`);
+      const data = new FormData();
+      data.set("wfs-url", baseUrl);
+      data.set("wfs-type-name", featureType.name);
+      data.set("wfs-version", version);
+      data.set("wfs-title", featureType.title || featureType.name);
+      data.set("intent", "add-wfs-layer");
+      fetcher.submit(data, { method: "post" });
+    },
+    [closeWfsExplorer, fetcher, setLayerAlert, setLoadingMessage]
+  );
+
   const handleLayerSubmit = useCallback(
     async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
@@ -319,17 +392,36 @@ export default function MapCreator() {
       const formData = new FormData(form);
       const rawUrl = (formData.get("layer-url") as string | null)?.trim() ?? "";
       if (!rawUrl) {
-        setLayerAlert("Please enter an ArcGIS REST URL.", "warning");
+        setLayerAlert("Please enter a URL.", "warning");
         return;
       }
 
-      // Clean the URL before analysis
-      const cleanedUrl = cleanArcGISUrl(rawUrl);
-
       closeExplorer();
+      closeWfsExplorer();
       setLayerAlert("", undefined);
-      setLayerUrlInput(cleanedUrl);
       setAnalyzingUrl(true);
+
+      // Check for WFS before ArcGIS analysis
+      if (isWfsUrl(rawUrl)) {
+        const baseUrl = normalizeWfsBaseUrl(rawUrl);
+        setLayerUrlInput(baseUrl);
+        setLoadingMessage(`Fetching WFS capabilities from ${baseUrl}`);
+        try {
+          const capabilities = await fetchWfsCapabilities(baseUrl);
+          setAnalyzingUrl(false);
+          setWfsBaseUrl(baseUrl);
+          setWfsCapabilities(capabilities);
+          setWfsExplorerVisible(true);
+        } catch (err) {
+          setAnalyzingUrl(false);
+          setLayerAlert((err as Error).message, "error");
+        }
+        return;
+      }
+
+      // ArcGIS path
+      const cleanedUrl = cleanArcGISUrl(rawUrl);
+      setLayerUrlInput(cleanedUrl);
       setLoadingMessage(`Analyzing ${cleanedUrl}`);
 
       try {
@@ -358,7 +450,7 @@ export default function MapCreator() {
         setLayerAlert(error.message, "error");
       }
     },
-    [closeExplorer, setLayerAlert, setLayerUrlInput, setAnalyzingUrl, setLoadingMessage, setLayerExplorerResult, setLayerExplorerVisible, submitAddLayer]
+    [closeExplorer, closeWfsExplorer, setLayerAlert, setLayerUrlInput, setAnalyzingUrl, setLoadingMessage, setLayerExplorerResult, setLayerExplorerVisible, submitAddLayer]
   );
 
   // Show/hide modal based on fetcher or analysis state
@@ -387,7 +479,10 @@ export default function MapCreator() {
     const f = async () => {
       const promises: Promise<QueryResult>[] = []
       for (const layer of loaderData.layers) {
-        promises.push(queryLayer(layer))
+        // WFS layers are downloaded directly — skip ArcGIS queryLayer for them
+        if (isArcGisLayer(layer as EsriLayerWithConfig)) {
+          promises.push(queryLayer(layer))
+        }
       }
       const results = await Promise.all(promises)
       setResults(results)
@@ -661,6 +756,10 @@ export default function MapCreator() {
                       url: layer.config?.url || layer.esri.url,
                       where: layer.config?.where_clause || "1=1",
                       columnMapping: layer.config?.column_mapping as Record<string, string> | undefined,
+                      service_type: layer.config?.service_type,
+                      wfs_type_name: layer.config?.wfs_type_name,
+                      wfs_version: layer.config?.wfs_version,
+                      wfs_title: layer.config?.wfs_title || layer.esri.title || layer.config?.name,
                     }));
 
                   // Create URL with parameters
@@ -698,6 +797,16 @@ export default function MapCreator() {
             </Form>
           </div>
         </div>
+
+        {/* WFS feature type explorer modal */}
+        {wfsExplorerVisible && wfsCapabilities && (
+          <WfsFeatureExplorerModal
+            capabilities={wfsCapabilities}
+            baseUrl={wfsBaseUrl}
+            onAdd={handleExplorerAddWfs}
+            onClose={closeWfsExplorer}
+          />
+        )}
 
         {/* Modal explaining broken layers with a single "Remove all" action */}
         {broken?.length > 0 && (
@@ -761,8 +870,15 @@ type LayerDropdownMenuProps = {
 }
 
 function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
-  const { url, sourceJSON } = layer.esri
-  const realUrl = getRealUrl(layer.esri)
+  const wfs = isWfsLayer(layer);
+  const { url } = layer.esri;
+  const sourceJSON = wfs ? null : (layer.esri as any).sourceJSON;
+  const realUrl = wfs ? layer.config?.url ?? url : getRealUrl(layer.esri);
+  const displayName = wfs
+    ? layer.config?.wfs_title || layer.config?.name || layer.config?.wfs_type_name || url
+    : sourceJSON?.["name"] ?? url;
+  const displayDescription = wfs ? "" : (sourceJSON?.["description"] ?? "");
+
   const [showRemoveModal, setShowRemoveModal] = useState(false)
   const [showConfigureModal, setShowConfigureModal] = useState(false)
   const mapView = useMapView()
@@ -782,21 +898,24 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
         // Ensure layer is loaded before setting popup template
         await layer.esri.load();
 
-        // Ensure popup template is set before adding to map
+        // Set popup template if not already set
         if (!layer.esri.popupTemplate) {
-          const template = layer.esri.createPopupTemplate();
-          layer.esri.popupTemplate = template;
+          try {
+            layer.esri.popupTemplate = (layer.esri as any).createPopupTemplate();
+          } catch {
+            // createPopupTemplate not available; popup will still work if popupTemplate is set manually
+          }
         }
         layer.esri.popupEnabled = true;
 
         // Add layer to map if not already present
-        if (!mapView.map.layers.includes(layer.esri)) {
-          mapView.map.add(layer.esri);
+        if (!mapView.map?.layers.includes(layer.esri)) {
+          mapView.map?.add(layer.esri);
         }
       } else {
         // Remove layer from map if present
-        if (mapView.map.layers.includes(layer.esri)) {
-          mapView.map.remove(layer.esri);
+        if (mapView.map?.layers.includes(layer.esri)) {
+          mapView.map?.remove(layer.esri);
         }
       }
     };
@@ -809,7 +928,7 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
         mapView.map.remove(layer.esri);
       }
     };
-  }, [isVisible, mapView, layer.esri]);
+  }, [isVisible, mapView, layer.esri, wfs]);
 
   function closeDropdown() {
     if (isDropDownOpen) {
@@ -838,47 +957,39 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
   }, [isDropDownOpen])
 
   const handleZoomToLayer = useCallback(() => {
-
     if (!mapView) {
       console.warn("MapView not available");
       return;
     }
 
-    // Use extent from sourceJSON (the layer's metadata from ArcGIS REST API)
-    const extentData = sourceJSON?.extent;
-    if (!extentData) {
-      console.warn(`Layer "${sourceJSON["name"]}" has no extent in sourceJSON`);
-      return;
-    }
+    // For WFS layers use fullExtent; for ArcGIS layers use sourceJSON extent
+    const goToTarget = wfs
+      ? layer.esri.fullExtent
+      : (() => {
+          const extentData = sourceJSON?.extent;
+          if (!extentData) {
+            console.warn(`Layer "${displayName}" has no extent in sourceJSON`);
+            return null;
+          }
+          return new Extent({
+            xmin: extentData.xmin,
+            ymin: extentData.ymin,
+            xmax: extentData.xmax,
+            ymax: extentData.ymax,
+            spatialReference: extentData.spatialReference
+          });
+        })();
 
-    console.log("Zooming to extent:", extentData);
-    console.log("MapView spatial reference:", mapView.spatialReference);
-
-    // Create an Extent object from the sourceJSON extent
-    const extent = new Extent({
-      xmin: extentData.xmin,
-      ymin: extentData.ymin,
-      xmax: extentData.xmax,
-      ymax: extentData.ymax,
-      spatialReference: extentData.spatialReference
-    });
-
-    console.log("Created extent object:", extent);
+    if (!goToTarget) return;
 
     mapView.when(() => {
-      console.log("MapView is ready, calling goTo...");
-      mapView.goTo(extent, {
-        animate: true,
-        duration: 1000
-      }).then(() => {
-        console.log("Successfully zoomed to layer extent");
-      }).catch((err) => {
-        console.error(`Error zooming to layer "${sourceJSON["name"]}" (${realUrl}):`, err);
+      mapView.goTo(goToTarget, { animate: true, duration: 1000 }).catch((err) => {
+        console.error(`Error zooming to layer "${displayName}":`, err);
       });
     }).catch((err) => {
       console.error("MapView not ready:", err);
     });
-  }, [mapView, sourceJSON, realUrl]);
+  }, [mapView, sourceJSON, displayName, wfs, layer.esri]);
 
   return <li ref={containerRef} key={url} className="flex flex-row items-center p-2 bg-white dark:bg-dark-bg">
     <Checkbox
@@ -900,12 +1011,14 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
     <div className="flex-1 min-w-0 max-w-xs">
       <p className="text-sm font-medium text-gray-900 truncate dark:text-white">
         <Link to={realUrl} target="_blank">
-          {sourceJSON["name"]}
+          {displayName}
         </Link>
       </p>
-      <p className="text-sm text-gray-500 truncate dark:text-gray-400">
-        {sourceJSON["description"]}
-      </p>
+      {displayDescription && (
+        <p className="text-sm text-gray-500 truncate dark:text-gray-400">
+          {displayDescription}
+        </p>
+      )}
     </div>
     <Dropdown
       className="dark:text-white dark:bg-dark-bg"
@@ -934,7 +1047,7 @@ function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
           setShowConfigureModal(true);
         }}
       >
-        Filters & Attributes...
+        {wfs ? "Columns..." : "Filters & Attributes..."}
       </Dropdown.Item>
       <Dropdown.Item
         icon={() =>
@@ -1038,14 +1151,15 @@ function RemoveLayerModal({ url, show, setShow }: RemoveLayerModalProps) {
 
 
 type ModifyLayerConfigProps = {
-  layer: EsriLayerWithConfig
+  layer: any
   show: boolean
   boundary?: Geometry
   setShow: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 function ModifyLayerConfig({ show, setShow, boundary, layer }: ModifyLayerConfigProps) {
-  const fields = layer.esri.fields
+  const isWfs = layer.config?.service_type === "wfs"
+  const fields = (layer.esri.fields ?? []) as Array<{ name: string; alias?: string }>
   const [results, setResults] = useState<FeatureSet>()
   const fetcher = useFetcher()
   const [where, setWhere] = useState(layer?.config?.where_clause ?? "1=1")
@@ -1054,7 +1168,7 @@ function ModifyLayerConfig({ show, setShow, boundary, layer }: ModifyLayerConfig
 
   const onUpdateClick = async (where: string) => {
     setWhere(where)
-    setResults(await layer.esri.queryFeatures({
+    setResults(await (layer.esri as EsriLayerWithConfig["esri"]).queryFeatures({
       where: where,
       geometry: boundary,
       num: 20,
@@ -1064,7 +1178,9 @@ function ModifyLayerConfig({ show, setShow, boundary, layer }: ModifyLayerConfig
   }
 
   useEffect(() => {
-    onUpdateClick(where)
+    if (!isWfs) {
+      onUpdateClick(where)
+    }
   }, [])
 
   useEffect(() => {
@@ -1110,7 +1226,9 @@ function ModifyLayerConfig({ show, setShow, boundary, layer }: ModifyLayerConfig
                   <fetcher.Form action="/maps/create/layers/configure" method="post">
                     <div className="flex flex-col gap-2">
                       <input name="url" value={layer?.config?.url} className="hidden" readOnly />
-                      <WhereInput defaultWhere={layer?.config?.where_clause ?? "1=1"} onUpdateClick={onUpdateClick} />
+                      {!isWfs && (
+                        <WhereInput defaultWhere={layer?.config?.where_clause ?? "1=1"} onUpdateClick={onUpdateClick} />
+                      )}
                       <div>
                         <label className="block mb-2 text-sm font-medium leading-6 text-gray-900 dark:text-white">Select and Rename Columns</label>
                         <div className="max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg">
@@ -1125,9 +1243,11 @@ function ModifyLayerConfig({ show, setShow, boundary, layer }: ModifyLayerConfig
                               <Table.HeadCell className="w-1/3">
                                 New Name
                               </Table.HeadCell>
-                              <Table.HeadCell>
-                                Sample Value
-                              </Table.HeadCell>
+                              {!isWfs && (
+                                <Table.HeadCell>
+                                  Sample Value
+                                </Table.HeadCell>
+                              )}
                             </Table.Head>
                             <Table.Body className="divide-y">
                               {fields.map(field => {
@@ -1154,9 +1274,11 @@ function ModifyLayerConfig({ show, setShow, boundary, layer }: ModifyLayerConfig
                                         placeholder={field.name}
                                       />
                                     </Table.Cell>
-                                    <Table.Cell className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
-                                      {sampleValue !== null && sampleValue !== undefined ? String(sampleValue) : '—'}
-                                    </Table.Cell>
+                                    {!isWfs && (
+                                      <Table.Cell className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
+                                        {sampleValue !== null && sampleValue !== undefined ? String(sampleValue) : '—'}
+                                      </Table.Cell>
+                                    )}
                                   </Table.Row>
                                 );
                               })}
@@ -1347,5 +1469,60 @@ function LayerRow({ layer, service, depth, onAddLayer }: LayerRowProps) {
         Add to Map
       </button>
     </div>
+  );
+}
+
+type WfsFeatureExplorerModalProps = {
+  capabilities: WfsCapabilities;
+  baseUrl: string;
+  onAdd: (featureType: WfsFeatureType, baseUrl: string, version: string) => void;
+  onClose: () => void;
+};
+
+function WfsFeatureExplorerModal({ capabilities, baseUrl, onAdd, onClose }: WfsFeatureExplorerModalProps) {
+  return (
+    <Modal show onClose={onClose} size="3xl" popup>
+      <Modal.Header>Select WFS Feature Type</Modal.Header>
+      <Modal.Body>
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            Source: <span className="break-all font-mono text-xs">{baseUrl}</span>
+          </p>
+          {capabilities.serviceTitle && (
+            <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{capabilities.serviceTitle}</p>
+          )}
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            WFS version: <span className="font-mono text-xs">{capabilities.version}</span>
+          </p>
+          <div className="max-h-[60vh] overflow-y-auto pr-2 space-y-2">
+            {capabilities.featureTypes.map((ft) => (
+              <div
+                key={ft.name}
+                className="flex items-center justify-between gap-3 rounded-md border border-gray-200 bg-white p-3 dark:border-gray-600 dark:bg-gray-800"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {ft.title || ft.name}
+                  </div>
+                  {ft.title && ft.title !== ft.name && (
+                    <div className="truncate text-xs text-gray-500 dark:text-gray-400 font-mono">{ft.name}</div>
+                  )}
+                  {ft.abstract && (
+                    <div className="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{ft.abstract}</div>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="whitespace-nowrap rounded-md border border-blue-600 px-3 py-1 text-xs font-semibold text-blue-600 hover:bg-blue-600 hover:text-white dark:border-blue-400 dark:text-blue-300 dark:hover:bg-blue-500 dark:hover:text-white"
+                  onClick={() => onAdd(ft, baseUrl, capabilities.version)}
+                >
+                  Add to Map
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Modal.Body>
+    </Modal>
   );
 }

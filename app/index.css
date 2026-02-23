@@ -27,6 +27,44 @@ code {
   border-radius: 8px !important;
 }
 
+/* ── Esri Popup widget ──────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  .esri-popup__main-container {
+    background: #1c1917 !important;
+    color: rgba(255, 255, 255, 0.87) !important;
+  }
+
+  .esri-popup__header {
+    background: #1c1917 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .esri-popup__header-title {
+    color: rgba(255, 255, 255, 0.87) !important;
+  }
+
+  .esri-popup__header-container--button .esri-popup__button,
+  .esri-popup__inline-actions-container .esri-popup__button {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+
+  .esri-popup__header-container--button .esri-popup__button:hover,
+  .esri-popup__inline-actions-container .esri-popup__button:hover {
+    color: #fff !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .esri-feature__fields-content .esri-feature-fields__field-header,
+  .esri-feature__fields-content .esri-feature-fields__field-data {
+    color: rgba(255, 255, 255, 0.87) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .esri-feature__fields-content tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.04) !important;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   .esri-sketch,
   .esri-sketch__panel {

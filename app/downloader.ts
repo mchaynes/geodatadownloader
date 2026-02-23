@@ -100,14 +100,14 @@ export const Drivers: { [key: string]: string[] } = {
 /**
  * Fetch all layers as GeoJSON strings.
  *
- * @returns Map of QueryResult → complete GeoJSON FeatureCollection string,
+ * @returns Map of layer title → complete GeoJSON FeatureCollection string,
  *          and the total number of features written across all layers.
  */
 export async function fetchLayersAsGeoJSON(
   results: QueryResult[],
   numConcurrent: number,
   onWrite: (featuresWritten: number) => void,
-): Promise<{ geojsonMap: Map<QueryResult, string>; featuresWritten: number }> {
+): Promise<{ geojsonMap: Map<string, string>; featuresWritten: number }> {
   const writers = new Map<QueryResult, Writer>();
   let featuresWritten = 0;
 
@@ -127,7 +127,7 @@ export async function fetchLayersAsGeoJSON(
     const fetchResults = async (pageNum: number): Promise<void> => {
       const features = await result.getPage(pageNum);
       const json = features.toJSON() as ArcgisFeatureResp;
-      assertNoArcGISError(json, `layer ${result.layer.esri?.url ?? result.layer.url}`);
+      assertNoArcGISError(json, `layer ${result.layer.esri?.url ?? result.layer.config?.url}`);
       json.features = json.features.filter(containsValidGeometry);
 
       const geojson = arcgisToGeoJSON(json) as unknown as GeoJSON.FeatureCollection;
@@ -171,9 +171,10 @@ export async function fetchLayersAsGeoJSON(
     writer.write(footer);
   }
 
-  const geojsonMap = new Map<QueryResult, string>();
+  const geojsonMap = new Map<string, string>();
   for (const [result, writer] of writers) {
-    geojsonMap.set(result, writer.data.join(""));
+    const title = (result.layer.esri as any)?.title ?? result.layer.config?.name ?? "layer";
+    geojsonMap.set(title, writer.data.join(""));
   }
   return { geojsonMap, featuresWritten };
 }
@@ -195,15 +196,76 @@ export class GdalDownloader {
     this.onZipping = onZipping;
     this.zipper = new JSZip();
   }
-  download = async (
-    results: QueryResult[],
-    numConcurrent: number,
+
+  /**
+   * Converts a pre-built map of title → GeoJSON strings to the target format,
+   * zips the output files, and triggers a browser download.
+   */
+  convertAndZip = async (
+    geojsonMap: Map<string, string>,
     format: string,
     extraOgrArgs: string[] = [],
   ) => {
     const Gdal = await getGdalJs();
     const outputPaths: string[] = [];
 
+    for (const [layerTitle, geojson] of geojsonMap) {
+      const srcDataset = await Gdal.open(
+        new File([geojson], `${layerTitle}.json`)
+      );
+      const outFilePath = await Gdal.ogr2ogr(srcDataset.datasets[0], [
+        "-f",
+        format,
+        "-skipfailures",
+        ...extraOgrArgs,
+      ]);
+
+      const outBasename = basename(outFilePath.local, extname(outFilePath.local));
+      const outDirname = dirname(outFilePath.local);
+      const filePaths = Drivers[format].map((ext) =>
+        join(outDirname, `${outBasename}.${ext}`)
+      );
+
+      for (const f of filePaths) {
+        outputPaths.push(f);
+      }
+      for (const d of srcDataset.datasets) {
+        await Gdal.close(d);
+      }
+    }
+
+    if (outputPaths.length === 0 || this.featuresWritten === 0) {
+      throw new Error(
+        "No output files were generated. The layer produced no outputs — this may indicate a server error or that no features matched the query."
+      );
+    }
+
+    if (this.onZipping) {
+      this.onZipping();
+    }
+
+    const zip = new JSZip();
+    for (const p of outputPaths) {
+      const bytes = await Gdal.getFileBytes(p) as any;
+      const blob = new Blob([bytes]);
+      const fileName = basename(p);
+      zip.file(fileName, blob);
+    }
+    const zipBytes = await zip.generateAsync({ type: "blob" });
+    const titles = [...geojsonMap.keys()];
+    const fileName = titles.length === 1
+      ? `${titles[0]}.zip`
+      : `geodatadownloader.zip`;
+    saveAs(zipBytes, fileName);
+    this.featuresWritten = 0;
+  };
+
+  download = async (
+    results: QueryResult[],
+    numConcurrent: number,
+    format: string,
+    extraOgrArgs: string[] = [],
+  ) => {
     // Fetch all features as GeoJSON
     const { geojsonMap, featuresWritten } = await fetchLayersAsGeoJSON(
       results,
@@ -217,67 +279,6 @@ export class GdalDownloader {
       this.onConverting();
     }
 
-    for (const result of results) {
-      const geojson = geojsonMap.get(result);
-      if (!geojson) {
-        throw new Error("GeoJSON not found for result");
-      }
-      const layerName = result.layer.esri.title;
-      const srcDataset = await Gdal.open(
-        new File([geojson], `${layerName}.json`)
-      );
-      const outFilePath = await Gdal.ogr2ogr(srcDataset.datasets[0], [
-        "-f",
-        format,
-        "-skipfailures",
-        ...extraOgrArgs,
-      ]);
-
-      // Remove the extension from the output file path
-      const outBasename = basename(
-        outFilePath.local,
-        extname(outFilePath.local)
-      );
-      const outDirname = dirname(outFilePath.local);
-      const filePaths = Drivers[format].map((ext) =>
-        join(outDirname, `${outBasename}.${ext}`)
-      );
-
-      for (const f of filePaths) {
-        outputPaths.push(f);
-      }
-      for (const d of srcDataset.datasets) {
-        await Gdal.close(d);
-      }
-    }
-    // If no output files were generated, abort — creating an empty zip is
-    // confusing and indicates the conversion/feature fetch likely failed.
-    if (outputPaths.length === 0 || this.featuresWritten === 0) {
-      throw new Error(
-        "No output files were generated. The layer produced no outputs — this may indicate a server error or that no features matched the query."
-      );
-    }
-
-    // Notify that we're starting zipping
-    if (this.onZipping) {
-      this.onZipping();
-    }
-
-    const zip = new JSZip();
-    for (const p of outputPaths) {
-      // Gdal.getFileBytes may return a Uint8Array or ArrayBuffer-like type; cast
-      // to any here to avoid strict typing issues when constructing the Blob.
-      const bytes = await Gdal.getFileBytes(p) as any;
-      const blob = new Blob([bytes]);
-      const fileName = basename(p);
-      zip.file(fileName, blob);
-    }
-    const zipBytes = await zip.generateAsync({ type: "blob" });
-    let fileName = `geodatadownloader.zip`;
-    if (results.length === 1) {
-      fileName = `${results[0].layer.esri.title}.zip`;
-    }
-    saveAs(zipBytes, fileName);
-    this.featuresWritten = 0;
+    await this.convertAndZip(geojsonMap, format, extraOgrArgs);
   };
 }

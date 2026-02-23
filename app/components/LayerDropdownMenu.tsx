@@ -8,7 +8,7 @@ import { HiOutlineExclamationCircle } from "react-icons/hi";
 import { Dialog, Transition } from "@headlessui/react";
 import { useMapView } from "../MapViewContext";
 import { getRealUrl } from "../arcgis";
-import { EsriLayerWithConfig } from "../types";
+import { EsriLayerWithConfig, isWfsLayer } from "../types";
 import { getMapConfigSync, saveMapConfigLocal } from "../database";
 
 type LayerDropdownMenuProps = {
@@ -17,8 +17,15 @@ type LayerDropdownMenuProps = {
 };
 
 export function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
-  const { url, sourceJSON } = layer.esri;
-  const realUrl = getRealUrl(layer.esri);
+  const wfs = isWfsLayer(layer);
+  const { url } = layer.esri;
+  const sourceJSON = wfs ? null : (layer.esri as any).sourceJSON;
+  const realUrl = wfs ? layer.config?.url ?? url : getRealUrl(layer.esri);
+  const displayName = wfs
+    ? layer.config?.wfs_title || layer.config?.name || layer.config?.wfs_type_name || url
+    : sourceJSON?.["name"] ?? url;
+  const displayDescription = wfs ? "" : (sourceJSON?.["description"] ?? "");
+
   const [showRemoveModal, setShowRemoveModal] = useState(false);
   const [showConfigureModal, setShowConfigureModal] = useState(false);
   const mapView = useMapView();
@@ -38,21 +45,24 @@ export function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
         // Ensure layer is loaded before setting popup template
         await layer.esri.load();
 
-        // Ensure popup template is set before adding to map
+        // Set popup template if not already set
         if (!layer.esri.popupTemplate) {
-          const template = layer.esri.createPopupTemplate();
-          layer.esri.popupTemplate = template;
+          try {
+            layer.esri.popupTemplate = (layer.esri as any).createPopupTemplate();
+          } catch {
+            // createPopupTemplate not available; popup will still work if popupTemplate is set manually
+          }
         }
         layer.esri.popupEnabled = true;
 
         // Add layer to map if not already present
-        if (!mapView.map.layers.includes(layer.esri)) {
-          mapView.map.add(layer.esri);
+        if (!mapView.map?.layers.includes(layer.esri)) {
+          mapView.map?.add(layer.esri);
         }
       } else {
         // Remove layer from map if present
-        if (mapView.map.layers.includes(layer.esri)) {
-          mapView.map.remove(layer.esri);
+        if (mapView.map?.layers.includes(layer.esri)) {
+          mapView.map?.remove(layer.esri);
         }
       }
     };
@@ -65,7 +75,7 @@ export function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
         mapView.map.remove(layer.esri);
       }
     };
-  }, [isVisible, mapView, layer.esri]);
+  }, [isVisible, mapView, layer.esri, wfs]);
 
   function closeDropdown() {
     if (isDropDownOpen) {
@@ -100,46 +110,34 @@ export function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
       return;
     }
 
-    // Use extent from sourceJSON (the layer's metadata from ArcGIS REST API)
-    const extentData = sourceJSON?.extent;
-    if (!extentData) {
-      console.warn(`Layer "${sourceJSON["name"]}" has no extent in sourceJSON`);
-      return;
-    }
-
-    console.log("Zooming to extent:", extentData);
-    console.log("MapView spatial reference:", mapView.spatialReference);
-
-    // Create an Extent object from the sourceJSON extent
-    const extent = new Extent({
-      xmin: extentData.xmin,
-      ymin: extentData.ymin,
-      xmax: extentData.xmax,
-      ymax: extentData.ymax,
-      spatialReference: extentData.spatialReference,
-    });
-
-    console.log("Created extent object:", extent);
-
-    mapView
-      .when(() => {
-        console.log("MapView is ready, calling goTo...");
-        mapView
-          .goTo(extent, {
-            animate: true,
-            duration: 1000,
-          })
-          .then(() => {
-            console.log("Successfully zoomed to layer extent");
-          })
-          .catch((err) => {
-            console.error(`Error zooming to layer "${sourceJSON["name"]}" (${realUrl}):`, err);
+    // For WFS layers use fullExtent; for ArcGIS layers use sourceJSON extent
+    const goToTarget = wfs
+      ? layer.esri.fullExtent
+      : (() => {
+          const extentData = sourceJSON?.extent;
+          if (!extentData) {
+            console.warn(`Layer "${displayName}" has no extent in sourceJSON`);
+            return null;
+          }
+          return new Extent({
+            xmin: extentData.xmin,
+            ymin: extentData.ymin,
+            xmax: extentData.xmax,
+            ymax: extentData.ymax,
+            spatialReference: extentData.spatialReference,
           });
-      })
-      .catch((err) => {
-        console.error("MapView not ready:", err);
+        })();
+
+    if (!goToTarget) return;
+
+    mapView.when(() => {
+      mapView.goTo(goToTarget, { animate: true, duration: 1000 }).catch((err) => {
+        console.error(`Error zooming to layer "${displayName}":`, err);
       });
-  }, [mapView, sourceJSON, realUrl]);
+    }).catch((err) => {
+      console.error("MapView not ready:", err);
+    });
+  }, [mapView, sourceJSON, displayName, wfs, layer.esri]);
 
   return (
     <li ref={containerRef} key={url} className="flex flex-row items-center p-2 bg-white dark:bg-dark-bg">
@@ -162,10 +160,12 @@ export function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
       <div className="flex-1 min-w-0 max-w-xs">
         <p className="text-sm font-medium text-gray-900 truncate dark:text-white">
           <Link to={realUrl} target="_blank">
-            {sourceJSON["name"]}
+            {displayName}
           </Link>
         </p>
-        <p className="text-sm text-gray-500 truncate dark:text-gray-400">{sourceJSON["description"]}</p>
+        {displayDescription && (
+          <p className="text-sm text-gray-500 truncate dark:text-gray-400">{displayDescription}</p>
+        )}
       </div>
       <Dropdown
         className="dark:text-white dark:bg-dark-bg"
@@ -205,7 +205,7 @@ export function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
             setShowConfigureModal(true);
           }}
         >
-          Filters & Attributes...
+          {wfs ? "Columns..." : "Filters & Attributes..."}
         </Dropdown.Item>
         <Dropdown.Item
           icon={() => (
@@ -269,7 +269,12 @@ export function LayerDropdownMenu({ layer, boundary }: LayerDropdownMenuProps) {
         </Dropdown.Item>
       </Dropdown>
       <RemoveLayerModal show={showRemoveModal} setShow={setShowRemoveModal} url={realUrl} />
-      <ModifyLayerConfig show={showConfigureModal} setShow={setShowConfigureModal} layer={layer} boundary={boundary} />
+      <ModifyLayerConfig
+        show={showConfigureModal}
+        setShow={setShowConfigureModal}
+        layer={layer}
+        boundary={boundary}
+      />
     </li>
   );
 }
@@ -315,14 +320,15 @@ function RemoveLayerModal({ url, show, setShow }: RemoveLayerModalProps) {
 }
 
 type ModifyLayerConfigProps = {
-  layer: EsriLayerWithConfig;
+  layer: any;
   show: boolean;
   boundary?: Geometry;
   setShow: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 function ModifyLayerConfig({ show, setShow, boundary, layer }: ModifyLayerConfigProps) {
-  const fields = layer.esri.fields;
+  const isWfs = layer.config?.service_type === "wfs";
+  const fields = (layer.esri.fields ?? []) as Array<{ name: string; alias?: string }>;
   const [results, setResults] = useState<FeatureSet>();
   const fetcher = useFetcher();
   const [where, setWhere] = useState(layer?.config?.where_clause ?? "1=1");
@@ -332,7 +338,7 @@ function ModifyLayerConfig({ show, setShow, boundary, layer }: ModifyLayerConfig
   const onUpdateClick = async (where: string) => {
     setWhere(where);
     setResults(
-      await layer.esri.queryFeatures({
+      await (layer.esri as EsriLayerWithConfig["esri"]).queryFeatures({
         where: where,
         geometry: boundary,
         num: 20,
@@ -343,7 +349,9 @@ function ModifyLayerConfig({ show, setShow, boundary, layer }: ModifyLayerConfig
   };
 
   useEffect(() => {
-    onUpdateClick(where);
+    if (!isWfs) {
+      onUpdateClick(where);
+    }
   }, []);
 
   useEffect(() => {
@@ -389,7 +397,9 @@ function ModifyLayerConfig({ show, setShow, boundary, layer }: ModifyLayerConfig
                   <fetcher.Form action="/maps/create/layers/configure" method="post">
                     <div className="flex flex-col gap-2">
                       <input name="url" value={layer?.config?.url} className="hidden" readOnly />
-                      <WhereInput defaultWhere={layer?.config?.where_clause ?? "1=1"} onUpdateClick={onUpdateClick} />
+                      {!isWfs && (
+                        <WhereInput defaultWhere={layer?.config?.where_clause ?? "1=1"} onUpdateClick={onUpdateClick} />
+                      )}
                       <div>
                         <label className="block mb-2 text-sm font-medium leading-6 text-gray-900 dark:text-white">
                           Select and Rename Columns
@@ -400,7 +410,7 @@ function ModifyLayerConfig({ show, setShow, boundary, layer }: ModifyLayerConfig
                               <Table.HeadCell className="w-12">Include</Table.HeadCell>
                               <Table.HeadCell className="w-1/3">Original Name</Table.HeadCell>
                               <Table.HeadCell className="w-1/3">New Name</Table.HeadCell>
-                              <Table.HeadCell>Sample Value</Table.HeadCell>
+                              {!isWfs && <Table.HeadCell>Sample Value</Table.HeadCell>}
                             </Table.Head>
                             <Table.Body className="divide-y">
                               {fields.map((field) => {
@@ -426,9 +436,11 @@ function ModifyLayerConfig({ show, setShow, boundary, layer }: ModifyLayerConfig
                                         placeholder={field.name}
                                       />
                                     </Table.Cell>
-                                    <Table.Cell className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
-                                      {sampleValue !== null && sampleValue !== undefined ? String(sampleValue) : "—"}
-                                    </Table.Cell>
+                                    {!isWfs && (
+                                      <Table.Cell className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
+                                        {sampleValue !== null && sampleValue !== undefined ? String(sampleValue) : "—"}
+                                      </Table.Cell>
+                                    )}
                                   </Table.Row>
                                 );
                               })}
