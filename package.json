@@ -90,7 +90,7 @@
     "jest-environment-jsdom": "^30.2.0",
     "postcss": "^8.5.14",
     "prettier": "^2.8.2",
-    "prettier-eslint": "^8.8.2",
+    "prettier-eslint": "^16.4.2",
     "react-test-renderer": "^18.2.0",
     "style-loader": "^3.3.1",
     "tailwindcss": "^3.3.2",
